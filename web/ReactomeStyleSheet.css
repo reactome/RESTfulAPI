@@ -1,0 +1,68 @@
+
+BODY	{ background-color: white; font-family:  Arial, Helvetica, sans-serif; }
+
+
+/* the font size controls the text size in the main table */
+H1, H2, DT, DL, DIV, TH, TD, P, BR, INPUT, SELECT, UL { font-family:  Arial, Helvetica, sans-serif; font-size: 9pt; }
+
+
+LI { font-family:  Arial, Helvetica, sans-serif; }
+LI.normalsize { font-size: 9pt; padding-bottom: 4px;}
+
+H1 { text-align: center; font-size: 14pt; }
+H1.frontpage { font-size: 20pt; color: navy; text-align: center; }
+
+P.introduction { text-align: justify;
+			     margin-left: 10px;
+			     margin-right: 10px;
+			     font-size: 12px;
+			     }    
+
+
+LI.direct_evidence { 
+		     text-indent: -28px; 
+	           }
+
+DT { color: #A52A2A; }
+DD { font-style: normal; 
+	text-indent: -50px;
+	margin-left: 50px;
+	padding-bottom: 2px;
+	padding-top: 2px;
+	}
+dd.description {
+	text-indent: 0px;
+	margin-left: 0px;	
+	}
+
+
+/*
+#########################################
+GK-wide general font and hover attributes
+#########################################
+*/
+
+A { color: #4169E1; text-decoration: none; }
+A:hover { color: black; text-decoration: none; background: #B0C4DE; }
+
+
+
+
+/* Unordered list general attrs */
+
+ul {
+	list-style: disc;
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+li {
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+
+
+/* colour of the current event selected */
+
+A.current { color: black; font-weight: bold; }
+A.current:hover {background-color: #E0FFFF;}
