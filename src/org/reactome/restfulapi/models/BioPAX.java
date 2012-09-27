@@ -1,0 +1,32 @@
+package org.reactome.restfulapi.models;
+
+/**
+ * Author: Stanislav Palatnik
+ * Date: 8/10/11
+ */
+class  BioPAX {
+    private long dbID;
+    private String biopaxxml;
+
+    public BioPAX() {
+    }
+
+
+    public long getDbID() {
+        return dbID;
+    }
+
+    public void setDbID(long dbID) {
+        this.dbID = dbID;
+    }
+
+    public String getBiopaxxml() {
+        return biopaxxml;
+    }
+
+    public void setBiopaxxml(String biopaxxml) {
+        this.biopaxxml = biopaxxml;
+    }
+
+
+}
