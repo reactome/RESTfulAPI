@@ -1,0 +1,9 @@
+#Sat Nov 05 14:06:46 PDT 2011
+DELEGATES_PREFERENCE=delegateValidatorList
+USER_BUILD_PREFERENCE=enabledBuildValidatorListorg.eclipse.jst.j2ee.internal.web.validation.UIWarValidator;
+USER_MANUAL_PREFERENCE=enabledManualValidatorListorg.eclipse.jst.j2ee.internal.web.validation.UIWarValidator;
+USER_PREFERENCE=overrideGlobalPreferencestruedisableAllValidationfalseversion1.2.302.v201107140600
+eclipse.preferences.version=1
+override=true
+suspend=false
+vf.version=3
