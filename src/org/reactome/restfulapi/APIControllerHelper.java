@@ -1,10 +1,12 @@
 package org.reactome.restfulapi;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,6 +34,7 @@ import org.gk.pathwaylayout.PathwayDiagramXMLGenerator;
 import org.gk.persistence.DiagramGKBReader;
 import org.gk.persistence.MySQLAdaptor;
 import org.gk.persistence.MySQLAdaptor.QueryRequest;
+import org.gk.render.Renderable;
 import org.gk.render.RenderablePathway;
 import org.gk.sbml.SBMLAndLayoutBuilderFields;
 import org.gk.schema.InvalidAttributeException;
@@ -171,8 +174,16 @@ public class APIControllerHelper {
         return null;
     }
     
-
-    public String pathwayDiagram(final long pathwayId, final String type) {
+    /**
+     * Get a PathwayDiagram encoded in Base64 string for PDF or PNG, or in XML.
+     * @param pathwayId
+     * @param type
+     * @param geneNames genes should be highlighted in the returned pathway diagram.
+     * @return
+     */
+    public String getPathwayDiagram(long pathwayId, 
+                                    String type,
+                                    String[] geneNames) {
         String rtn = null;
         try {
             GKInstance pathway = dba.fetchInstance(pathwayId);
@@ -197,6 +208,8 @@ public class APIControllerHelper {
             }
             DiagramGKBReader reader = new DiagramGKBReader();
             RenderablePathway renderablePathway = reader.openDiagram(diagram);
+            if (geneNames != null)
+                highlightPathwayDiagram(renderablePathway, geneNames);
             PathwayEditor editor = new DiagramGeneratorFromDB().preparePathwayEditor(diagram, 
                                                                                      pathway, 
                                                                                      renderablePathway);
@@ -238,6 +251,30 @@ public class APIControllerHelper {
             e.printStackTrace();
         }
         return rtn;
+    }
+    
+    private void highlightPathwayDiagram(RenderablePathway diagram,
+                                         String[] geneNames) throws Exception {
+        List<Renderable> comps = diagram.getComponents();
+        if (comps == null || comps.size() == 0 || geneNames == null || geneNames.length == 0)
+            return;
+        List<Long> dbIds = new ArrayList<Long>();
+        for (Renderable r : comps) {
+            if (r.getReactomeId() == null)
+                continue;
+            dbIds.add(r.getReactomeId());
+        }
+        List<Long> matched = InstanceUtilities.checkMatchEntityIds(dbIds, Arrays.asList(geneNames), dba);
+        for (Renderable r : comps) {
+            if (r.getReactomeId() == null)
+                continue;
+            if (matched.contains(r.getReactomeId())) {
+//                r.setForegroundColor(Color.BLUE);
+//                r.setLineColor(Color.BLUE);
+                r.setBackgroundColor(Color.BLUE);
+                r.setForegroundColor(Color.WHITE);
+            }
+        }
     }
 
     boolean isStableIdentifier(final String Id)
