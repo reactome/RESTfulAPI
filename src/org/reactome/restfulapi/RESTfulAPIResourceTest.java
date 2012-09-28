@@ -37,10 +37,10 @@ public class RESTfulAPIResourceTest {
     // Two methods used in this class
     private final static String HTTP_GET = "Get";
     private final static String HTTP_POST = "Post";
-    private final static String RESTFUL_URL = "http://www.reactome.org:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://www.reactome.org:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
+    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
     
     @Test
     public void testBioPaxExporter() throws Exception {
@@ -87,10 +87,21 @@ public class RESTfulAPIResourceTest {
         System.out.println("Output from pathwaydiagram:\n");
         System.out.println(text);
         decodeInBase64(text, "69278.pdf");
-        // A disease diagram
-        url = RESTFUL_URL + "pathwayDiagram/2206302/pdf";
+        
+        // A disease diagram: signaling by EGFR in cancer
+        url = RESTFUL_URL + "pathwayDiagram/1643713/pdf";
         text = callHttp(url, HTTP_GET, "");
-        decodeInBase64(text, "2206302.pdf");
+        decodeInBase64(text, "1643713.pdf");
+    }
+    
+    @Test
+    public void testHighlightPathwayDiagram() throws Exception {
+        // G2/M Transition: 453274
+        String url = RESTFUL_URL + "highlightPathwayDiagram/453274/pdf";
+        // A list of genes
+        String genes = "PPP2R1A,CEP192,AKAP9,CENPJ,CEP290,DYNC1H1";
+        String text = callHttp(url, HTTP_POST, genes);
+        decodeInBase64(text, "HighlightG2_MTransition.pdf");
     }
     
     public void decodeInBase64(String text, String fileName) throws IOException {
@@ -362,8 +373,8 @@ public class RESTfulAPIResourceTest {
             client = initializeHTTPClient((PostMethod) method, query);
         } else {
             method = new GetMethod(url); // Default
-//            method.setRequestHeader("Accept", "text/plain, application/xml");
-            method.setRequestHeader("Accept", "application/json");
+            method.setRequestHeader("Accept", "text/plain, application/xml");
+//            method.setRequestHeader("Accept", "application/json");
             client = new HttpClient();
         }
         int responseCode = client.executeMethod(method);
