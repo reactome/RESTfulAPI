@@ -90,7 +90,27 @@ public class RESTfulAPIResource {
     public String pathwayDiagram(@PathParam("dbId") final long PathwayId, 
                                  @PathParam("format") String format) {
         format = format.toLowerCase();
-        return service.pathwayDiagram(PathwayId, format);
+        return service.getPathwayDiagram(PathwayId, 
+                                         format,
+                                         null);
+    }
+    
+    /**
+     * Highlight pathway diagrams using posted list of gene names.
+     * @param pathwayId
+     * @param format either PNG or PDF
+     * @param query a list of gene names delimited by "," (no-space).
+     * @return
+     */
+    @POST
+    @Path("/highlightPathwayDiagram/{dbId}/{format}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String highlightPathwayDiagram(@PathParam("dbId") long pathwayId,
+                                          @PathParam("format") String format,
+                                          String query) {
+        return service.getPathwayDiagram(pathwayId,
+                                         format.toLowerCase(), 
+                                         query.split(","));
     }
 
     /**
@@ -111,7 +131,9 @@ public class RESTfulAPIResource {
      */
     @POST
     @Path("/queryByIds/{className}")
-    public String queryByIds(@PathParam("className") String className, String Post, @HeaderParam("Accept") String accept) {
+    public String queryByIds(@PathParam("className") String className, 
+                             String Post, 
+                             @HeaderParam("Accept") String accept) {
         Post = java.net.URLDecoder.decode(Post);
         Post = StringUtils.trimWhitespace(Post);
         if (Post.length() == 0)
