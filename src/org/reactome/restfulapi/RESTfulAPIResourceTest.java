@@ -104,6 +104,19 @@ public class RESTfulAPIResourceTest {
         decodeInBase64(text, "HighlightG2_MTransition.pdf");
     }
     
+    @Test
+    public void testHitPathways() throws Exception {
+        String url = RESTFUL_URL + "queryHitPathways";
+        // A list of genes
+        String genes = "PPP2R1A,CEP192,AKAP9,CENPJ,CEP290,DYNC1H1";
+        String text = callHttp(url, HTTP_POST, genes);
+        prettyPrintXML(text);
+        Long dbId = 71387L;
+        url = RESTFUL_URL + "highlightPathwayDiagram/" + dbId + "/pdf";
+        text = callHttp(url, HTTP_POST, genes);
+        decodeInBase64(text, "OneHitPathway.pdf");
+    }
+    
     public void decodeInBase64(String text, String fileName) throws IOException {
         byte[] content = Base64.decodeBase64(text);
         // Output the content into a local file
@@ -402,8 +415,8 @@ public class RESTfulAPIResourceTest {
     private HttpClient initializeHTTPClient(PostMethod post, String query) throws UnsupportedEncodingException {
         RequestEntity entity = new StringRequestEntity(query, "text/plain", "UTF-8");
         post.setRequestEntity(entity);
-        post.setRequestHeader("Accept", "application/XML, application/JSON, text/plain");
-        //post.setRequestHeader("Accept", "application/json");
+        post.setRequestHeader("Accept", "application/JSON, application/XML, text/plain");
+//        post.setRequestHeader("Accept", "application/json");
         HttpClient client = new HttpClient();
         return client;
     }
