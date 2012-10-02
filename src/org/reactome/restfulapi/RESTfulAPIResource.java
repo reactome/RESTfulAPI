@@ -1,5 +1,6 @@
 package org.reactome.restfulapi;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -111,6 +112,19 @@ public class RESTfulAPIResource {
         return service.getPathwayDiagram(pathwayId,
                                          format.toLowerCase(), 
                                          query.split(","));
+    }
+    
+    /**
+     * Query a list of pathways that contain one or more genes in the query gene list.
+     * @return
+     */
+    @POST
+    @Path("/queryHitPathways")
+    public List<Pathway> queryHitPathways(String queryGenes) {
+        if (queryGenes == null || queryGenes.length() == 0)
+            return new ArrayList<Pathway>();
+        String[] genes = queryGenes.split(",");
+        return service.queryHitPathways(genes);
     }
 
     /**
