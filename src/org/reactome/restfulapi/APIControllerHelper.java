@@ -5,14 +5,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.*;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.core.MediaType;
@@ -172,6 +169,101 @@ public class APIControllerHelper {
             logger.error(e.getMessage(), e);
         }
         return null;
+    }
+    
+    /**
+     * Query a list of pathways containing one or more genes from the passed gene
+     * array.
+     * @param genes gene symbols
+     * @return
+     */
+    public List<Pathway> queryHitPathways(String[] genes) {
+        try {
+            // Connect to the de-normalized database
+            String connectionStr = "jdbc:mysql://" + dba.getDBHost() + ":" + dba.getDBPort() + "/" + dba.getDBName() + "_dn";
+            //+ "?autoReconnect=true";
+            Properties prop = new Properties();
+            prop.setProperty("user", dba.getDBUser());
+            prop.setProperty("password", dba.getDBPwd());
+            Connection conn = DriverManager.getConnection(connectionStr, prop);
+            String sql = "select ei.DB_ID from Event_2_indirectIdentifier ei, Event_2_species es, " +
+            		     "Pathway p where ei.DB_ID = es.DB_ID AND es.species = 48887 AND " +
+            		     "ei.DB_ID = p.DB_ID AND ei.indirectIdentifier in (";
+            StringBuilder builder = new StringBuilder();
+            for (String gene : genes) {
+                builder.append("'").append(gene).append("',");
+            }
+            builder.deleteCharAt(builder.length() - 1); // Delete the last ","
+            sql += builder.toString() + ")";
+            Statement stat = conn.createStatement();
+            ResultSet resultSet = stat.executeQuery(sql);
+            // Get a list of Pathway ids containing genes
+            builder.setLength(0);
+            while (resultSet.next()) {
+                builder.append(resultSet.getLong(1)).append(",");
+            }
+            if (builder.length() == 0) { // Nothing returned
+                resultSet.close();
+                stat.close();
+                conn.close();
+                return new ArrayList<Pathway>();
+            }
+            builder.deleteCharAt(builder.length() - 1);
+            resultSet.close();
+            // Select pathways that have PathwayDiagrams
+            sql = "SELECT representedPathway FROM PathwayDiagram_2_representedPathway " +
+            		"WHERE representedPathway IN (" + builder.toString() + ")";
+            Connection dbaConn = dba.getConnection();
+            Statement dbaStat = dbaConn.createStatement();
+            resultSet = dbaStat.executeQuery(sql);
+            Set<Long> pathwayIds = new HashSet<Long>();
+            builder.setLength(0);
+            while (resultSet.next()) {
+                pathwayIds.add(resultSet.getLong(1));
+                builder.append(resultSet.getLong(1)).append(",");
+            }
+            resultSet.close();
+            dbaStat.close();
+            builder.deleteCharAt(builder.length() - 1);
+            // Want the get the lowest pathways that have pathway diagrams. These
+            // pathways should provide most detailed information in diagrams.
+            sql = "SELECT DB_ID, hasEveryComponent FROM Pathway_2_hasEveryComponent " +
+            		"WHERE DB_ID IN (" + builder.toString() + ")";
+            resultSet = stat.executeQuery(sql);
+            Map<Long, Set<Long>> pathwayToSubs = new HashMap<Long, Set<Long>>();
+            while (resultSet.next()) {
+                Long pathwayId = resultSet.getLong(1);
+                Long subPathwayId = resultSet.getLong(2);
+                Set<Long> subIds = pathwayToSubs.get(pathwayId);
+                if (subIds == null) {
+                    subIds = new HashSet<Long>();
+                    pathwayToSubs.put(pathwayId, subIds);
+                }
+                subIds.add(subPathwayId);
+            }
+            resultSet.close();
+            stat.close();
+            conn.close();
+            // Only pick up pathways that don't have sub-pathway diagrams
+            List<Pathway> rtn = new ArrayList<Pathway>();
+            for (Long dbId : pathwayIds) {
+                Set<Long> subIds = pathwayToSubs.get(dbId);
+                if (subIds != null) {
+                    // Check if there is any sub-pathway has PathwayDiagram
+                    subIds.retainAll(pathwayIds);
+                }
+                if (subIds == null || subIds.size() == 0) {
+                    GKInstance instance = dba.fetchInstance(dbId);
+                    Pathway pathway = (Pathway) converter.createObject(instance);
+                    rtn.add(pathway);
+                }
+            }
+            return rtn;
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return new ArrayList<Pathway>();
     }
     
     /**
