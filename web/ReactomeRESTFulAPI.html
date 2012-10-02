@@ -38,6 +38,12 @@
 			body="ID=170075,176374,68557";
 			doPost(url, type, body);
 		}
+		
+		function queryHitPathways(type) {
+			url = "/ReactomeRESTfulAPI/RESTfulWS/queryHitPathways";
+			body="PPP2R1A,CEP192,AKAP9,CENPJ,CEP290,DYNC1H1";
+			doPost(url, type, body);
+		}
 	</script>
 </head>
 
@@ -82,6 +88,29 @@ The returned result can be specified as either XML or JSON. The user can view th
 				<dt><b>Output:</b></dt><dd>list of fully encoded Pathway objects in JSON or XML</dd>
 				<dt><b>Example:</b></dt>
 				<dd>To get a list of front page items for human pathways, use <a href="/ReactomeRESTfulAPI/RESTfulWS/frontPageItems" target="example">frontPageItems</a></dd>
+			</dl>
+		</dd>
+	</dl>
+</li>
+
+<li>
+	<h4><a name="highlightPathwayDiagram"></a>HighlightPathwayDiagram: <code>highlightPathwayDiagram/{dbId:\\d+}/{format: PDF|PNG}</code></h4>
+	<dl>
+		<dd class="description">
+			Highlight a diagram for a specified pathway based on its DB_ID. The returned value is base64 encoded image in the PDF or PNG format. This method should be used after method 
+			<a href="#queryHitPathway">queryHitPathways</a>.
+		</dd>
+		<dd>
+			<dl>
+				<dt><b>Request Type:</b></dt><dd><code>POST</code></dd>
+				<dt><b>Parameters:</b></dt>
+					<dd><code>Integer</code> - Pathway database identifier</dd>
+					<dd><code>String</code> - image format: PNG, or PDF
+					<dd><code>String</code> - Gene symbols delimited by comma (no space)</dd>
+				<dt><b>Output:</b></dt>
+					<dd><code>String</code> - Base64 encoded pathway diagram for PNG or PDF with objects highlighted for queried genes</dd>
+				<dt><b>Note:</b></dt>
+				<dd>You may have to use a Base64 decoder to get the actual image file from the returned String.</dd>
 			</dl>
 		</dd>
 	</dl>
@@ -190,6 +219,27 @@ First a key "ID", and a value of comma separated list inside the body of the HTT
 		</dl>
 	</dd>
 </dl>
+</li>
+
+<li>
+	<h4><a name="queryHitPathway"></a>QueryHitPathways: <code>queryHitPathways</code></h4>
+	<dl>
+		<dd class="description">
+			Query for a list of pathways that contain one or more genes passed in the query list. In the Reactome data model, pathways are organized in a hierarchical structure. 
+			The returned pathways in this method are pathways having detailed manually drawn pathway diagrams. Currently only human pathways will be returned from this method.
+		</dd>
+		<dd>
+			<dl>
+				<dt><b>Request Type:</b></dt><dd><code>POST</code></dd>
+				<dt><b>Parameters:</b></dt>
+				<dd><code>String</code> - Gene symbols delimited by comma (no space)</dd>
+				<dt><b>Output:</b></dt><dd>list of fully encoded Pathways objects in JSON or XML</dd>
+				<dt><b>Example:</b></dt>
+				<dd>To get a list of pathways containing PPP2R1A, CEP192, AKAP9, CENPJ, CEP290, and DYNC1H1, 
+				try <a href="javascript:queryHitPathways('application/xml')"><code>XML</code></a> or <a href="javascript:queryHitPathways('application/json')">JSON</a> result
+			</dl>
+		</dd>
+	</dl>
 </li>
 
 <li>
