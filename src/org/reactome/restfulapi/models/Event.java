@@ -37,12 +37,32 @@ public class Event extends DatabaseObject implements Regulator {
     private List<DatabaseObject> requirements;
     private List<DatabaseIdentifier> crossReference;
     private List<Disease> disease;
+    // A simple label to indicate if this Event object is a disease
+    private Boolean isInDisease;
     private List<Event> inferredFrom;
+    // A simple flag to indicate if this Event is inferred from another
+    private Boolean isInferred;
     private List<String> name;
     private List<Event> orthologousEvent;
     private List<Compartment> compartment;
     
     public Event() {
+    }
+
+    public Boolean getIsInferred() {
+        return isInferred;
+    }
+
+    public void setIsInferred(Boolean isInferred) {
+        this.isInferred = isInferred;
+    }
+
+    public Boolean getIsInDisease() {
+        return isInDisease;
+    }
+
+    public void setIsInDisease(Boolean isInDisease) {
+        this.isInDisease = isInDisease;
     }
 
     public Boolean get_doRelease() {

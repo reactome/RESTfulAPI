@@ -146,11 +146,16 @@ public class EventMapper extends ReactomeModelPostMapper {
     public void postShellProcess(GKInstance inst, DatabaseObject obj) throws Exception {
         if (!validParameters(inst, obj))
             return;
+        Event event = (Event) obj;
         String releaseStatus = (String) inst.getAttributeValue(ReactomeJavaConstants.releaseStatus);
         if (releaseStatus != null) {
-            Event event = (Event) obj;
             event.setReleaseStatus(releaseStatus);
         }
+        // Check if this Event is in disease
+        GKInstance disease = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.disease);
+        event.setIsInDisease(disease == null ? Boolean.FALSE : Boolean.TRUE);
+        GKInstance inferredFrom = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.inferredFrom);
+        event.setIsInferred(inferredFrom == null ? Boolean.FALSE : Boolean.TRUE);
     }
     
 }
