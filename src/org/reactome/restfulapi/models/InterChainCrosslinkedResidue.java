@@ -6,10 +6,13 @@ package org.reactome.restfulapi.models;
 
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * @author gwu
  *
  */
+@XmlRootElement
 public class InterChainCrosslinkedResidue extends CrosslinkedResidue {
     private List<InterChainCrosslinkedResidue> equivalentTo;
     private List<ReferenceSequence> secondReferenceSequence;
