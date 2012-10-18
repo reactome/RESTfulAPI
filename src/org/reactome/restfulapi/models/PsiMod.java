@@ -13,7 +13,7 @@ public class PsiMod extends DatabaseObject {
     private String definition;
     private String identifier;
     private String name;
-    private Integer referenceDatabase;
+    private ReferenceDatabase referenceDatabase;
 
     public PsiMod() {
     }
@@ -42,11 +42,11 @@ public class PsiMod extends DatabaseObject {
         this.name = name;
     }
 
-    public Integer getReferenceDatabase() {
+    public ReferenceDatabase getReferenceDatabase() {
         return this.referenceDatabase;
     }
 
-    public void setReferenceDatabase(Integer referenceDatabase) {
+    public void setReferenceDatabase(ReferenceDatabase referenceDatabase) {
         this.referenceDatabase = referenceDatabase;
     }
 
