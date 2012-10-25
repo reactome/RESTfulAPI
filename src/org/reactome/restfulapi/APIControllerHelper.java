@@ -49,6 +49,7 @@ import org.reactome.restfulapi.models.ListOfShellInstances;
 import org.reactome.restfulapi.models.Pathway;
 import org.reactome.restfulapi.models.PhysicalEntity;
 import org.reactome.restfulapi.models.Publication;
+import org.reactome.restfulapi.models.Species;
 import org.springframework.util.StringUtils;
 
 import com.googlecode.gwt.crypto.gwtx.io.IOException;
@@ -58,6 +59,7 @@ import com.sun.jersey.core.impl.provider.entity.Inflector;
 import com.sun.jersey.spi.resource.Singleton;
 
 @Singleton
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class APIControllerHelper {
     private Logger logger = Logger.getLogger(APIControllerHelper.class);
     private MySQLAdaptor dba;
@@ -790,20 +792,98 @@ public class APIControllerHelper {
         return pathways;
     }
     
-    public List<Pathway> listFrontPageItem() {
+    /**
+     * Get the species list for pathways listed in the front page items and their
+     * orthologous events.
+     * @return
+     */
+    public List<Species> getSpeciesList() {
+        try {
+            Collection<?> c = dba.fetchInstancesByClass(ReactomeJavaConstants.FrontPage);
+            if (c == null || c.size() == 0)
+                return null;
+            GKInstance frontPage = (GKInstance) c.iterator().next();
+            List<GKInstance> values = frontPage.getAttributeValuesList(ReactomeJavaConstants.frontPageItem);
+            Set<GKInstance> species = new HashSet<GKInstance>();
+            for (GKInstance pathway : values) {
+                List<GKInstance> speciesList = pathway.getAttributeValuesList(ReactomeJavaConstants.species);
+                if (speciesList != null)
+                    species.addAll(speciesList);
+                List<GKInstance> orEvents = pathway.getAttributeValuesList(ReactomeJavaConstants.orthologousEvent);
+                if (orEvents == null)
+                    continue;
+                for (GKInstance orEvent : orEvents) {
+                    speciesList = orEvent.getAttributeValuesList(ReactomeJavaConstants.species);
+                    if (speciesList != null)
+                        species.addAll(speciesList);
+                }
+            }
+            List<Species> rtn = new ArrayList<Species>();
+            // Place the human in the top: this is special
+            Species human = null;
+            for (GKInstance s : species) {
+                Species converted = (Species) converter.createObject(s);
+                if (s.getDBID().equals(48887L))
+                    human = converted;
+                else
+                    rtn.add(converted);
+            }
+            Collections.sort(rtn, new Comparator<Species>() {
+                public int compare(Species s1, Species s2) {
+                    return s1.getDisplayName().compareTo(s2.getDisplayName());
+                }
+            });
+            rtn.add(0, human);
+            return rtn;
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return null;
+    }
+    
+    public List<Pathway> listFrontPageItem(String speciesName) {
         // Get the FrontPage instance. It is assumed that there should be only one
         // FrontPage instance
         try {
-            Collection c = dba.fetchInstancesByClass(ReactomeJavaConstants.FrontPage);
+            Collection<?> c = dba.fetchInstancesByClass(ReactomeJavaConstants.FrontPage);
             if (c == null || c.size() == 0)
                 return new ArrayList<Pathway>();
+            // Just in case
+            if (speciesName == null || speciesName.equals(""))
+                speciesName = "Homo sapiens"; //TODO: This may need to be set in an external configuration in the future!
+            // Want to ignore cases
+            speciesName = speciesName.toLowerCase();
             GKInstance frontPage = (GKInstance) c.iterator().next();
             List<?> values = frontPage.getAttributeValuesList(ReactomeJavaConstants.frontPageItem);
             List<Pathway> pathways = new ArrayList<Pathway>(values.size());
             for (Iterator<?> it = values.iterator(); it.hasNext();) {
                 GKInstance inst = (GKInstance) it.next();
-                Pathway pathway = (Pathway) converter.convert(inst);
-                pathways.add(pathway);
+                // In case for human or chicken pathways that are listed in the top-level
+                // Use list in case multiple species are used (e.g. HIV with human)
+                List<GKInstance> speciesList = inst.getAttributeValuesList(ReactomeJavaConstants.species);
+                boolean hasFound = false;
+                for (GKInstance species : speciesList) {
+                    if (species.getDisplayName().toLowerCase().equals(speciesName)) {
+                        Pathway pathway = (Pathway) converter.convert(inst);
+                        pathways.add(pathway);
+                        hasFound = true;
+                        break;
+                    }
+                }
+                if (hasFound)
+                    continue;
+                // Check predicted pathways
+                List<GKInstance> orEvents = inst.getAttributeValuesList(ReactomeJavaConstants.orthologousEvent);
+                for (GKInstance orEvent : orEvents) {
+                    // For inferred pathway, only one species needs to be checked.
+                    GKInstance species = (GKInstance) orEvent.getAttributeValue(ReactomeJavaConstants.species);
+                    if (species.getDisplayName().toLowerCase().equals(speciesName)) {
+                        Pathway pathway = (Pathway) converter.convert(orEvent);
+                        pathways.add(pathway);
+                        break;
+                    }
+                }
             }
             return pathways;
         }
