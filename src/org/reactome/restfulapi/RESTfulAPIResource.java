@@ -1,5 +1,7 @@
 package org.reactome.restfulapi;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +18,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -30,6 +33,7 @@ import org.reactome.restfulapi.models.ListOfShellInstances;
 import org.reactome.restfulapi.models.Pathway;
 import org.reactome.restfulapi.models.PhysicalEntity;
 import org.reactome.restfulapi.models.Publication;
+import org.reactome.restfulapi.models.Species;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
@@ -48,6 +52,7 @@ import com.sun.jersey.spi.resource.Singleton;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Singleton
 public class RESTfulAPIResource {
+    private static final Logger logger = Logger.getLogger(RESTfulAPIResource.class);
     @Autowired
     private APIControllerHelper service;
 
@@ -246,15 +251,34 @@ public class RESTfulAPIResource {
         return rtn;
     }
     
+//    /**
+//     * Use this method to get a list of Pathways that have been listed in the 
+//     * FrontPage instance.
+//     * @return
+//     */
+//    @GET
+//    @Path("/frontPageItems")
+//    public List<Pathway> queryFrontPageItems() {
+//        // Default for human with null
+//        return service.listFrontPageItem(null);
+//    }
+    
     /**
      * Use this method to get a list of Pathways that have been listed in the 
-     * FrontPage instance.
+     * FrontPage instance for other non-human species
      * @return
      */
     @GET
-    @Path("/frontPageItems")
-    public List<Pathway> queryFrontPageItems() {
-        return service.listFrontPageItem();
+    @Path("/frontPageItems/{speciesName}")
+    public List<Pathway> queryFrontPageItems(@PathParam("speciesName") String speciesName) {
+        try {
+            String decoded = URLDecoder.decode(speciesName, "utf-8");
+            return service.listFrontPageItem(decoded);
+        }
+        catch(UnsupportedEncodingException e) {
+            logger.error(e.getMessage(), e);
+        }
+        return null;
     }
     
     /**
@@ -326,6 +350,16 @@ public class RESTfulAPIResource {
     	Long id = Long.parseLong(dbID);
     	ResultContainer rc = service.getParticipatingMolecules(id);
     	return rc;
+    }
+    
+    /**
+     * Get a list of species that should be used in a pathway browser.
+     * @return
+     */
+    @GET
+    @Path("/speciesList")
+    public List<Species> getSpeciesList() {
+        return service.getSpeciesList();
     }
 
     @POST

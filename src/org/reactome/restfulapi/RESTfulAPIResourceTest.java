@@ -8,8 +8,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.HttpClient;
@@ -25,6 +27,8 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.junit.Test;
+import org.reactome.px.util.FileUtility;
+import org.reactome.px.util.InteractionUtilities;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,6 +43,7 @@ public class RESTfulAPIResourceTest {
     private final static String HTTP_POST = "Post";
 //    private final static String RESTFUL_URL = "http://www.reactome.org:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
     private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
     
@@ -96,12 +101,21 @@ public class RESTfulAPIResourceTest {
     
     @Test
     public void testHighlightPathwayDiagram() throws Exception {
-        // G2/M Transition: 453274
-        String url = RESTFUL_URL + "highlightPathwayDiagram/453274/pdf";
-        // A list of genes
-        String genes = "PPP2R1A,CEP192,AKAP9,CENPJ,CEP290,DYNC1H1";
-        String text = callHttp(url, HTTP_POST, genes);
-        decodeInBase64(text, "HighlightG2_MTransition.pdf");
+        //        // G2/M Transition: 453274
+        //        String url = RESTFUL_URL + "highlightPathwayDiagram/453274/pdf";
+        //        // A list of genes
+        //        String genes = "PPP2R1A,CEP192,AKAP9,CENPJ,CEP290,DYNC1H1";
+        //        String text = callHttp(url, HTTP_POST, genes);
+        //        decodeInBase64(text, "HighlightG2_MTransition.pdf");
+        
+        // Test for a gene list in a file
+        String dir = "/Users/gwu/Documents/wgm/work/ctbioscience/";
+        String fileName = dir + "CellCycleCheckpointsGenes.txt";
+        Set<String> genes = new FileUtility().loadInteractions(fileName);
+        String query = InteractionUtilities.joinStringElements(",", genes);
+        String url = RESTFUL_URL + "highlightPathwayDiagram/69620/pdf";
+        String text = callHttp(url, HTTP_POST, query);
+        decodeInBase64(text, dir + "CellCycleCheckpoints.pdf");
     }
     
     @Test
@@ -156,9 +170,26 @@ public class RESTfulAPIResourceTest {
     
     @Test
     public void testQueryFrontPageItems() throws Exception  {
-        String url = RESTFUL_URL + "frontPageItems";
+        String species[] = new String[] {
+                "Homo sapiens",
+                "Mus musculus",
+                "Gallus gallus"
+        };
+        for (String name : species) {
+            name = URLEncoder.encode(name, "utf-8");
+            System.out.println("Encoded species: " + name);
+            String specuesUrl = RESTFUL_URL + "frontPageItems/" + name;
+            String text = callHttp(specuesUrl, HTTP_GET, "");
+            System.out.println("\nFront page for " + name + ":");
+            prettyPrintXML(text);
+        }
+    }
+    
+    @Test
+    public void testSpeciesList() throws Exception {
+        String url = RESTFUL_URL + "speciesList";
         String text = callHttp(url, HTTP_GET, "");
-        System.out.println("Front Page instances:\n");
+        System.out.println("\nSpecies List:");
         prettyPrintXML(text);
     }
     
@@ -408,8 +439,10 @@ public class RESTfulAPIResourceTest {
             if (rtn.length() == 0)
                 return rtn;
             return rtn.substring(0, rtn.length() - 1);
-        } else
+        } else {
+            System.err.println("Error from server: " + method.getResponseBodyAsString());
             throw new IllegalStateException(method.getResponseBodyAsString());
+        }
     }
 
     private HttpClient initializeHTTPClient(PostMethod post, String query) throws UnsupportedEncodingException {
