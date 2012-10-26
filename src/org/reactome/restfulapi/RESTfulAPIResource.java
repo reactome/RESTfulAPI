@@ -282,6 +282,24 @@ public class RESTfulAPIResource {
     }
     
     /**
+     * Get a XML string for the pathway hierarchy for a specified species.
+     * @param speciesName
+     * @return
+     */
+    @GET
+    @Path("/pathwayHierarchy/{speciesName}")
+    public String getPathwayHierarchy(@PathParam("speciesName") String speciesName) {
+        try {
+            String decoded = URLDecoder.decode(speciesName, "utf-8");
+            return service.generatePathwayHierarchy(decoded);
+        }
+        catch(UnsupportedEncodingException e) {
+            logger.error(e.getMessage(), e);
+        }
+        return null;
+    }
+    
+    /**
      * Query a list of LiteratureReference for a passed DB_ID for a Person instance.
      * @param personId
      * @return

@@ -842,48 +842,77 @@ public class APIControllerHelper {
         return null;
     }
     
-    public List<Pathway> listFrontPageItem(String speciesName) {
+    /**
+     * Generate an XML encoding the pathway hierarchy for a specified species.
+     * @param speciesName
+     * @return
+     */
+    public String generatePathwayHierarchy(String speciesName) {
+        try {
+            List<GKInstance> pathways = getFrontPageItems(speciesName);
+            if (pathways == null || pathways.size() == 0)
+                return null;
+            PathwayHierarchyGenerator helper = new PathwayHierarchyGenerator();
+            return helper.generatePathwayHierarchy(pathways, speciesName);
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return null;
+    }
+    
+    private List<GKInstance> getFrontPageItems(String speciesName) throws Exception {
         // Get the FrontPage instance. It is assumed that there should be only one
         // FrontPage instance
+        Collection<?> c = dba.fetchInstancesByClass(ReactomeJavaConstants.FrontPage);
+        if (c == null || c.size() == 0)
+            return null;
+        // Just in case
+        if (speciesName == null || speciesName.equals(""))
+            speciesName = "Homo sapiens"; //TODO: This may need to be set in an external configuration in the future!
+        // Want to ignore cases
+        speciesName = speciesName.toLowerCase();
+        GKInstance frontPage = (GKInstance) c.iterator().next();
+        List<?> values = frontPage.getAttributeValuesList(ReactomeJavaConstants.frontPageItem);
+        List<GKInstance> rtnList = new ArrayList<GKInstance>();
+        for (Iterator<?> it = values.iterator(); it.hasNext();) {
+            GKInstance inst = (GKInstance) it.next();
+            // In case for human or chicken pathways that are listed in the top-level
+            // Use list in case multiple species are used (e.g. HIV with human)
+            List<GKInstance> speciesList = inst.getAttributeValuesList(ReactomeJavaConstants.species);
+            boolean hasFound = false;
+            for (GKInstance species : speciesList) {
+                if (species.getDisplayName().toLowerCase().equals(speciesName)) {
+                    rtnList.add(inst);
+                    hasFound = true;
+                    break;
+                }
+            }
+            if (hasFound)
+                continue;
+            // Check predicted pathways
+            List<GKInstance> orEvents = inst.getAttributeValuesList(ReactomeJavaConstants.orthologousEvent);
+            for (GKInstance orEvent : orEvents) {
+                // For inferred pathway, only one species needs to be checked.
+                GKInstance species = (GKInstance) orEvent.getAttributeValue(ReactomeJavaConstants.species);
+                if (species.getDisplayName().toLowerCase().equals(speciesName)) {
+                    rtnList.add(orEvent);
+                    break;
+                }
+            }
+        }
+        return rtnList;
+    }
+    
+    public List<Pathway> listFrontPageItem(String speciesName) {
         try {
-            Collection<?> c = dba.fetchInstancesByClass(ReactomeJavaConstants.FrontPage);
-            if (c == null || c.size() == 0)
-                return new ArrayList<Pathway>();
-            // Just in case
-            if (speciesName == null || speciesName.equals(""))
-                speciesName = "Homo sapiens"; //TODO: This may need to be set in an external configuration in the future!
-            // Want to ignore cases
-            speciesName = speciesName.toLowerCase();
-            GKInstance frontPage = (GKInstance) c.iterator().next();
-            List<?> values = frontPage.getAttributeValuesList(ReactomeJavaConstants.frontPageItem);
-            List<Pathway> pathways = new ArrayList<Pathway>(values.size());
-            for (Iterator<?> it = values.iterator(); it.hasNext();) {
-                GKInstance inst = (GKInstance) it.next();
-                // In case for human or chicken pathways that are listed in the top-level
-                // Use list in case multiple species are used (e.g. HIV with human)
-                List<GKInstance> speciesList = inst.getAttributeValuesList(ReactomeJavaConstants.species);
-                boolean hasFound = false;
-                for (GKInstance species : speciesList) {
-                    if (species.getDisplayName().toLowerCase().equals(speciesName)) {
-                        Pathway pathway = (Pathway) converter.convert(inst);
-                        pathways.add(pathway);
-                        hasFound = true;
-                        break;
-                    }
-                }
-                if (hasFound)
-                    continue;
-                // Check predicted pathways
-                List<GKInstance> orEvents = inst.getAttributeValuesList(ReactomeJavaConstants.orthologousEvent);
-                for (GKInstance orEvent : orEvents) {
-                    // For inferred pathway, only one species needs to be checked.
-                    GKInstance species = (GKInstance) orEvent.getAttributeValue(ReactomeJavaConstants.species);
-                    if (species.getDisplayName().toLowerCase().equals(speciesName)) {
-                        Pathway pathway = (Pathway) converter.convert(orEvent);
-                        pathways.add(pathway);
-                        break;
-                    }
-                }
+            List<GKInstance> frontPageItems = getFrontPageItems(speciesName);
+            if (frontPageItems == null)
+                return null;
+            List<Pathway> pathways = new ArrayList<Pathway>(frontPageItems.size());
+            for (GKInstance inst : frontPageItems) {
+                Pathway pathway = (Pathway) converter.convert(inst);
+                pathways.add(pathway);
             }
             return pathways;
         }
