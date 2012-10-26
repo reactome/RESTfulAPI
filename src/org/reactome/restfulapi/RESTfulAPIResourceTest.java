@@ -21,6 +21,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.gk.util.FileUtilities;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
@@ -43,9 +44,9 @@ public class RESTfulAPIResourceTest {
     private final static String HTTP_POST = "Post";
 //    private final static String RESTFUL_URL = "http://www.reactome.org:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
+    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
-    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
     
     @Test
     public void testBioPaxExporter() throws Exception {
@@ -167,6 +168,26 @@ public class RESTfulAPIResourceTest {
 //        System.out.println("\nFirst Event in FrontPage:\n");
 //        prettyPrintXML(text);
 //    }
+    @Test
+    public void testPathwayHierarchy() throws Exception {
+        String species[] = new String[] {
+                "Homo sapiens",
+                "Mus musculus",
+                "Gallus gallus"
+        };
+        for (String name : species) {
+            name = URLEncoder.encode(name, "utf-8");
+            System.out.println("Encoded species: " + name);
+            String specuesUrl = RESTFUL_URL + "pathwayHierarchy/" + name;
+            String text = callHttp(specuesUrl, HTTP_GET, "");
+            System.out.println("\nPathway hierarchy for " + name + ":");
+            prettyPrintXML(text);
+            FileUtilities fu = new FileUtilities();
+            fu.setOutput(name + ".xml");
+            fu.printLine(text);
+            fu.close();
+        }
+    }
     
     @Test
     public void testQueryFrontPageItems() throws Exception  {
