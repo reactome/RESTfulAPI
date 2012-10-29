@@ -35,6 +35,8 @@ public class PhysicalEntity extends DatabaseObject implements Regulator {
     private List<Event> inhibitedEvent;
     private List<Event> activatedEvent;
     private List<Event> requiredEvent;
+    private List<Event> producedByEvent;
+    private List<Event> consumedByEvent;
     
     public PhysicalEntity() {
         
@@ -217,5 +219,21 @@ public class PhysicalEntity extends DatabaseObject implements Regulator {
 
     public void setRequiredEvent(List<Event> requiredEvent) {
         this.requiredEvent = requiredEvent;
+    }
+
+    public List<Event> getProducedByEvent() {
+        return producedByEvent;
+    }
+
+    public void setProducedByEvent(List<Event> producedByEvent) {
+        this.producedByEvent = producedByEvent;
+    }
+
+    public List<Event> getConsumedByEvent() {
+        return consumedByEvent;
+    }
+
+    public void setConsumedByEvent(List<Event> consumedByEvent) {
+        this.consumedByEvent = consumedByEvent;
     }
 }

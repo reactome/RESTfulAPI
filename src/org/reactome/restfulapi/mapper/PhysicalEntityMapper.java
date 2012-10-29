@@ -70,6 +70,8 @@ public class PhysicalEntityMapper extends ReactomeModelPostMapper {
         }
         handleCatalysedEvents(inst, converter, pe);
         handleRegulatedEvents(inst, converter, pe);
+        handleProducedByEvents(inst, converter, pe);
+        handleConsumedByEvents(inst, converter, pe);
     }
     
     private void handleRegulatedEvents(GKInstance inst,
@@ -106,6 +108,36 @@ public class PhysicalEntityMapper extends ReactomeModelPostMapper {
         pe.setRequiredEvent(requiredEvents);
         pe.setInhibitedEvent(inhibitedEvents);
         pe.setActivatedEvent(activatedEvents);
+    }
+    
+    private void handleProducedByEvents(GKInstance inst,
+                                        ReactomeToRESTfulAPIConverter converter,
+                                        PhysicalEntity pe) throws Exception {
+        Collection<GKInstance> producedByEventInsts = inst.getReferers(ReactomeJavaConstants.output);
+        if (producedByEventInsts == null || producedByEventInsts.size() == 0)
+            return;
+        List<Event> producedByEvents = new ArrayList<Event>();
+        for (GKInstance eventInst : producedByEventInsts) {
+            Object obj = converter.createObject(eventInst);
+            if (obj instanceof Event)
+                producedByEvents.add((Event)obj);
+        }
+        pe.setProducedByEvent(producedByEvents);
+    }
+    
+    private void handleConsumedByEvents(GKInstance inst,
+                                        ReactomeToRESTfulAPIConverter converter,
+                                        PhysicalEntity pe) throws Exception {
+        Collection<GKInstance> consumedByInsts = inst.getReferers(ReactomeJavaConstants.input);
+        if (consumedByInsts == null || consumedByInsts.size() == 0)
+            return;
+        List<Event> consumedByEvents = new ArrayList<Event>();
+        for (GKInstance eventInst : consumedByInsts) {
+            DatabaseObject obj = converter.createObject(eventInst);
+            if (obj instanceof Event) 
+                consumedByEvents.add((Event)obj);
+        }
+        pe.setConsumedByEvent(consumedByEvents);
     }
 
     private void handleCatalysedEvents(GKInstance inst,
