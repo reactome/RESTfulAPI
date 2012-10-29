@@ -11,16 +11,16 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 public class Species extends Taxon {
-    private List<String> figure;
+    private List<Figure> figure;
 
     public Species() {
     }
 
-    public List<String> getFigure() {
+    public List<Figure> getFigure() {
         return figure;
     }
 
-    public void setFigure(List<String> figure) {
+    public void setFigure(List<Figure> figure) {
         this.figure = figure;
     }
 
