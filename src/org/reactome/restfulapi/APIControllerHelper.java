@@ -87,6 +87,10 @@ public class APIControllerHelper {
         this.dba = dba;
         queryHelper.setMySQLAdaptor(dba);
     }
+    
+    public MySQLAdaptor getDba() {
+        return this.dba;
+    }
 
     public void setQueryHelper(QueryHelper queryHelper) {
         this.queryHelper = queryHelper;

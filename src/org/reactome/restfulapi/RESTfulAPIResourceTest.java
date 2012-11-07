@@ -44,9 +44,9 @@ public class RESTfulAPIResourceTest {
     private final static String HTTP_POST = "Post";
 //    private final static String RESTFUL_URL = "http://www.reactome.org:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
+    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
     
     @Test
     public void testBioPaxExporter() throws Exception {
@@ -401,6 +401,24 @@ public class RESTfulAPIResourceTest {
         System.out.println(url);
         String text = callHttp(url, HTTP_GET, "");
         System.out.println("Contained Event DB_IDs for Apoptosis: " + text.length() + "\n");
+        prettyPrintXML(text);
+    }
+    
+    @Test
+    public void testPSICQUICServiceList() throws Exception {
+        String url = RESTFUL_URL + "psicquicList";
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("List PSICQUIC services:");
+        prettyPrintXML(text);
+    }
+    
+    @Test
+    public void testPSICQUICInteractionsQuery() throws Exception {
+        Long dbId = 66212L; // EWAS FASL
+        String serviceName = "Reactome-FIs";
+        String url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + serviceName;
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("Query interactions for " + dbId + ":");
         prettyPrintXML(text);
     }
 
