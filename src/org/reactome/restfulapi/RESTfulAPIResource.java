@@ -22,6 +22,9 @@ import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.reactome.psicquic.PSICQUICService;
+import org.reactome.psicquic.model.QueryResults;
+import org.reactome.psicquic.service.Service;
 import org.reactome.restfulapi.details.pmolecules.converter.Converter;
 import org.reactome.restfulapi.details.pmolecules.converter.Data2Excel;
 import org.reactome.restfulapi.details.pmolecules.converter.ExportConfiguration;
@@ -378,6 +381,34 @@ public class RESTfulAPIResource {
     @Path("/speciesList")
     public List<Species> getSpeciesList() {
         return service.getSpeciesList();
+    }
+    
+    /**
+     * Get a list of PSICQUIC services registered at EBI.
+     * @return
+     */
+    @GET
+    @Path("/psicquicList")
+    public List<Service> getPSIQUICServices() {
+        // Initialized when needed in order to control memory usage
+        PSICQUICService psicquicService = new PSICQUICService();
+        return psicquicService.listPSIQUICSercices();
+    }
+    
+    /**
+     * Query for interactions.
+     * @param dbId
+     * @param serviceName
+     * @return
+     */
+    @GET
+    @Path("/psiquicInteractions/{dbId}/{service}")
+    public QueryResults queryPSICQUICInteractions(@PathParam("dbId") Long dbId,
+                                                  @PathParam("service") String serviceName) {
+        PSICQUICService psicquicService = new PSICQUICService();
+        psicquicService.setMySQLAdaptor(service.getDba());
+        QueryResults results = psicquicService.queryInteractions(dbId, serviceName);
+        return results;
     }
 
     @POST
