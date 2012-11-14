@@ -388,6 +388,14 @@ public class RESTfulAPIResourceTest {
     }
     
     @Test
+    public void testComplexSubunits() throws Exception {
+        String url = RESTFUL_URL + "complexSubunits/75114";
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("Output from complex subunits (4 should be returned):");
+        prettyPrintXML(text);
+    }
+    
+    @Test
     public void testQueryReferences() throws Exception {
         String url = RESTFUL_URL + "queryReferences/140547";
         String text = callHttp(url, HTTP_GET, "");
