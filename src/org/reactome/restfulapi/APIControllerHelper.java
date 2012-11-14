@@ -408,11 +408,38 @@ public class APIControllerHelper {
             }
         }
         catch (InstanceNotFoundException e) {
-            e.printStackTrace();
+            logger.error("Cannot find instance of " + dbId + " in class " + className, e);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
         return rtn;
+    }
+    
+    public List<PhysicalEntity> getComplexSubunits(Long dbId) {
+        try {
+            GKInstance complex = dba.fetchInstance(dbId);
+            Set<GKInstance> components = InstanceUtilities.getContainedInstances(complex,
+                                                                                 ReactomeJavaConstants.hasComponent);
+            // Do a filter to remove complex instances
+            for (Iterator<GKInstance> it = components.iterator(); it.hasNext();) {
+                GKInstance comp = it.next();
+                if (comp.getSchemClass().isa(ReactomeJavaConstants.Complex))
+                    it.remove();
+            }
+            List<PhysicalEntity> rtn = new ArrayList<PhysicalEntity>(components.size());
+            for (GKInstance comp : components) {
+                PhysicalEntity pe = (PhysicalEntity) converter.createObject(comp);
+                rtn.add(pe);
+            }
+            return rtn;
+        }
+        catch(InstanceNotFoundException e) {
+            logger.error("Cannot find instance for " + dbId, e);
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return new ArrayList<PhysicalEntity>();
     }
 
     public String queryByIds(String className, final List<String> dbIds, final String accept) {

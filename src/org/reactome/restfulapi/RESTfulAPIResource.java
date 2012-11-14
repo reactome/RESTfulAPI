@@ -145,6 +145,16 @@ public class RESTfulAPIResource {
     public DatabaseObject queryById(@PathParam("className") final String className, @PathParam("dbId") final String dbID) {
         return service.queryById(className, dbID);
     }
+    
+    /**
+     * Get a list of complex subunits that are no-complex PEs.
+     * @return
+     */
+    @GET
+    @Path("/complexSubunits/{dbId}")
+    public List<PhysicalEntity> getComplexSubunits(@PathParam("dbId") Long dbId) {
+        return service.getComplexSubunits(dbId);
+    }
 
     /**
      * @param className Class Name of Object you are querying for
