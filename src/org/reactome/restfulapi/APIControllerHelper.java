@@ -583,7 +583,7 @@ public class APIControllerHelper {
                 throw new InstanceNotFoundException(className,propertyValue);
 
             for (GKInstance gkInstance : instances) {
-                DatabaseObject converted = (DatabaseObject) converter.convert(gkInstance);
+                DatabaseObject converted = (DatabaseObject) converter.createObject(gkInstance);
                 if(headerType==1)
                 {
                     mapper.writeValue(sw, converted);
