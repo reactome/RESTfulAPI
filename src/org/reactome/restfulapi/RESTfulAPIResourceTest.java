@@ -44,9 +44,9 @@ public class RESTfulAPIResourceTest {
     private final static String HTTP_POST = "Post";
 //    private final static String RESTFUL_URL = "http://www.reactome.org:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
+    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
-    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
     
     @Test
     public void testBioPaxExporter() throws Exception {
@@ -332,6 +332,11 @@ public class RESTfulAPIResourceTest {
                 HTTP_POST,
                 "name=Apoptosis");
         System.out.println("Output from listByQuery for name=Apotosis:\n");
+        prettyPrintXML(text);
+        
+        url = RESTFUL_URL + "listByQuery/Pathway";
+        text = callHttp(url, HTTP_POST, "species=48887");
+        System.out.println("\nOutput from listByQuery for species=48887:\n");
         prettyPrintXML(text);
     }
 
