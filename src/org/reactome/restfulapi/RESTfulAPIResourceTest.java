@@ -44,9 +44,9 @@ public class RESTfulAPIResourceTest {
     private final static String HTTP_POST = "Post";
 //    private final static String RESTFUL_URL = "http://www.reactome.org:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
+    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
     
     @Test
     public void testBioPaxExporter() throws Exception {
@@ -168,6 +168,7 @@ public class RESTfulAPIResourceTest {
 //        System.out.println("\nFirst Event in FrontPage:\n");
 //        prettyPrintXML(text);
 //    }
+    
     @Test
     public void testPathwayHierarchy() throws Exception {
         String species[] = new String[] {
@@ -236,6 +237,12 @@ public class RESTfulAPIResourceTest {
         url = RESTFUL_URL + "queryById/ReferenceGeneProduct/155554";
         text = callHttp(url, HTTP_GET, "");
         prettyPrintXML(text);
+        
+        // Check a Requirement
+        url = RESTFUL_URL + "queryById/Regulation/449175";
+        text = callHttp(url, HTTP_GET, "");
+        prettyPrintXML(text);
+        
 //        /// Another pathway
 //        // Check a pathway instance
 //        url = RESTFUL_URL + "querybyid/Pathway/198323";
@@ -299,6 +306,12 @@ public class RESTfulAPIResourceTest {
         System.out.println("Output for query summation 450983:");
         prettyPrintXML(text);
         
+        // Check a reaction with regulation
+        url = RESTFUL_URL + "queryById/ReactionlikeEvent/2002440";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("Output for a reaction having regulators:");
+        prettyPrintXML(text);
+        
         // Check for InstanceEdit
 //        String url = RESTFUL_URL + "querybyid/InstanceEdit/168269";
 //        String text = callHttp(url, HTTP_GET, url);
@@ -358,13 +371,13 @@ public class RESTfulAPIResourceTest {
         System.out.println("Output from topLevelPathways:\n");
         prettyPrintXML(text);
     }
-    
-    @Test
-    public void testExportParticipatingMolecules() throws Exception {
-        String url = RESTFUL_URL + "participatingMolecules/export/109581";
-        String text = callHttp(url, HTTP_GET, "");
-        System.out.println(text);
-    }
+//    
+//    @Test
+//    public void testExportParticipatingMolecules() throws Exception {
+//        String url = RESTFUL_URL + "participatingMolecules/export/109581";
+//        String text = callHttp(url, HTTP_GET, "");
+//        System.out.println(text);
+//    }
 
 //    @Test
 //    public void testListTopLevelPathways() throws Exception {
@@ -429,9 +442,19 @@ public class RESTfulAPIResourceTest {
     public void testPSICQUICInteractionsQuery() throws Exception {
         Long dbId = 66212L; // EWAS FASL
         String serviceName = "Reactome-FIs";
+        serviceName = "MINT";
         String url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + serviceName;
         String text = callHttp(url, HTTP_GET, "");
         System.out.println("Query interactions for " + dbId + ":");
+        prettyPrintXML(text);
+    }
+    
+    @Test
+    public void testReferenceEntity() throws Exception {
+        Long dbId = 66212L; // EWAS FASL
+        String url = RESTFUL_URL + "referenceEntity/" + dbId;
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("Query ReferenceEntity for " + dbId + ":");
         prettyPrintXML(text);
     }
 
