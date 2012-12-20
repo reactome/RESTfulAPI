@@ -36,10 +36,13 @@ import org.reactome.restfulapi.models.ListOfShellInstances;
 import org.reactome.restfulapi.models.Pathway;
 import org.reactome.restfulapi.models.PhysicalEntity;
 import org.reactome.restfulapi.models.Publication;
+import org.reactome.restfulapi.models.ReferenceEntity;
 import org.reactome.restfulapi.models.Species;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
+
+import sun.reflect.ReflectionFactory.GetReflectionFactoryAction;
 
 import com.sun.jersey.spi.resource.Singleton;
 
@@ -419,6 +422,18 @@ public class RESTfulAPIResource {
         psicquicService.setMySQLAdaptor(service.getDba());
         QueryResults results = psicquicService.queryInteractions(dbId, serviceName);
         return results;
+    }
+    
+    /**
+     * Get a list of ReferenceEntity for an Event or PE defined by its DB_ID.
+     * @param dbId
+     * @return
+     */
+    @GET
+    @Path("/referenceEntity/{dbId}")
+    public List<ReferenceEntity> queryReferenceEntity(@PathParam("dbId") Long dbId) {
+        List<ReferenceEntity> entities = service.getReferenceEntity(dbId);
+        return entities;
     }
 
     @POST

@@ -49,6 +49,7 @@ import org.reactome.restfulapi.models.ListOfShellInstances;
 import org.reactome.restfulapi.models.Pathway;
 import org.reactome.restfulapi.models.PhysicalEntity;
 import org.reactome.restfulapi.models.Publication;
+import org.reactome.restfulapi.models.ReferenceEntity;
 import org.reactome.restfulapi.models.Species;
 import org.springframework.util.StringUtils;
 
@@ -607,6 +608,42 @@ public class APIControllerHelper {
                 sw.append("</").append(className).append(">");
 
         return sw.toString();
+    }
+    
+    /**
+     * Get a list of ReferenceEntity for a PE or Event that is specified by its DB_ID.
+     * @param dbId
+     * @return
+     */
+    public List<ReferenceEntity> getReferenceEntity(Long dbId) {
+        List<ReferenceEntity> rtn = new ArrayList<ReferenceEntity>();
+        try {
+            GKInstance inst = dba.fetchInstance(dbId);
+            if (!inst.getSchemClass().isa(ReactomeJavaConstants.Event) && !inst.getSchemClass().isa(ReactomeJavaConstants.PhysicalEntity)) {
+                logger.warn("Passed DB_ID " + dbId + " is not for an Event or PhysicaleEntity: " + inst);
+                return rtn;
+            }
+            Set<GKInstance> refEntities = null;
+            if (inst.getSchemClass().isa(ReactomeJavaConstants.Event)) {
+                Set<GKInstance> pes = InstanceUtilities.grepPathwayParticipants(inst);
+                refEntities = new HashSet<GKInstance>();
+                for (GKInstance pe : pes) {
+                    if (!pe.getSchemClass().isa(ReactomeJavaConstants.PhysicalEntity))
+                        continue;
+                    refEntities.addAll(InstanceUtilities.grepReferenceEntitiesForPE(pe));
+                }
+            }
+            else // Treated as PE
+                refEntities = InstanceUtilities.grepReferenceEntitiesForPE(inst);
+            for (GKInstance ref : refEntities) {
+                ReferenceEntity refObj = (ReferenceEntity) converter.createObject(ref);
+                rtn.add(refObj);
+            }
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return rtn;
     }
     
     /**
