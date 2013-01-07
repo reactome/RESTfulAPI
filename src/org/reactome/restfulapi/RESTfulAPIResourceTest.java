@@ -371,6 +371,14 @@ public class RESTfulAPIResourceTest {
         System.out.println("Output from topLevelPathways:\n");
         prettyPrintXML(text);
     }
+    
+    @Test
+    public void testGeneSetInXML() throws Exception {
+        String url = RESTFUL_URL + "GeneSetInXML";
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput from GeneSetInXML:");
+        prettyPrintXML(text);
+    }
 //    
 //    @Test
 //    public void testExportParticipatingMolecules() throws Exception {
@@ -452,6 +460,7 @@ public class RESTfulAPIResourceTest {
     @Test
     public void testReferenceEntity() throws Exception {
         Long dbId = 66212L; // EWAS FASL
+        dbId = 75975L;
         String url = RESTFUL_URL + "referenceEntity/" + dbId;
         String text = callHttp(url, HTTP_GET, "");
         System.out.println("Query ReferenceEntity for " + dbId + ":");
