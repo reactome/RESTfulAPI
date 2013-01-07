@@ -108,6 +108,16 @@ public class RESTfulAPIResource {
     }
     
     /**
+     * Get the gene set in XML. This method is used by the Reactome R analysis package.
+     * @return
+     */
+    @GET
+    @Path("/GeneSetInXML")
+    public String getGeneSetInXML() {
+        return service.getGeneSetInXML();
+    }
+    
+    /**
      * Highlight pathway diagrams using posted list of gene names.
      * @param pathwayId
      * @param format either PNG or PDF
