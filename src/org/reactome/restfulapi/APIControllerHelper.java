@@ -274,6 +274,25 @@ public class APIControllerHelper {
     }
     
     /**
+     * Generate an XML String for GeneSet in XML. This method is used by Reactome R analysis package.
+     * @return
+     */
+    public String getGeneSetInXML() {
+        GeneSetXMLExporter exporter = new GeneSetXMLExporter();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            exporter.exportToXML(dba, 
+                                 new HashMap<String, String>(),
+                                 bos);
+            return bos.toString();
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+            return e.getMessage();
+        }
+    }
+    
+    /**
      * Get a PathwayDiagram encoded in Base64 string for PDF or PNG, or in XML.
      * @param pathwayId
      * @param type
