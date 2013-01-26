@@ -4,10 +4,13 @@
  */
 package org.reactome.restfulapi.mapper;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.gk.model.GKInstance;
@@ -16,11 +19,13 @@ import org.gk.model.ReactomeJavaConstants;
 import org.gk.schema.InvalidAttributeException;
 import org.reactome.restfulapi.ReactomeModelPostMapper;
 import org.reactome.restfulapi.ReactomeToRESTfulAPIConverter;
+import org.reactome.restfulapi.ReflectionUtility;
 import org.reactome.restfulapi.models.DatabaseIdentifier;
 import org.reactome.restfulapi.models.DatabaseObject;
 import org.reactome.restfulapi.models.Event;
 import org.reactome.restfulapi.models.GO_MolecularFunction;
 import org.reactome.restfulapi.models.PhysicalEntity;
+import org.reactome.restfulapi.models.Species;
 
 /**
  * @author gwu
@@ -72,6 +77,47 @@ public class PhysicalEntityMapper extends ReactomeModelPostMapper {
         handleRegulatedEvents(inst, converter, pe);
         handleProducedByEvents(inst, converter, pe);
         handleConsumedByEvents(inst, converter, pe);
+        handleInferredTo(inst, converter, pe);
+    }
+    
+    private void handleInferredTo(GKInstance instance,
+                                  ReactomeToRESTfulAPIConverter converter,
+                                  PhysicalEntity pe) throws Exception {
+        List<PhysicalEntity> inferredTo = pe.getInferredTo();
+        if (inferredTo == null || inferredTo.size() == 0)
+            return;
+        //TODO: The use of string here should be changed after updating ReactomeJavaConstant class.
+        List<GKInstance> inferredToList = instance.getAttributeValuesList("inferredTo");
+        if (inferredToList == null || inferredToList.size() == 0)
+            return;
+        // Create a map for searching
+        Map<Long, PhysicalEntity> idToPe = new HashMap<Long, PhysicalEntity>();
+        for (PhysicalEntity pe1 : inferredTo) {
+            idToPe.put(pe1.getDbId(), pe1);
+        }
+        for (GKInstance inst1 : inferredToList) {
+            if (!inst1.getSchemClass().isValidAttribute(ReactomeJavaConstants.species))
+                continue;
+            PhysicalEntity pe1 = idToPe.get(inst1.getDBID());
+            if (pe1 == null)
+                continue; // This should not occur
+            Method setSpeciesMethod = ReflectionUtility.getNamedMethod(pe1,
+                                                                       "setSpecies");
+            if (setSpeciesMethod == null)
+                continue;
+            List<GKInstance> speciesList = inst1.getAttributeValuesList(ReactomeJavaConstants.species);
+            List<Species> species = new ArrayList<Species>(speciesList.size());
+            for (GKInstance speciesInst : speciesList) {
+                Species species1 = (Species) converter.createObject(speciesInst);
+                species.add(species1);
+            }
+            // The method argument may be an array of species or just a species
+            if (setSpeciesMethod.getParameterTypes()[0] == Species.class) {
+                setSpeciesMethod.invoke(pe1, species.get(0));
+            }
+            else // Should be a list
+                setSpeciesMethod.invoke(pe1, species);
+        }
     }
     
     private void handleRegulatedEvents(GKInstance inst,

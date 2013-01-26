@@ -348,7 +348,8 @@ public class RESTfulAPIResourceTest {
         prettyPrintXML(text);
         
         url = RESTFUL_URL + "listByQuery/Pathway";
-        text = callHttp(url, HTTP_POST, "species=48887");
+//        text = callHttp(url, HTTP_POST, "species=48887");
+        text = callHttp(url, HTTP_POST, "species=3042819");
         System.out.println("\nOutput from listByQuery for species=48887:\n");
         prettyPrintXML(text);
     }
@@ -379,6 +380,15 @@ public class RESTfulAPIResourceTest {
         System.out.println("\nOutput from GeneSetInXML:");
         prettyPrintXML(text);
     }
+    
+    @Test
+    public void testDetailedView() throws Exception {
+        String url = RESTFUL_URL + "detailedView/EntityWithAccessionedSequence/66212";
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput from detailedView:");
+        prettyPrintXML(text);
+    }
+    
 //    
 //    @Test
 //    public void testExportParticipatingMolecules() throws Exception {

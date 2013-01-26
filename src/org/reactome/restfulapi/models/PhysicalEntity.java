@@ -5,6 +5,8 @@ package org.reactome.restfulapi.models;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -82,6 +84,21 @@ public class PhysicalEntity extends DatabaseObject implements Regulator {
         this.inferredFrom = inferredFrom;
     }
 
+    /**
+     * Use this @XmlElements so that species can be marshaled for the detailed view.
+     * Otherwise, if EntitySet and EWAS are both listed in the list for an EWAS, 
+     * EntitySet's species cannot be marshaled.
+     * @return
+     */
+    @XmlElements(
+                 {
+                     @XmlElement(type = Complex.class),
+                     @XmlElement(type = EntitySet.class),
+                     @XmlElement(type = GenomeEncodedEntity.class),
+                     @XmlElement(type = Polymer.class),
+                     @XmlElement(type = SimpleEntity.class)
+                 }
+            )
     public List<PhysicalEntity> getInferredTo() {
         return inferredTo;
     }
