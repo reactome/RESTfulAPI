@@ -15,7 +15,7 @@ import org.reactome.restfulapi.details.pmolecules.types.MoleculeType;
 public class ResultContainer {
 	
 	/**  */
-	private boolean success = true;
+	private Boolean success = true;
 	
 	/**  */
 	private String errorMessage;
@@ -34,7 +34,7 @@ public class ResultContainer {
 	}
 	
 	@XmlElement(type=Boolean.class)
-	public boolean getSuccess() {
+	public Boolean getSuccess() {
 		return this.success;
 	}
 
