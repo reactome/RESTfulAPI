@@ -2,29 +2,38 @@ package org.reactome.restfulapi;
 
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
-import javax.xml.bind.JAXBContext;
 
-import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
-import org.reactome.restfulapi.models.DatabaseObject;
-
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.api.json.JSONJAXBContext;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
 @Provider
-public class JAXBContextResolver implements ContextResolver<JAXBContext> {
+public class JAXBContextResolver implements ContextResolver<ObjectMapper> {
 
-    private JAXBContext context;
-    private Class[] types = {DatabaseObject.class, ResultContainer.class};
+    private ObjectMapper context;
+//    private Class[] types = {DatabaseObject.class, 
+//                             EntityWithAccessionedSequence.class,
+//                             ResultContainer.class};
 
     public JAXBContextResolver() throws Exception {
-        this.context = new JSONJAXBContext(JSONConfiguration.natural().build(), types);
+//        this.context = new JSONJAXBContext(JSONConfiguration.natural().humanReadableFormatting(true).build(), "org.reactome.restfulapi.models");
+//                                           "org.reactome.restfulapi.models:" + // Delimit with ":"
+//                                           "org.reactome.psicquic.model:" +
+//                                           "org.reactome.restfulapi.details.pmolecules.model");
+//        this.context = new JSONJAXBContext(JSONConfiguration.natural().build(),
+//                                           types);
+        this.context = new ObjectMapper();
+        context.configure(org.codehaus.jackson.map.SerializationConfig.Feature.INDENT_OUTPUT, 
+                          true);
+        context.configure(SerializationConfig.Feature.WRITE_NULL_PROPERTIES,
+                          false);
     }
 
-    public JAXBContext getContext(Class<?> objectType) {
-        for (Class type : types) {
-            if (type == objectType) {
-                return context;
-            }
-        }
-        return null;
+    public ObjectMapper getContext(Class<?> objectType) {
+        return this.context;
+//        for (Class type : types) {
+//            if (type == objectType) {
+//                return context;
+//            }
+//        }
+//        return null;
     }
 }
