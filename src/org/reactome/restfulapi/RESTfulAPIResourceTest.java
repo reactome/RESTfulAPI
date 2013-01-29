@@ -458,13 +458,29 @@ public class RESTfulAPIResourceTest {
     
     @Test
     public void testPSICQUICInteractionsQuery() throws Exception {
-        Long dbId = 66212L; // EWAS FASL
-        String serviceName = "Reactome-FIs";
-        serviceName = "MINT";
-        String url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + serviceName;
-        String text = callHttp(url, HTTP_GET, "");
-        System.out.println("Query interactions for " + dbId + ":");
-        prettyPrintXML(text);
+        Long[] dbIds = new Long[] {
+                66212L, // EWAS FASL
+                209799L, // SmallMolecule: Cu for MatrixDB.
+                2658043L,
+                375987L, //ABL1
+        };
+        String[] serviceNames = new String[] {
+                "Reactome-FIs",
+                //serviceName = "MINT";
+                "MatrixDB",
+                "MatrixDB",
+                "ChEMBL"
+        };
+        for (int i = 0; i < dbIds.length; i++) {
+            if (i != 2)
+                continue;
+            Long dbId = dbIds[i];
+            String serviceName = serviceNames[i];
+            String url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + serviceName;
+            String text = callHttp(url, HTTP_GET, "");
+            System.out.println("\nQuery interactions for " + dbId + " in " + serviceName + ":");
+            prettyPrintXML(text);
+        }
     }
     
     @Test
