@@ -28,7 +28,9 @@ public class DefaultServiceManager extends ServiceManager {
 	            "uniprotkb", 
 	            "dip", 
 	            "embl", 
-	            "chembl"
+	            "chembl",
+	            "matrixdb" // For some small molecule interactions. Make sure this is at the end of the list so
+	                       // that uniprot can be picked first. 
 	    };
 	    interactorAccs = Arrays.asList(dbNames);
 	}
@@ -72,6 +74,10 @@ public class DefaultServiceManager extends ServiceManager {
 		return si;
 	}
 	
+	/**
+	 * This method seems not reliable if there are multiple values returned in mapList. Which one
+	 * should be picked?
+	 */
 	@Override
 	protected String getInteractorName(Map<String, List<String>> mapList) {
 		for(String acc : this.interactorAccs){
