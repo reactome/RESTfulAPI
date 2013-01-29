@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -215,20 +217,58 @@ public class PSICQUICService {
 	                                      String serviceName) {
 	    try {
 	        GKInstance dbObj = dba.fetchInstance(dbId);
-	        Set<GKInstance> refSeqs = null;
-	        if (dbObj.getSchemClass().isa(ReactomeJavaConstants.Event))
-	            refSeqs = InstanceUtilities.grepRefPepSeqsFromPathway(dbObj);
-	        else // Treated as PE
-	            refSeqs = InstanceUtilities.grepRefPepSeqsFromPhysicalEntity(dbObj);
-	        Map<String, String> accessionToRefSeqId = getAccToRefIdMapping(refSeqs);
-	        
-	        PSICQUICRetriever pr = getPISCQUICRetrieverFromName(serviceName);
-	        return pr.getDataFromRest(accessionToRefSeqId);
+	        // Currently it support PhysicalEntity only
+	        if (dbObj.getSchemClass().isa(ReactomeJavaConstants.PhysicalEntity)) {
+	            Set<GKInstance> refSeqs = queryReferenceEntities(dbObj);
+	            Map<String, String> accessionToRefSeqId = getAccToRefIdMapping(refSeqs);
+	            PSICQUICRetriever pr = getPISCQUICRetrieverFromName(serviceName);
+	            return pr.getDataFromRest(accessionToRefSeqId);
+	        }
 	    }
 	    catch(Exception e) {
 	        logger.error(e.getMessage(), e);
 	    }
 	    return null;
+	}
+	
+	/**
+	 * A helper method to grep all ReferenceEntities for a PhysicalEntity (any type).
+	 * @param pe
+	 * @return
+	 * @throws Exception
+	 */
+	private Set<GKInstance> queryReferenceEntities(GKInstance pe) throws Exception {
+	    Set<GKInstance> rtn = new HashSet<GKInstance>();
+	    String[] attributes = new String[] {
+	            ReactomeJavaConstants.hasMember,
+	            ReactomeJavaConstants.hasCandidate,
+	            ReactomeJavaConstants.hasCandidate,
+	            ReactomeJavaConstants.referenceEntity
+	    };
+	    int preSize = rtn.size();
+	    rtn.add(pe);
+	    while (true) {
+	        preSize = rtn.size();
+	        for (GKInstance inst : rtn) {
+	            for (String att : attributes) {
+	                if (!inst.getSchemClass().isValidAttribute(att))
+	                    continue;
+	                List<GKInstance> values = inst.getAttributeValuesList(att);
+	                if (values != null && values.size() > 0)
+	                    rtn.addAll(values);
+	            }
+	        }
+	        if (preSize == rtn.size())
+	            break;
+	    }
+	    // Do a little filtering
+	    for (Iterator<GKInstance> it = rtn.iterator(); it.hasNext();) {
+	        GKInstance inst = it.next();
+	        if (inst.getSchemClass().isa(ReactomeJavaConstants.ReferenceEntity))
+	            continue;
+	        it.remove();
+	    }
+	    return rtn;
 	}
 	
 //	

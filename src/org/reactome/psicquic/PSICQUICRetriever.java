@@ -135,8 +135,14 @@ public class PSICQUICRetriever {
 	private void addResultToQuerySIL(EncoreInteraction ei, String query,
 									 Map<String, String> queryRefid,
 									 Map<String, SimpleInteractorList> querySIL){
-		
-		if(queryRefid.keySet().contains(query)){
+		// Reactome use ids only. Some databases may attached db name before the ids.
+	    // Need a little parsing here
+	    String id = query;
+	    if (query.contains(":")) {
+	        int index = query.indexOf(":");
+	        id = query.substring(index + 1);
+	    }
+		if(queryRefid.keySet().contains(id)) {
     		SimpleInteractor si = this.sm.getSimpleInteractor(ei, query);
 
     		// Next lines get an existing SimpleInteractorList from querySIL or
