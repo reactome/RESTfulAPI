@@ -9,7 +9,6 @@ import java.util.StringTokenizer;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -169,44 +168,41 @@ public class RESTfulAPIResource {
 
     /**
      * @param className Class Name of Object you are querying for
-     * @param Post      Array of dbIDs
+     * @param post      Array of dbIDs
      * @return A list of full objects of type className
      */
     @POST
     @Path("/queryByIds/{className}")
-    public String queryByIds(@PathParam("className") String className, 
-                             String Post, 
-                             @HeaderParam("Accept") String accept) {
-        Post = java.net.URLDecoder.decode(Post);
-        Post = StringUtils.trimWhitespace(Post);
-        if (Post.length() == 0)
+    public List<DatabaseObject> queryByIds(@PathParam("className") String className, 
+                                           String post) {
+        if (post.length() == 0)
             return null;
-        Post = java.net.URLDecoder.decode(Post);
-        Post = Post.substring(3);
-        String[] dbIDs = Post.split(",");
-        List<String> IDs = Arrays.asList(dbIDs);
-        return service.queryByIds(className, IDs, accept);
+        // The first three characters should be "ID="
+        post = post.substring(3);
+        String[] dbIDs = post.split(",");
+        List<String> ids = Arrays.asList(dbIDs);
+        return service.queryByIds(className, ids);
     }
 
     /**
      * @param className Class Name of Object you are querying for
-     * @param  Post Comma seperated list of Database ID's
+     * @param  post Comma seperated list of Database ID's
      * @return list of of objects of type Class Name
      */
     @POST
     @Path("/listByQuery/{className}")
-    public String listByQuery(@PathParam("className") final String className, String Post, @HeaderParam("accept") String accept) {
+    public List<DatabaseObject> listByQuery(@PathParam("className") final String className,
+                                            String post) {
         //parse POST query for key field and key values
-        Post = java.net.URLDecoder.decode(Post);
-        StringTokenizer keyvalues = new StringTokenizer(Post, "=");
+        StringTokenizer keyvalues = new StringTokenizer(post, "=");
         String propertyField = keyvalues.nextToken();
         String propertyValue = keyvalues.nextToken();
-        return service.listByQuery(className, propertyField, propertyValue, accept);
+        return service.listByQuery(className, propertyField, propertyValue);
     }
 
     /**
      * @param PathwayId Pathway Id
-     * @return List of PhysicalEntity ID’s that are present in a reaction
+     * @return List of PhysicalEntity instances that are present in an Event.
      */
     @GET
     @Path("/pathwayParticipants/{dbId : \\d+}")
@@ -241,24 +237,22 @@ public class RESTfulAPIResource {
     }
 
     /**
-     * @param Post An comma seperated list of Pathway ID's
+     * @param post An comma seperated list of Pathway ID's
      * @return List of Pathway Objects
      */
     @POST
     @Path("/pathwaysForEntities")
-    public List<Pathway> queryPathwaysforEntities(String Post) {
-        Post = java.net.URLDecoder.decode(Post);
-        Post = StringUtils.trimWhitespace(Post);
-        if (Post.length() == 0)
+    public List<Pathway> queryPathwaysforEntities(String post) {
+        if (post.length() == 0)
             return null;
 
-        String EntityIdsStr = Post.substring(3);
-        String[] EntityIds = EntityIdsStr.split(",");
-        Long[] EntityIdsList = new Long[EntityIds.length];
-        for (int i = 0; i < EntityIds.length; i++) {
-            EntityIdsList[i] = Long.parseLong(EntityIds[i]);
+        String entityIdsStr = post.substring(3);
+        String[] entityIds = entityIdsStr.split(",");
+        Long[] entityIdsList = new Long[entityIds.length];
+        for (int i = 0; i < entityIds.length; i++) {
+            entityIdsList[i] = Long.parseLong(entityIds[i]);
         }
-        List<Long> IDs = Arrays.asList(EntityIdsList);
+        List<Long> IDs = Arrays.asList(entityIdsList);
         return service.queryPathwaysforEntities(IDs);
     }
     

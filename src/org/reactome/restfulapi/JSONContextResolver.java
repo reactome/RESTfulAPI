@@ -6,14 +6,14 @@ import javax.ws.rs.ext.Provider;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 @Provider
-public class JAXBContextResolver implements ContextResolver<ObjectMapper> {
+public class JSONContextResolver implements ContextResolver<ObjectMapper> {
 
     private ObjectMapper context;
 //    private Class[] types = {DatabaseObject.class, 
 //                             EntityWithAccessionedSequence.class,
 //                             ResultContainer.class};
 
-    public JAXBContextResolver() throws Exception {
+    public JSONContextResolver() throws Exception {
 //        this.context = new JSONJAXBContext(JSONConfiguration.natural().humanReadableFormatting(true).build(), "org.reactome.restfulapi.models");
 //                                           "org.reactome.restfulapi.models:" + // Delimit with ":"
 //                                           "org.reactome.psicquic.model:" +
