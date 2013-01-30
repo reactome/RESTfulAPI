@@ -12,15 +12,9 @@ import java.sql.Statement;
 import java.util.*;
 
 import javax.imageio.ImageIO;
-import javax.ws.rs.core.MediaType;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
 
 import org.apache.log4j.Logger;
-import org.codehaus.jackson.map.AnnotationIntrospector;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.xc.JaxbAnnotationIntrospector;
 import org.gk.graphEditor.PathwayEditor;
 import org.gk.model.GKInstance;
 import org.gk.model.InstanceUtilities;
@@ -51,12 +45,8 @@ import org.reactome.restfulapi.models.PhysicalEntity;
 import org.reactome.restfulapi.models.Publication;
 import org.reactome.restfulapi.models.ReferenceEntity;
 import org.reactome.restfulapi.models.Species;
-import org.springframework.util.StringUtils;
 
 import com.googlecode.gwt.crypto.gwtx.io.IOException;
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.jersey.core.impl.provider.entity.Inflector;
 import com.sun.jersey.spi.resource.Singleton;
 
 @Singleton
@@ -86,6 +76,8 @@ public class APIControllerHelper {
 
     public void setDba(MySQLAdaptor dba) {
         this.dba = dba;
+        // In order to keep dba connection valid.
+        dba.initDumbThreadForConnection();
         queryHelper.setMySQLAdaptor(dba);
     }
     
@@ -402,35 +394,59 @@ public class APIControllerHelper {
         return result;
     }
     
-    public DatabaseObject queryById(String className, final String dbId) {
+    public DatabaseObject queryById(String className, 
+                                    String id) {
         GKInstance instance;
         DatabaseObject rtn = new DatabaseObject();
         try {
-            if(isStableIdentifier(dbId)==false)
-            {
-                Long dbIdl = Long.parseLong(dbId);
-                instance = dba.fetchInstance(className, dbIdl);
-                
-                if (instance == null) {
-                    throw new InstanceNotFoundException(dbIdl);
-                }
-                rtn = (DatabaseObject) converter.convert(instance);
-            }
-            else
-            {
-                Collection col = dba.fetchInstanceByAttribute(ReactomeJavaConstants.StableIdentifier, ReactomeJavaConstants.identifier, "=", dbId);
-                Collection Objcol = dba.fetchInstanceByAttribute(className, ReactomeJavaConstants.stableIdentifier, "=", (GKInstance)col.iterator().next());
-                if (Objcol == null || Objcol.size() == 0) {
-                    throw new InstanceNotFoundException(Long.parseLong(dbId.substring(6)));
-                }
-                rtn = (DatabaseObject) converter.convert((GKInstance)Objcol.iterator().next());
-                //System.out.print(className+":"+rtn.toString());
-            }
+            rtn = fetchInstance(className, 
+                                id);
         }
         catch (InstanceNotFoundException e) {
-            logger.error("Cannot find instance of " + dbId + " in class " + className, e);
+            logger.error("Cannot find instance of " + id + " in class " + className, e);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+        }
+        return rtn;
+    }
+
+    /**
+     * A helper method to fetch an instance based on either DB_ID or stable id.
+     * @param className
+     * @param id
+     * @return
+     * @throws Exception
+     * @throws InstanceNotFoundException
+     */
+    private DatabaseObject fetchInstance(String className, String id) throws Exception, InstanceNotFoundException {
+        GKInstance instance = null;
+        DatabaseObject rtn = null;
+        if (!isStableIdentifier(id)) {
+            Long dbIdl = new Long(id);
+            instance = dba.fetchInstance(className, dbIdl);
+            if (instance == null) {
+                throw new InstanceNotFoundException(dbIdl);
+            }
+            rtn = (DatabaseObject) converter.convert(instance);
+        }
+        else { // This should be stable id
+            Collection col = dba.fetchInstanceByAttribute(ReactomeJavaConstants.StableIdentifier,
+                                                          ReactomeJavaConstants.identifier, 
+                                                          "=",
+                                                          id);
+            if (col == null || col.size() == 0) {
+                throw new InstanceNotFoundException(ReactomeJavaConstants.StableIdentifier,
+                                                    id);
+            }
+            Collection objCol = dba.fetchInstanceByAttribute(className, 
+                                                             ReactomeJavaConstants.stableIdentifier,
+                                                             "=", 
+                                                             (GKInstance)col.iterator().next());
+            if (objCol == null || objCol.size() == 0) {
+                throw new InstanceNotFoundException(className, id);
+            }
+            // Choose the first returned object only
+            rtn = (DatabaseObject) converter.convert((GKInstance)objCol.iterator().next());
         }
         return rtn;
     }
@@ -462,171 +478,46 @@ public class APIControllerHelper {
         return new ArrayList<PhysicalEntity>();
     }
 
-    public String queryByIds(String className, final List<String> dbIds, final String accept) {
-        GKInstance instance;
-        String rtn = null;
-        ObjectMapper mapper = new ObjectMapper();
-        int headerType = getHeaderType(accept);
-        AnnotationIntrospector introspector = new JaxbAnnotationIntrospector();
-        mapper.getSerializationConfig().setAnnotationIntrospector(introspector);
-        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
-        String pluralClass = Inflector.getInstance().pluralize(className);
-        StringWriter sw = new StringWriter();
-        StringBuilder clsName = new StringBuilder();
-        clsName.append("org.reactome.restfulapi.models.");
-        clsName.append(className);
-        if(headerType==0)
-            sw.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<").append(pluralClass.toLowerCase()).append(">\n");
-
+    public List<DatabaseObject> queryByIds(String className, 
+                                           List<String> ids) {
+        List<DatabaseObject> rtn = new ArrayList<DatabaseObject>();
         try {
-            Class cls = Class.forName(clsName.toString());
-            Object obj = cls.newInstance();
-            JAXBContext context = new JSONJAXBContext(JSONConfiguration.mapped().rootUnwrapping(false).build(), obj.getClass());
-            Marshaller m = context.createMarshaller();
-            m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            m.setProperty(Marshaller.JAXB_FRAGMENT, true);
-            DatabaseObject object = null;
-            for (String id : dbIds) {
-                if(isStableIdentifier(id)==false)
-                {
-                    Long dbIdl = Long.parseLong(id);
-                    instance = dba.fetchInstance(className, dbIdl);
-
-                    if (instance == null) {
-                    throw new InstanceNotFoundException(dbIdl);
-                    }
-                    object = (DatabaseObject) converter.convert(instance);
-                    if (object == null) {
-                    throw new InstanceNotFoundException(dbIdl);
-                    }
-                }
-                else {
-                    Collection col = dba.fetchInstanceByAttribute(ReactomeJavaConstants.StableIdentifier, ReactomeJavaConstants.identifier, "=", id);
-                    Collection Objcol = dba.fetchInstanceByAttribute(className, ReactomeJavaConstants.stableIdentifier, "=", (GKInstance)col.iterator().next());
-                    if (Objcol == null || Objcol.size() == 0) {
-                        throw new InstanceNotFoundException(Long.parseLong(id.substring(6)));
-                    }
-                    object = (DatabaseObject) converter.convert((GKInstance)Objcol.iterator().next());
-                    if (object == null) {
-                    throw new InstanceNotFoundException(Long.parseLong(id.substring(6)));
-                    }
-
-                }
-                if(headerType==0)
-                {
-                    m.marshal(object, sw);
-                    sw.append("\n");
-                }
-                else if(headerType==1)
-                {
-                    mapper.writeValue(sw, object);
-                }
-                else if(headerType==-1)
-                {   //by default, it will be XML
-                   m.marshal(object, sw);
-                    sw.append("\n");
-                }
-                else
-                {
-                    throw new Exception("Unhandled headerType value");
-                }
-            } //end for
-            if(headerType==0)
-                sw.append("</").append(pluralClass.toLowerCase()).append(">");
-
-            rtn = sw.toString();
-            sw.close();
-        } catch (InstanceNotFoundException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
+            for (String id : ids) {
+                DatabaseObject converted = fetchInstance(className, id);
+                if (converted != null)
+                    rtn.add(converted);
+            }
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
         }
         return rtn;
     }
 
-    /*
-    @param String accept
-    @return:
-       -1 = OTHER
-        0 = XML
-        1 = JSON
-        2 = TEXT
-     */
-    int getHeaderType(String accept)
-    {
-        boolean text = false;
-
-        if(accept.length()!=0)
-        {
-            String[] acceptArray = StringUtils.trimAllWhitespace(accept).split(",");
-            for(String acceptType: acceptArray)
-            {
-                if(acceptType.equalsIgnoreCase(MediaType.APPLICATION_XML))
-                {
-                    return 0;
-                }
-                else if(accept.equalsIgnoreCase(MediaType.APPLICATION_JSON))
-                {
-                    return 1;
-                }
-                else if(accept.equalsIgnoreCase(MediaType.TEXT_PLAIN))
-                {
-                    text = true;
-                }
-            }
-            return (text == true) ? 2: -1;
-        }
-        else {
-            return -1;
-        }
-    }
-
-    public String listByQuery(String className, 
-                              String propertyName, 
-                              String propertyValue, 
-                              String accept) {
+    public List<DatabaseObject> listByQuery(String className, 
+                                            String propertyName, 
+                                            String propertyValue) {
         //currenty this only returns proxies
-        List rtn = new ArrayList();
+        List<DatabaseObject> rtn = new ArrayList<DatabaseObject>();
         List<GKInstance> instances;
         StringWriter sw = new StringWriter();
         ObjectMapper mapper = new ObjectMapper();
-        int headerType = getHeaderType(accept);
-        AnnotationIntrospector introspector = new JaxbAnnotationIntrospector();
-        mapper.getSerializationConfig().setAnnotationIntrospector(introspector);
-        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
-        if(headerType==0)
-                sw.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<").append(className).append(">\n");
-
         try {
-            instances = queryHelper.query(className, propertyName, propertyValue);
-            if(instances.size()==0)
-                throw new InstanceNotFoundException(className,propertyValue);
-
+            instances = queryHelper.query(className,
+                                          propertyName,
+                                          propertyValue);
+            if( instances.size() == 0)
+                return rtn;
+            
             for (GKInstance gkInstance : instances) {
                 DatabaseObject converted = (DatabaseObject) converter.createObject(gkInstance);
-                if(headerType==1)
-                {
-                    mapper.writeValue(sw, converted);
-                }
-                else
-                {  //default and everything else to XML
-
-                    JAXBContext context = JAXBContext.newInstance(converted.getClass());
-                    Marshaller m = context.createMarshaller();
-                    m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-                    m.setProperty(Marshaller.JAXB_FRAGMENT, true);
-                    m.marshal(converted, sw);
-                }
-
+                rtn.add(converted);
             }
-        } catch (Exception e) {
-            //e.printStackTrace();
+        } 
+        catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
-
-        if(headerType==0)
-                sw.append("</").append(className).append(">");
-
-        return sw.toString();
+        return rtn;
     }
     
     /**
@@ -703,145 +594,6 @@ public class APIControllerHelper {
             logger.error("Error in listPathwayParticipants for " + pathwayId, e);
         }
         return new ArrayList<PhysicalEntity>();
-//        StringWriter sw = new StringWriter();
-//        ObjectMapper mapper = new ObjectMapper();
-//        int headerType = getHeaderType(accept);
-//        AnnotationIntrospector introspector = new JaxbAnnotationIntrospector();
-//        mapper.getSerializationConfig().setAnnotationIntrospector(introspector);
-//        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
-//
-//        Set<Event> current = new HashSet<Event>();
-//        try {
-//            Event dbPathway = loadPathway(PathwayId);
-//            // Get all reactions first from the specified Pathway
-//            current.add(dbPathway);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//        Set<Event> next = new HashSet<Event>();
-//        Set<Reaction> reactions = new HashSet<Reaction>();
-//        while (current.size() > 0) {
-//            for (Event eventTmp : current) {
-//                if (eventTmp instanceof Reaction) {
-////                    System.out.print(eventTmp + "y");
-//                    reactions.add((Reaction) eventTmp);
-//                } else if (eventTmp instanceof Pathway) {
-////                    System.out.print(eventTmp + "x");
-//                    Pathway pathway1 = (Pathway) eventTmp;
-//                    if (pathway1.getHasEvent() != null) {
-////                        System.out.print(eventTmp + "z");
-//                        next.addAll(pathway1.getHasEvent());
-//                    }
-//                }
-//            }
-//            current.clear();
-//            current.addAll(next);
-//            next.clear();
-//        }
-//        Set<PhysicalEntity> entitySet = new HashSet<PhysicalEntity>();
-//        Set<Complex> touchedComplexes = new HashSet<Complex>();
-//        for (Reaction reaction : reactions) {
-//            if (reaction.getInput() != null) {
-//                List<PhysicalEntity> inputs = reaction.getInput();
-//                if (inputs != null) {
-//                    for (PhysicalEntity entity : inputs) {
-//                        if (entity instanceof Complex)
-//                            listComplexParticipantsI((Complex) entity,
-//                                    touchedComplexes,
-//                                    entitySet);
-//                        else
-//                            entitySet.add(entity);
-//                    }
-//                }
-//            }
-//            if (reaction.getOutput() != null) {
-//                List<PhysicalEntity> outputs = reaction.getOutput();
-//                if (outputs != null) {
-//                    for (PhysicalEntity entity : outputs) {
-//                        if (entity instanceof Complex)
-//                            listComplexParticipantsI((Complex) entity,
-//                                    touchedComplexes,
-//                                    entitySet);
-//                        else
-//                            entitySet.add(entity);
-//                    }
-//                }
-//            }
-//            if (reaction.getCatalystActivity() != null) {
-//                List<CatalystActivity> cas = reaction.getCatalystActivity();
-//                for (CatalystActivity ca : cas) {
-//                    PhysicalEntity catalyst = ca.getPhysicalEntity();
-//                    if (catalyst instanceof Complex)
-//                        listComplexParticipantsI((Complex) catalyst,
-//                                touchedComplexes,
-//                                entitySet);
-//                    else if (catalyst != null)
-//                        entitySet.add(catalyst);
-//                }
-//            }
-//            if (reaction.getRegulation() != null) {
-//                List<Regulation> regulations = reaction.getRegulation();
-//                for (Regulation regulation : regulations) {
-//                    DatabaseObject regulator = regulation.getRegulator();
-//                    if (regulator instanceof Complex)
-//                        listComplexParticipantsI((Complex) regulator,
-//                                touchedComplexes,
-//                                entitySet);
-//                    else if (regulator instanceof ReactionlikeEvent)
-//                        entitySet.add((PhysicalEntity) regulator);
-//                }
-//            }
-//        }
-//
-//        String physicalEntityName = Inflector.getInstance().pluralize(ReactomeJavaConstants.PhysicalEntity);
-//        if(headerType==0 || headerType == -1) // If no header has been set, XML will be returned as default.
-//            sw.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<").append(physicalEntityName).append(">\n");
-//
-//        List<PhysicalEntity> entityList = new ArrayList<PhysicalEntity>(entitySet);
-//        try
-//        {
-//            for (int i = 0; i < entityList.size(); i++) {
-//                if(headerType==0 || headerType==-1)
-//                {
-//                    JAXBContext context = JAXBContext.newInstance(entityList.get(i).getClass());
-//                    Marshaller m = context.createMarshaller();
-//                    m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-//                    m.setProperty(Marshaller.JAXB_FRAGMENT, true);
-//                    m.marshal(entityList.get(i), sw);
-//                }
-//                else if(headerType==1)
-//                {
-//                    mapper.writeValue(sw, entityList.get(i));
-//                }
-//                else
-//                {
-//                    throw new Exception("Error marshalling object, unhandled headerType");
-//                }
-//                sw.append("\n");
-//            }
-//            if(!accept.equalsIgnoreCase(MediaType.APPLICATION_JSON))
-//                sw.append("</").append(physicalEntityName).append(">");
-//
-//            sw.close();
-//        }
-//        catch(JAXBException e)
-//        {
-//            e.printStackTrace();
-//        }
-//        catch(Exception e)
-//        {
-//            e.printStackTrace();
-//        }
-//        // Sort it
-//        /* Collections.sort(rtn, new Comparator() {
-//            public int compare(Object obj1, Object obj2) {
-//                PhysicalEntity entity1 = (PhysicalEntity) obj1;
-//                PhysicalEntity entity2 = (PhysicalEntity) obj2;
-//                return entity1.getName().compareTo(entity2.getName());
-//            }
-//        });*/
-//        return sw.toString();
     }
 
     public List<Pathway> listTopLevelPathways() {
@@ -1074,7 +826,7 @@ public class APIControllerHelper {
                 instances.add(instance);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
         if (instances.size() == 0)
             return new ArrayList<Pathway>();
@@ -1086,7 +838,7 @@ public class APIControllerHelper {
             Set<GKInstance> reactions = getParticipatingReactions(instances);
             rtn = grepTopPathwaysFromReactions(reactions);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
         return rtn;
     }

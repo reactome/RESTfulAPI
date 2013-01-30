@@ -31,6 +31,8 @@ import org.junit.Test;
 import org.reactome.px.util.FileUtility;
 import org.reactome.px.util.InteractionUtilities;
 
+import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
+
 /**
  * Created by IntelliJ IDEA.
  * User: home
@@ -47,6 +49,7 @@ public class RESTfulAPIResourceTest {
 //    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
     private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
     
     @Test
     public void testBioPaxExporter() throws Exception {
@@ -233,6 +236,13 @@ public class RESTfulAPIResourceTest {
                 "");
         System.out.println("Output from querybyid 69278:\n");
         prettyPrintXML(text);
+        
+        // For PE
+        url = RESTFUL_URL + "queryById/DatabaseObject/418785";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput from queryById for 418785:");
+        prettyPrintXML(text);
+        
         // Check for ReferenceGeneProduct
         url = RESTFUL_URL + "queryById/ReferenceGeneProduct/155554";
         text = callHttp(url, HTTP_GET, "");
@@ -328,11 +338,16 @@ public class RESTfulAPIResourceTest {
                 "ID=109607,109606,75153,169911");
         System.out.println("Output from querybyids:\n");
         prettyPrintXML(text);
+        
+        url = RESTFUL_URL + "queryByIds/EntityWithAccessionedSequence";
+        text = callHttp(url, HTTP_POST, "ID=418785");
+        System.out.println("\nOutput from another queryByIds:");
+        prettyPrintXML(text);
     }
 
     @Test
     public void testListByQuery() throws Exception {
-        String url = RESTFUL_URL + "listByQuery/Pathway";
+        String url = RESTFUL_URL + "listByQuery/DatabaseObject";
         String text = callHttp(url,
                 HTTP_POST,
                 "DB_ID=114298");
@@ -348,8 +363,8 @@ public class RESTfulAPIResourceTest {
         prettyPrintXML(text);
         
         url = RESTFUL_URL + "listByQuery/Pathway";
-//        text = callHttp(url, HTTP_POST, "species=48887");
-        text = callHttp(url, HTTP_POST, "species=3042819");
+        text = callHttp(url, HTTP_POST, "species=48887");
+//        text = callHttp(url, HTTP_POST, "species=3042819");
         System.out.println("\nOutput from listByQuery for species=48887:\n");
         prettyPrintXML(text);
     }
@@ -387,6 +402,13 @@ public class RESTfulAPIResourceTest {
         String text = callHttp(url, HTTP_GET, "");
         System.out.println("\nOutput from detailedView:");
         prettyPrintXML(text);
+//        long time1 = System.currentTimeMillis();
+//        url = RESTFUL_URL + "detailedView/DatabaseObject/29370";
+//        text = callHttp(url, HTTP_GET, "");
+//        System.out.println("\nOutput from detailedView:");
+//        prettyPrintXML(text);
+//        long time2 = System.currentTimeMillis();
+//        System.out.println("Time: " + (time2 - time1));
     }
     
 //    
@@ -472,8 +494,8 @@ public class RESTfulAPIResourceTest {
                 "ChEMBL"
         };
         for (int i = 0; i < dbIds.length; i++) {
-            if (i != 2)
-                continue;
+//            if (i != 2)
+//                continue;
             Long dbId = dbIds[i];
             String serviceName = serviceNames[i];
             String url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + serviceName;
@@ -513,6 +535,10 @@ public class RESTfulAPIResourceTest {
             outputter.output(doc, System.out);
         }
         else {
+//            FileUtilities fu = new FileUtilities();
+//            fu.setOutput("tmp.txt");
+//            fu.printLine(xml);
+//            fu.close();
             System.out.println(xml);
         }
     }
@@ -527,10 +553,10 @@ public class RESTfulAPIResourceTest {
             client = initializeHTTPClient((PostMethod) method, query);
         } else {
             method = new GetMethod(url); // Default
-            method.setRequestHeader("Accept", "text/plain, application/xml");
-//            method.setRequestHeader("Accept", "application/json");
             client = new HttpClient();
         }
+//        method.setRequestHeader("Accept", "text/plain, application/xml");
+        method.setRequestHeader("Accept", "application/json");
         int responseCode = client.executeMethod(method);
         if (responseCode == HttpStatus.SC_OK) {
             InputStream is = method.getResponseBodyAsStream();
