@@ -7,6 +7,8 @@ package org.reactome.psicquic.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * 
  * After processing a PSI-MITAB line with an interaction, the PSICQUIC Proxy
@@ -18,6 +20,7 @@ import java.util.Map;
  * @author Antonio Fabregat <fabregat@ebi.ac.uk>
  * 
  */
+@XmlRootElement
 public class SimpleInteractor implements Comparable<SimpleInteractor> {
 	/**
 	 * Contains the interactor accession value
@@ -40,9 +43,8 @@ public class SimpleInteractor implements Comparable<SimpleInteractor> {
 	 * Container of extra fields needed in some services treatment
 	 */
 	private Map<String, String> extraFields = new HashMap<String, String>();
-	
-	public SimpleInteractor() {
-	    
+
+    public SimpleInteractor() {
 	}
 	
 	/**
@@ -140,5 +142,14 @@ public class SimpleInteractor implements Comparable<SimpleInteractor> {
 		SimpleInteractor si = (SimpleInteractor) obj;
 		return this.accession.equals(si.getAccession());
 	}
+	
+	   
+    public Map<String, String> getExtraFields() {
+        return extraFields;
+    }
+
+    public void setExtraFields(Map<String, String> extraFields) {
+        this.extraFields = extraFields;
+    }
 
 }
