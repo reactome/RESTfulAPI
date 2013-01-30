@@ -17,6 +17,7 @@ import org.gk.model.ReactomeJavaConstants;
 import org.gk.persistence.MySQLAdaptor;
 import org.gk.schema.SchemaClass;
 import org.junit.Test;
+import org.reactome.restfulapi.models.Event;
 import org.reactome.restfulapi.models.ListOfShellInstances;
 import org.reactome.restfulapi.models.ShellInstance;
 
@@ -28,8 +29,7 @@ import org.reactome.restfulapi.models.ShellInstance;
 @SuppressWarnings("unchecked")
 public class QueryHelper {
     private MySQLAdaptor dba;
-    private ReactomeToRESTfulAPIMapper mapper;
-
+    private ReactomeToRESTfulAPIConverter converter;
 
     public QueryHelper() {
     }
@@ -37,9 +37,9 @@ public class QueryHelper {
     public void setMySQLAdaptor(MySQLAdaptor dba) {
         this.dba = dba;
     }
-
-    public void setMapper(ReactomeToRESTfulAPIMapper mapper) {
-        this.mapper = mapper;
+    
+    public void setConverter(ReactomeToRESTfulAPIConverter converter) {
+        this.converter = converter;
     }
 
     public List<GKInstance> query(String className,
@@ -86,9 +86,9 @@ public class QueryHelper {
      * @return
      * @throws Exception
      */
-    public List<ListOfShellInstances> queryAncestors(GKInstance event) throws Exception {
-        List<ListOfShellInstances> ancestors = new ArrayList<ListOfShellInstances>();
-        ListOfShellInstances branch = new ListOfShellInstances();
+    public List<List<Event>> queryAncestors(GKInstance event) throws Exception {
+        List<List<Event>> ancestors = new ArrayList<List<Event>>();
+        List<Event> branch = new ArrayList<Event>();
         ancestors.add(branch);
         queryAncestors(ancestors, branch, event);
         return ancestors;
@@ -102,10 +102,12 @@ public class QueryHelper {
      * @param event
      * @throws Exception
      */
-    private void queryAncestors(List<ListOfShellInstances> ancestors, 
-                                ListOfShellInstances branch,
+    private void queryAncestors(List<List<Event>> ancestors, 
+                                List<Event> branch,
                                 GKInstance event) throws Exception {
-        branch.addInstance(0, convertToShellInstance(event));
+        Event convertedEvent = convertToEvent(event);
+        if (convertedEvent != null)
+            branch.add(0, convertedEvent);
         Collection<?> parents = event.getReferers(ReactomeJavaConstants.hasEvent);
         if (parents == null || parents.size() == 0)
             return;
@@ -115,7 +117,7 @@ public class QueryHelper {
         }
         else {
             // Need to make a copy first to avoid any overriding
-            ListOfShellInstances copy = branch.copy();
+            List<Event> copy = new ArrayList<Event>(branch);
             int index = 0;
             for (Iterator<?> it = parents.iterator(); it.hasNext();) {
                 GKInstance parent = (GKInstance) it.next();
@@ -123,7 +125,7 @@ public class QueryHelper {
                     queryAncestors(ancestors, branch, parent);
                 }
                 else {
-                    ListOfShellInstances newBranch = copy.copy();
+                    List<Event> newBranch = new ArrayList<Event>(copy);
                     ancestors.add(newBranch);
                     queryAncestors(ancestors, newBranch, parent);
                 }
@@ -132,27 +134,31 @@ public class QueryHelper {
         }
     }
     
-    private ShellInstance convertToShellInstance(GKInstance instance) {
-        ShellInstance shell = new ShellInstance();
-        shell.setDbId(instance.getDBID());
-        shell.setDisplayName(instance.getDisplayName());
-        shell.setClassName(instance.getSchemClass().getName());
-        return shell;
+    private Event convertToEvent(GKInstance instance) throws Exception {
+        if (instance.getSchemClass().isa(ReactomeJavaConstants.Event)) {
+            Event event = (Event) converter.createObject(instance);
+            return event;
+        }
+        return null;
     }
     
     @Test
     public void testQueryAncestors() throws Exception {
         MySQLAdaptor dba = new MySQLAdaptor("localhost",
-                                            "test_gk_central_slice_one_pathway",
+                                            "gk_current_ver42",
                                             "root",
                                             "macmysql01");
         setMySQLAdaptor(dba);
+        ReactomeToRESTfulAPIConverter converter = new ReactomeToRESTfulAPIConverter();
+        converter.setMapper(new ReactomeToRESTfulAPIMapper());
+        converter.setPostMapperFactory(new ReactomeModelPostMapperFactory());
+        setConverter(converter);
         // The following event should have four branches
         GKInstance event = dba.fetchInstance(69019L);
-        List<ListOfShellInstances> ancestors = queryAncestors(event);
+        List<List<Event>> ancestors = queryAncestors(event);
         System.out.println("Total branches: " + ancestors.size());
-        for (ListOfShellInstances branch : ancestors) {
-            for (ShellInstance inst : branch.getInstance())
+        for (List<Event> branch : ancestors) {
+            for (Event inst : branch)
                 System.out.print(inst.getDisplayName() + "||");
             System.out.println();
         }
