@@ -14,6 +14,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  *
  */
 @XmlRootElement(name="Insatnce")
+@Deprecated
 public class ShellInstance {
     private Long dbId;
     private String displayName;
