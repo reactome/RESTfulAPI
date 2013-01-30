@@ -31,7 +31,8 @@ import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
 import org.reactome.restfulapi.details.pmolecules.types.FormatType;
 import org.reactome.restfulapi.details.pmolecules.types.QueryParams;
 import org.reactome.restfulapi.models.DatabaseObject;
-import org.reactome.restfulapi.models.ListOfShellInstances;
+import org.reactome.restfulapi.models.DatabaseObjectList;
+import org.reactome.restfulapi.models.Event;
 import org.reactome.restfulapi.models.Pathway;
 import org.reactome.restfulapi.models.PhysicalEntity;
 import org.reactome.restfulapi.models.Publication;
@@ -39,7 +40,6 @@ import org.reactome.restfulapi.models.ReferenceEntity;
 import org.reactome.restfulapi.models.Species;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.StringUtils;
 
 import com.sun.jersey.spi.resource.Singleton;
 
@@ -330,8 +330,17 @@ public class RESTfulAPIResource {
     
     @GET
     @Path("/queryEventAncestors/{dbId}")
-    public List<ListOfShellInstances> queryEventAncestors(@PathParam("dbId") Long eventId) {
-        return service.queryAncestors(eventId);
+    public List<DatabaseObjectList> queryEventAncestors(@PathParam("dbId") Long eventId) {
+        List<List<Event>> ancestors = service.queryAncestors(eventId);
+        List<DatabaseObjectList> rtn = new ArrayList<DatabaseObjectList>();
+        if (ancestors != null && ancestors.size() > 0) {
+            for (List<Event> events : ancestors) {
+                DatabaseObjectList wrapper = new DatabaseObjectList();
+                wrapper.setDatabaseObject(events);
+                rtn.add(wrapper);
+            }
+        }
+        return rtn;
     }
 
     /**

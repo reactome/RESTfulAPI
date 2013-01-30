@@ -39,6 +39,7 @@ import org.reactome.restfulapi.details.pmolecules.ParticipatingMolecules;
 import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
 import org.reactome.restfulapi.models.Complex;
 import org.reactome.restfulapi.models.DatabaseObject;
+import org.reactome.restfulapi.models.Event;
 import org.reactome.restfulapi.models.ListOfShellInstances;
 import org.reactome.restfulapi.models.Pathway;
 import org.reactome.restfulapi.models.PhysicalEntity;
@@ -71,7 +72,7 @@ public class APIControllerHelper {
 
     public void setConverter(ReactomeToRESTfulAPIConverter converter) {
         this.converter = converter;
-        queryHelper.setMapper(converter.getMapper());
+        queryHelper.setConverter(converter);
     }
 
     public void setDba(MySQLAdaptor dba) {
@@ -777,20 +778,20 @@ public class APIControllerHelper {
             return references;
         }
         catch(Exception e) {
-            logger.error("Cannot queryLiteratureReferenceForPerson(): ", e);
+            logger.error(e.getMessage(), e);
         }
         return new ArrayList<Publication>();
     }
     
-    public List<ListOfShellInstances> queryAncestors(Long eventId) {
+    public List<List<Event>> queryAncestors(Long eventId) {
         try {
             GKInstance event = dba.fetchInstance(eventId);
             return queryHelper.queryAncestors(event);
         }
         catch(Exception e) {
-            logger.error("Cannot queryAncestors", e);
+            logger.error(e.getMessage(), e);
         }
-        return new ArrayList<ListOfShellInstances>();
+        return new ArrayList<List<Event>>();
     }
     
     /**
@@ -807,7 +808,7 @@ public class APIControllerHelper {
                 converter.fillInDetails(instance, rtn);
             }
             catch(Exception e) {
-                logger.error("getDetailedView()", e);
+                logger.error(e.getMessage(), e);
             }
         }
         return rtn;
