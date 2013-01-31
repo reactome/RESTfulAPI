@@ -11,8 +11,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ReferenceList {
-	@XmlElement(name="name")
-	private String key;
+	private String name;
 	
 	@XmlElement
 	private List<Reference> list = new ArrayList<Reference>();
@@ -20,12 +19,12 @@ public class ReferenceList {
 	public ReferenceList() {
 	}
 	
-	public String getKey() {
-		return key;
+	public String getName() {
+		return name;
 	}
 
-	public void setKey(String key) {
-		this.key = key;
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public List<Reference> getList() {

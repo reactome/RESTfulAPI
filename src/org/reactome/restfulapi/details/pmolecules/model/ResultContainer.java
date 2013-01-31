@@ -1,17 +1,14 @@
 package org.reactome.restfulapi.details.pmolecules.model;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
 import org.reactome.restfulapi.details.pmolecules.types.MoleculeType;
 
-@XmlRootElement(name="participatingMolecules")
 public class ResultContainer {
 	
 	/**  */
@@ -43,7 +40,6 @@ public class ResultContainer {
 		return errorMessage;
 	}
 
-	@XmlElement(name="moleculeTypes")
 	public List<MoleculeList> getParticipatingMolecules(){
 		return molecules;
 	}
@@ -51,42 +47,41 @@ public class ResultContainer {
 	private Set<String> getMoleculesTypeKeys(){
 		Set<String> keys = new HashSet<String>();
 		for(MoleculeList ml : molecules){
-			keys.add(ml.getKey());
+			keys.add(ml.getName());
 		}
 		return keys;
 	}
 	
 	private MoleculeList getMoleculeList(String type){
 		for(MoleculeList ml : molecules){
-			if(ml.getKey().equals(type))
+			if(ml.getName().equals(type))
 				return ml;
 		}
 		return null;
 	}
 	
-	public List<MoleculeType> getMoleculesTypes(){
+	public List<MoleculeType> getMoleculeTypes(){
 		
 		List<MoleculeType> typeList = new ArrayList<MoleculeType>();
 		for(String key : getMoleculesTypeKeys()){
 			typeList.add(MoleculeType.getMoleculeType(key));
 		}
-        Collections.sort(typeList);
+        //Collections.sort(typeList);
         return typeList;
 	}
 	
-	@XmlElement(name="moleculesNum", type=Integer.class)
 	public Integer getMoleculesNumber(){
 		Integer size = 0;
 		for(String mt : getMoleculesTypeKeys()){
-			size += getMoleculeList(mt).getList().size();
+			size += getMoleculeList(mt).getMolecules().size();
 		}
 		return size;
 	}
 
 	public MoleculeList getMolecules(MoleculeType moleculeType) {
-		if(getMoleculesTypeKeys().contains(moleculeType.getName())){
+		if(getMoleculesTypeKeys().contains(moleculeType.getData().getName())){
 			for(MoleculeList ml : molecules){
-				if(ml.getKey().equals(moleculeType.getName()))
+				if(ml.getName().equals(moleculeType.getData().getName()))
 					return ml;
 			}
 		}
@@ -96,11 +91,11 @@ public class ResultContainer {
 	public void addMolecule(MoleculeType type, Molecule molecule){
 		if(type==null || molecule==null) return;
 		
-		if(getMoleculesTypeKeys().contains(type.getName())){
+		if(getMoleculesTypeKeys().contains(type.getData().getName())){
 			getMolecules(type).addMolecule(molecule);
 		}else{
 			MoleculeList aux = new MoleculeList();
-			aux.setKey(type.getName());
+			aux.setName(type.getData().getName());
 			aux.addMolecule(molecule);
 			molecules.add(aux);
 		}

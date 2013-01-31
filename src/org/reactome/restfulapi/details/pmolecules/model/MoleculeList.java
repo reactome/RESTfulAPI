@@ -2,30 +2,27 @@ package org.reactome.restfulapi.details.pmolecules.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 public class MoleculeList {
 
-	private String key;
+	private String name;
 	
 	private List<Molecule> list = new ArrayList<Molecule>();
 
 	public MoleculeList() {
 	}
 
-	@XmlElement(name="name")
-	public String getKey() {
-		return key;
+	public String getName() {
+		return name;
 	}
 
-	public void setKey(String key) {
-		this.key = key;
+	public void setName(String key) {
+		this.name = key;
 	}
 
-	@XmlElement(name="molecules")
-	public List<Molecule> getList() {
+	public List<Molecule> getMolecules() {
 		return list;
 	}
 

@@ -175,6 +175,6 @@ public class ParticipatingMolecules {
 	    List<MoleculeList> molecules = container.getParticipatingMolecules();
 	    System.out.println("Total moleculeList: " + molecules.size());
 	    MoleculeList list = molecules.get(0);
-	    System.out.println("Total molecules in the first list: " + list.getList().size());
+	    System.out.println("Total molecules in the first list: " + list.getMolecules().size());
 	}
 }
