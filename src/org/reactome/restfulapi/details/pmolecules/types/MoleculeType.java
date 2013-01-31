@@ -1,5 +1,7 @@
 package org.reactome.restfulapi.details.pmolecules.types;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 import org.gk.schema.SchemaClass;
 
 /**
@@ -13,19 +15,32 @@ public enum MoleculeType implements Comparable<MoleculeType> {
 	CHEMICAL("Chemical compounds"),
 	OTHER("Others");
 
-	private String name;
+	@XmlRootElement(name="moleculeType")
+	public class Data {
+		private String name;
+		
+		Data(String name){
+			this.name = name;
+		}
+		
+		public String getName(){
+			return this.name;
+		}
+	}
+	
+	private Data data;
 	
 	MoleculeType(String name) {
-		this.name = name;
+		this.data = new Data(name);
 	}
-	
-	public String getName(){
-		return this.name;
+
+	public Data getData(){
+		return this.data;
 	}
-	
+
 	public static MoleculeType getMoleculeType(String name){
 		for(MoleculeType mt : MoleculeType.values())
-			if(mt.getName().equals(name)) return mt;
+			if(mt.data.getName().equals(name)) return mt;
 		
 		return null;
 	}

@@ -39,13 +39,13 @@ public abstract class Converter {
 		this.exportLines.add(firstLine);
 
 		for (MoleculeType mt : conf.getMoleculeTypes()) {
-			for (Molecule molecule : data.getMolecules(mt).getList()) {
+			for (Molecule molecule : data.getMolecules(mt).getMolecules()) {
 				ExportLine exportLine = new ExportLine();
 				for (FieldType ft : conf.getFields()) {
 					String value;
 					switch (ft) {
 					case MOLECULE_TYPE:
-						value = molecule.getMoleculeType().getName();
+						value = molecule.getMoleculeType().getData().getName();
 						break;
 					case NAME:
 						value = molecule.getName();

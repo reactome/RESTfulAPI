@@ -44,14 +44,14 @@ public class Molecule {
 	private Set<String> getReferenceTypeKeys(){
 		Set<String> keys = new HashSet<String>();
 		for(ReferenceList rl : references){
-			keys.add(rl.getKey());
+			keys.add(rl.getName());
 		}
 		return keys;
 	}
 	
 	private ReferenceList getReferenceList(String type){
 		for(ReferenceList rl : references){
-			if(rl.getKey().equals(type))
+			if(rl.getName().equals(type))
 				return rl;
 		}
 		return null;
@@ -64,7 +64,7 @@ public class Molecule {
 				getReferenceList(name).addReference(reference);
 			}else{
 				ReferenceList aux = new ReferenceList();
-				aux.setKey(name);
+				aux.setName(name);
 				aux.addReference(reference);
 				references.add(aux);
 			}
@@ -79,7 +79,6 @@ public class Molecule {
 		return name;
 	}
 	
-	@XmlElement(name="num_refs")
 	public int getReferencesSize(){
 		return references.size();
 	}
@@ -87,7 +86,7 @@ public class Molecule {
 	public List<String> getReferencesTypes(){
 		List<String> list = new ArrayList<String>();
 		for(ReferenceList rl : references){
-			list.add(rl.getKey());
+			list.add(rl.getName());
 		}
 		return list;
 	}
@@ -95,7 +94,7 @@ public class Molecule {
 	public ReferenceList getReferences(String referenceType){
 		if(getReferenceTypeKeys().contains(referenceType)){
 			for(ReferenceList rl : references){
-				if(rl.getKey().equals(referenceType))
+				if(rl.getName().equals(referenceType))
 					return rl;
 			}
 		}
