@@ -16,7 +16,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.gk.model.GKInstance;
-import org.gk.model.InstanceUtilities;
 import org.gk.model.ReactomeJavaConstants;
 import org.gk.persistence.MySQLAdaptor;
 import org.hupo.psi.mi.psicquic.registry.ServiceType;
@@ -224,6 +223,24 @@ public class PSICQUICService {
 	            PSICQUICRetriever pr = getPISCQUICRetrieverFromName(serviceName);
 	            return pr.getDataFromRest(accessionToRefSeqId);
 	        }
+	    }
+	    catch(Exception e) {
+	        logger.error(e.getMessage(), e);
+	    }
+	    return null;
+	}
+	
+	public String exportInteractions(Long dbId,
+	                                 String serviceName) {
+	    try {
+	        GKInstance dbObj = dba.fetchInstance(dbId);
+            // Currently it support PhysicalEntity only
+            if (dbObj.getSchemClass().isa(ReactomeJavaConstants.PhysicalEntity)) {
+                Set<GKInstance> refSeqs = queryReferenceEntities(dbObj);
+                Map<String, String> accessionToRefSeqId = getAccToRefIdMapping(refSeqs);
+                PSICQUICRetriever pr = getPISCQUICRetrieverFromName(serviceName);
+                return pr.exportInteractions(accessionToRefSeqId);
+            }
 	    }
 	    catch(Exception e) {
 	        logger.error(e.getMessage(), e);
