@@ -481,12 +481,14 @@ public class RESTfulAPIResourceTest {
     @Test
     public void testPSICQUICInteractionsQuery() throws Exception {
         Long[] dbIds = new Long[] {
+                193937L,
                 66212L, // EWAS FASL
                 209799L, // SmallMolecule: Cu for MatrixDB.
                 2658043L,
                 375987L, //ABL1
         };
         String[] serviceNames = new String[] {
+                "IntAct",
                 "Reactome-FIs",
                 //serviceName = "MINT";
                 "MatrixDB",
@@ -494,11 +496,40 @@ public class RESTfulAPIResourceTest {
                 "ChEMBL"
         };
         for (int i = 0; i < dbIds.length; i++) {
-//            if (i != 2)
-//                continue;
+            if (i != 0)
+                continue;
             Long dbId = dbIds[i];
             String serviceName = serviceNames[i];
             String url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + serviceName;
+            String text = callHttp(url, HTTP_GET, "");
+            System.out.println("\nQuery interactions for " + dbId + " in " + serviceName + ":");
+            prettyPrintXML(text);
+        }
+    }
+    
+    @Test
+    public void testExportPSICQUICInteractions() throws Exception {
+        Long[] dbIds = new Long[] {
+                193937L,
+                66212L, // EWAS FASL
+                209799L, // SmallMolecule: Cu for MatrixDB.
+                2658043L,
+                375987L, //ABL1
+        };
+        String[] serviceNames = new String[] {
+                "IntAct",
+                "Reactome-FIs",
+                //serviceName = "MINT";
+                "MatrixDB",
+                "MatrixDB",
+                "ChEMBL"
+        };
+        for (int i = 0; i < dbIds.length; i++) {
+            if (i != 0)
+                continue;
+            Long dbId = dbIds[i];
+            String serviceName = serviceNames[i];
+            String url = RESTFUL_URL + "exportPsiquicInteractions/" + dbId + "/" + serviceName;
             String text = callHttp(url, HTTP_GET, "");
             System.out.println("\nQuery interactions for " + dbId + " in " + serviceName + ":");
             prettyPrintXML(text);
@@ -555,8 +586,8 @@ public class RESTfulAPIResourceTest {
             method = new GetMethod(url); // Default
             client = new HttpClient();
         }
-//        method.setRequestHeader("Accept", "text/plain, application/xml");
-        method.setRequestHeader("Accept", "application/json");
+        method.setRequestHeader("Accept", "text/plain, application/xml");
+//        method.setRequestHeader("Accept", "application/json");
         int responseCode = client.executeMethod(method);
         if (responseCode == HttpStatus.SC_OK) {
             InputStream is = method.getResponseBodyAsStream();

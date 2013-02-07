@@ -436,6 +436,23 @@ public class RESTfulAPIResource {
     }
     
     /**
+     * Export a list of PSICQUIC interaction for a DB_ID in a simple text format.
+     * @param dbId
+     * @param serviceName
+     * @return
+     */
+    @GET
+    @Path("/exportPsiquicInteractions/{dbId}/{service}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String exportPSICQUICInteractions(@PathParam("dbId") Long dbId,
+                                             @PathParam("service") String serviceName) {
+        PSICQUICService psicquicService = new PSICQUICService();
+        psicquicService.setMySQLAdaptor(service.getDba());
+        String text = psicquicService.exportInteractions(dbId, serviceName);
+        return text;
+    }
+    
+    /**
      * Get a list of ReferenceEntity for an Event or PE defined by its DB_ID.
      * @param dbId
      * @return
