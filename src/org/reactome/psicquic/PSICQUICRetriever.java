@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,9 +23,8 @@ import org.reactome.psicquic.service.DefaultServiceManager;
 import org.reactome.psicquic.service.Service;
 import org.reactome.psicquic.service.ServiceManager;
 
+import psidev.psi.mi.tab.io.PsimiTabReader;
 import psidev.psi.mi.tab.model.BinaryInteraction;
-import psidev.psi.mi.tab.model.Interactor;
-import psidev.psi.mi.tab.model.builder.MitabDocumentDefinition;
 import uk.ac.ebi.enfin.mi.cluster.EncoreInteraction;
 import uk.ac.ebi.enfin.mi.cluster.score.InteractionClusterScore;
 
@@ -59,17 +59,17 @@ public class PSICQUICRetriever {
                                -1);
     }
     
-    @SuppressWarnings("unchecked")
-    public QueryResults getDataFromRest(Map<String, String> accessionToRefSeqId, int maxResults) throws IOException {
-        InteractionClusterScore ics = new InteractionClusterScore();
-        MitabDocumentDefinition mdd = new MitabDocumentDefinition();
+    @SuppressWarnings("rawtypes")
+    public QueryResults getDataFromRest(Map<String, String> queryRefid, int maxResults) throws IOException {
+        List<SimpleQueryResult> sqrList = new ArrayList<SimpleQueryResult>();
         
-        for(String line : getInteractionListFromRest(accessionToRefSeqId.keySet())){
-            if (line.isEmpty())
-                continue;
-            BinaryInteraction<Interactor> bi = mdd.interactionFromString(line);
-            ics.addBinaryInteraction(bi);
-        }
+        InteractionClusterScore ics = new InteractionClusterScore();
+        String restQuery = StringUtils.join(queryRefid.keySet().iterator(), " OR ");
+        PsicquicSimpleClient client = new PsicquicSimpleClient(this.URL);
+        InputStream result = client.getByQuery(restQuery);
+        PsimiTabReader reader = new psidev.psi.mi.tab.PsimiTabReader();
+        Iterator<BinaryInteraction> iterator = reader.iterate(result);
+        ics.setBinaryInteractionIterator(iterator);
         
         ics.setMappingIdDbNames(this.sm.getMappingIdDbNames());
         ics.runService();
@@ -79,22 +79,21 @@ public class PSICQUICRetriever {
         
         String query;
         Map<String, SimpleInteractorList> querySIL = new HashMap<String, SimpleInteractorList>();
-        for(EncoreInteraction ei : interactionMapping.values() ){           	
+        for(EncoreInteraction ei : interactionMapping.values() ){
             query = ei.getInteractorA();
-            addResultToQuerySIL(ei, query, accessionToRefSeqId, querySIL);
+            addResultToQuerySIL(ei, query, queryRefid, querySIL);
             
             query = ei.getInteractorB();
-            addResultToQuerySIL(ei, query, accessionToRefSeqId, querySIL);
+            addResultToQuerySIL(ei, query, queryRefid, querySIL);
         }
         
-        List<SimpleQueryResult> sqrList = new ArrayList<SimpleQueryResult>();
         for(String queryAux : querySIL.keySet()){
-            String refid = accessionToRefSeqId.get(queryAux);
+            String refid = queryRefid.get(queryAux);
             SimpleInteractorList sil = querySIL.get(queryAux);
             SimpleQueryResult sqr = new SimpleQueryResult(queryAux,refid,sil);
             sqr.setMaxResults(maxResults);
             sqrList.add(sqr);
-        }        
+        }
         return new QueryResults(sqrList);
     }
     

@@ -227,7 +227,7 @@ public class PSICQUICService {
 	    catch(Exception e) {
 	        logger.error(e.getMessage(), e);
 	    }
-	    return null;
+	    return new QueryResults(); // Create an empty array to avoid null exception
 	}
 	
 	public String exportInteractions(Long dbId,
