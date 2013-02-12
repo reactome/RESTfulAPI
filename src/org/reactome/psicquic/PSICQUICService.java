@@ -254,6 +254,7 @@ public class PSICQUICService {
 	 * @return
 	 * @throws Exception
 	 */
+	@SuppressWarnings("unchecked")
 	private Set<GKInstance> queryReferenceEntities(GKInstance pe) throws Exception {
 	    Set<GKInstance> rtn = new HashSet<GKInstance>();
 	    String[] attributes = new String[] {
@@ -263,18 +264,24 @@ public class PSICQUICService {
 	            ReactomeJavaConstants.referenceEntity
 	    };
 	    int preSize = rtn.size();
-	    rtn.add(pe);
+	    Set<GKInstance> checking = new HashSet<GKInstance>();
+	    checking.add(pe);
+	    Set<GKInstance> next = new HashSet<GKInstance>();
 	    while (true) {
 	        preSize = rtn.size();
-	        for (GKInstance inst : rtn) {
+	        for (GKInstance inst : checking) {
+	            rtn.add(inst);
 	            for (String att : attributes) {
 	                if (!inst.getSchemClass().isValidAttribute(att))
 	                    continue;
 	                List<GKInstance> values = inst.getAttributeValuesList(att);
 	                if (values != null && values.size() > 0)
-	                    rtn.addAll(values);
+	                    next.addAll(values);
 	            }
 	        }
+	        checking.clear();
+	        checking.addAll(next);
+	        next.clear();
 	        if (preSize == rtn.size())
 	            break;
 	    }
