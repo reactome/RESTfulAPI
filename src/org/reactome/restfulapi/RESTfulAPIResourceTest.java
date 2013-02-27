@@ -31,8 +31,6 @@ import org.junit.Test;
 import org.reactome.px.util.FileUtility;
 import org.reactome.px.util.InteractionUtilities;
 
-import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
-
 /**
  * Created by IntelliJ IDEA.
  * User: home
@@ -101,6 +99,15 @@ public class RESTfulAPIResourceTest {
         url = RESTFUL_URL + "pathwayDiagram/1643713/pdf";
         text = callHttp(url, HTTP_GET, "");
         decodeInBase64(text, "1643713.pdf");
+    }
+    
+    @Test
+    public void testGetPhysicalToReferenceEntityMap() throws Exception {
+        // Regulation of Apoptosis
+        String url = RESTFUL_URL + "getPhysicalToReferenceEntityMaps/169911";
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("\ngetPhysicalToReferenceEntityMaps for 169911:");
+        System.out.println(text);
     }
     
     @Test
@@ -486,6 +493,8 @@ public class RESTfulAPIResourceTest {
                 209799L, // SmallMolecule: Cu for MatrixDB.
                 2658043L,
                 375987L, //ABL1
+                418812L,
+                418812L
         };
         String[] serviceNames = new String[] {
                 "IntAct",
@@ -493,10 +502,12 @@ public class RESTfulAPIResourceTest {
                 //serviceName = "MINT";
                 "MatrixDB",
                 "MatrixDB",
-                "ChEMBL"
+                "ChEMBL",
+                "IntAct",
+                "MatrixDB"
         };
         for (int i = 0; i < dbIds.length; i++) {
-            if (i != 0)
+            if (i != 5 && i != 6)
                 continue;
             Long dbId = dbIds[i];
             String serviceName = serviceNames[i];
@@ -586,8 +597,8 @@ public class RESTfulAPIResourceTest {
             method = new GetMethod(url); // Default
             client = new HttpClient();
         }
-        method.setRequestHeader("Accept", "text/plain, application/xml");
-//        method.setRequestHeader("Accept", "application/json");
+//        method.setRequestHeader("Accept", "text/plain, application/xml");
+        method.setRequestHeader("Accept", "application/json");
         int responseCode = client.executeMethod(method);
         if (responseCode == HttpStatus.SC_OK) {
             InputStream is = method.getResponseBodyAsStream();

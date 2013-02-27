@@ -35,6 +35,7 @@ import org.reactome.restfulapi.models.DatabaseObjectList;
 import org.reactome.restfulapi.models.Event;
 import org.reactome.restfulapi.models.Pathway;
 import org.reactome.restfulapi.models.PhysicalEntity;
+import org.reactome.restfulapi.models.PhysicalToReferenceEntityMap;
 import org.reactome.restfulapi.models.Publication;
 import org.reactome.restfulapi.models.ReferenceEntity;
 import org.reactome.restfulapi.models.Species;
@@ -143,6 +144,16 @@ public class RESTfulAPIResource {
             return new ArrayList<Pathway>();
         String[] genes = queryGenes.split(",");
         return service.queryHitPathways(genes);
+    }
+    
+    /**
+     * Get a list of maps from PhysicalEntity DB_IDs to their ReferenceEntity DB_IDs.
+     * @return
+     */
+    @GET
+    @Path("/getPhysicalToReferenceEntityMaps/{dbId}")
+    public List<PhysicalToReferenceEntityMap> getPathwayPEToRefEntityMap(@PathParam("dbId") Long pathwayId) {
+        return service.getPathwayPEToRefEntityMap(pathwayId);
     }
 
     /**

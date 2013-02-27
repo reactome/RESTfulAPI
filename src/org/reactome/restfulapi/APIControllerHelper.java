@@ -40,9 +40,9 @@ import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
 import org.reactome.restfulapi.models.Complex;
 import org.reactome.restfulapi.models.DatabaseObject;
 import org.reactome.restfulapi.models.Event;
-import org.reactome.restfulapi.models.ListOfShellInstances;
 import org.reactome.restfulapi.models.Pathway;
 import org.reactome.restfulapi.models.PhysicalEntity;
+import org.reactome.restfulapi.models.PhysicalToReferenceEntityMap;
 import org.reactome.restfulapi.models.Publication;
 import org.reactome.restfulapi.models.ReferenceEntity;
 import org.reactome.restfulapi.models.Species;
@@ -169,6 +169,36 @@ public class APIControllerHelper {
             logger.error(e.getMessage(), e);
         }
         return null;
+    }
+    
+    public List<PhysicalToReferenceEntityMap> getPathwayPEToRefEntityMap(Long pathwayId) {
+        try {
+            GKInstance pathway = dba.fetchInstance(pathwayId);
+            if (pathway == null)
+                throw new InstanceNotFoundException(pathwayId);
+            if (!pathway.getSchemClass().isa(ReactomeJavaConstants.Pathway))
+                throw new IllegalArgumentException(pathway + " is not a pathway!");
+            Set<GKInstance> pes = InstanceUtilities.grepPathwayParticipants(pathway);
+            List<PhysicalToReferenceEntityMap> maps = new ArrayList<PhysicalToReferenceEntityMap>();
+            for (GKInstance pe : pes) {
+                Set<GKInstance> refEntities = InstanceUtilities.grepReferenceEntitiesForPE(pe);
+                if (refEntities == null || refEntities.size() == 0)
+                    continue;
+                PhysicalToReferenceEntityMap map = new PhysicalToReferenceEntityMap();
+                List<Long> refDbIds = new ArrayList<Long>();
+                for (GKInstance refEntity : refEntities) {
+                    refDbIds.add(refEntity.getDBID());
+                }
+                map.setPeDbId(pe.getDBID());
+                map.setRefDbIds(refDbIds);
+                maps.add(map);
+            }
+            return maps;
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return new ArrayList<PhysicalToReferenceEntityMap>();
     }
     
     /**
