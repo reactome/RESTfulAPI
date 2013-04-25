@@ -224,8 +224,11 @@ public class PSICQUICService {
 	            return pr.getDataFromRest(accessionToRefSeqId);
 	        }
 	    }
-	    catch(Exception e) {
+	    catch(Exception e) { // If there is an exception, send the error message to the client.
 	        logger.error(e.getMessage(), e);
+	        QueryResults results = new QueryResults();
+	        results.setErrorMessage(e.getMessage());
+	        return results;
 	    }
 	    return new QueryResults(); // Create an empty array to avoid null exception
 	}
