@@ -1,5 +1,7 @@
 package org.reactome.restfulapi;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.reactome.psicquic.CustomizedInteractionService;
 import org.reactome.psicquic.PSICQUICService;
 import org.reactome.psicquic.model.QueryResults;
 import org.reactome.psicquic.service.Service;
@@ -42,6 +45,7 @@ import org.reactome.restfulapi.models.Species;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
+import com.sun.jersey.multipart.FormDataParam;
 import com.sun.jersey.spi.resource.Singleton;
 
 
@@ -441,6 +445,7 @@ public class RESTfulAPIResource {
     public QueryResults queryPSICQUICInteractions(@PathParam("dbId") Long dbId,
                                                   @PathParam("service") String serviceName) {
         PSICQUICService psicquicService = new PSICQUICService();
+        psicquicService.setTempDir(service.getOutputdir());
         psicquicService.setMySQLAdaptor(service.getDba());
         QueryResults results = psicquicService.queryInteractions(dbId, serviceName);
         return results;
@@ -458,9 +463,34 @@ public class RESTfulAPIResource {
     public String exportPSICQUICInteractions(@PathParam("dbId") Long dbId,
                                              @PathParam("service") String serviceName) {
         PSICQUICService psicquicService = new PSICQUICService();
+        psicquicService.setTempDir(service.getOutputdir());
         psicquicService.setMySQLAdaptor(service.getDba());
         String text = psicquicService.exportInteractions(dbId, serviceName);
         return text;
+    }
+    
+    /**
+     * Upload a customized interaction file. The file should contain the following format:
+     * UniProt1\tUniProt2
+     * One interaction per line.
+     * @return
+     */
+    @POST
+    @Path("/uploadInteractionFile")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.TEXT_PLAIN)
+    public String uploadInteractionFile(@FormDataParam("file") InputStream uploadIs) throws IOException {
+        // Though you may use FormDataContentDisposition to get some information about the uploaded
+        // file, however, the file size value is -1, which is empty!
+        try {
+            CustomizedInteractionService ppiService = new CustomizedInteractionService();
+            ppiService.setTempDir(service.getOutputdir());
+            return ppiService.uploadInteractions(uploadIs);
+        }
+        catch(IOException e) {
+            logger.error(e.getMessage(), e);
+            throw e; // Re-throw exception and hope to be popped-up by Jersey.
+        }
     }
     
     /**

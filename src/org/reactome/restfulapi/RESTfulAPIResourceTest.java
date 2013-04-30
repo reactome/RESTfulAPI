@@ -1,6 +1,7 @@
 package org.reactome.restfulapi;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,7 +12,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.HttpClient;
@@ -21,6 +21,11 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.gk.util.FileUtilities;
 import org.jdom.Document;
 import org.jdom.JDOMException;
@@ -28,8 +33,6 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.junit.Test;
-import org.reactome.px.util.FileUtility;
-import org.reactome.px.util.InteractionUtilities;
 
 /**
  * Created by IntelliJ IDEA.
@@ -112,21 +115,21 @@ public class RESTfulAPIResourceTest {
     
     @Test
     public void testHighlightPathwayDiagram() throws Exception {
-        //        // G2/M Transition: 453274
-        //        String url = RESTFUL_URL + "highlightPathwayDiagram/453274/pdf";
-        //        // A list of genes
-        //        String genes = "PPP2R1A,CEP192,AKAP9,CENPJ,CEP290,DYNC1H1";
-        //        String text = callHttp(url, HTTP_POST, genes);
-        //        decodeInBase64(text, "HighlightG2_MTransition.pdf");
+        // G2/M Transition: 453274
+        String url = RESTFUL_URL + "highlightPathwayDiagram/453274/pdf";
+        // A list of genes
+        String genes = "PPP2R1A,CEP192,AKAP9,CENPJ,CEP290,DYNC1H1";
+        String text = callHttp(url, HTTP_POST, genes);
+        decodeInBase64(text, "HighlightG2_MTransition.pdf");
         
-        // Test for a gene list in a file
-        String dir = "/Users/gwu/Documents/wgm/work/ctbioscience/";
-        String fileName = dir + "CellCycleCheckpointsGenes.txt";
-        Set<String> genes = new FileUtility().loadInteractions(fileName);
-        String query = InteractionUtilities.joinStringElements(",", genes);
-        String url = RESTFUL_URL + "highlightPathwayDiagram/69620/pdf";
-        String text = callHttp(url, HTTP_POST, query);
-        decodeInBase64(text, dir + "CellCycleCheckpoints.pdf");
+        //        // Test for a gene list in a file
+        //        String dir = "/Users/gwu/Documents/wgm/work/ctbioscience/";
+        //        String fileName = dir + "CellCycleCheckpointsGenes.txt";
+        //        Set<String> genes = new FileUtility().loadInteractions(fileName);
+        //        String query = InteractionUtilities.joinStringElements(",", genes);
+        //        String url = RESTFUL_URL + "highlightPathwayDiagram/69620/pdf";
+        //        String text = callHttp(url, HTTP_POST, query);
+        //        decodeInBase64(text, dir + "CellCycleCheckpoints.pdf");
     }
     
     @Test
@@ -234,6 +237,13 @@ public class RESTfulAPIResourceTest {
         prettyPrintXML(text);
     }
 
+//    @Test
+//    public void justATest() throws Exception {
+//        String url = "http://reactomerelease.oicr.on.ca/ReactomeGWT/service/analysis/results/combined_analysis_set_http_7080_10_15_04_2013_13_27_25/expression_analysis";
+//        String text = callHttp(url, HTTP_GET, "");
+//        System.out.println(text);
+//    }
+    
     @Test
     public void testQueryById() throws Exception {
         // Check a pathway instance
@@ -383,7 +393,12 @@ public class RESTfulAPIResourceTest {
         String text = callHttp(url,
                 HTTP_GET,
                 "");
-        System.out.println("Output from pathwayParticipants:\n");
+        System.out.println("\nOutput from pathwayParticipants:");
+        prettyPrintXML(text);
+        
+        url = RESTFUL_URL + "pathwayParticipants/168256";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput from pathwayParticipant for 168256:");
         prettyPrintXML(text);
     }
     
@@ -409,13 +424,13 @@ public class RESTfulAPIResourceTest {
         String text = callHttp(url, HTTP_GET, "");
         System.out.println("\nOutput from detailedView:");
         prettyPrintXML(text);
-//        long time1 = System.currentTimeMillis();
-//        url = RESTFUL_URL + "detailedView/DatabaseObject/29370";
-//        text = callHttp(url, HTTP_GET, "");
-//        System.out.println("\nOutput from detailedView:");
-//        prettyPrintXML(text);
-//        long time2 = System.currentTimeMillis();
-//        System.out.println("Time: " + (time2 - time1));
+        long time1 = System.currentTimeMillis();
+        url = RESTFUL_URL + "detailedView/DatabaseObject/29370";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput from detailedView:");
+        prettyPrintXML(text);
+        long time2 = System.currentTimeMillis();
+        System.out.println("Time: " + (time2 - time1));
     }
     
 //    
@@ -493,7 +508,7 @@ public class RESTfulAPIResourceTest {
                 209799L, // SmallMolecule: Cu for MatrixDB.
                 2658043L,
                 375987L, //ABL1
-                418812L,
+                418812L, // CandidateSet DAPKs [Cytosol]
                 418812L
         };
         String[] serviceNames = new String[] {
@@ -547,6 +562,34 @@ public class RESTfulAPIResourceTest {
         }
     }
     
+    /**
+     * This test method is based on this web page: 
+     * http://puspendu.wordpress.com/2012/08/23/restful-webservice-file-upload-with-jersey/
+     * @throws Exception
+     */
+    @Test
+    public void testUploadInteractionFile() throws Exception {
+        org.apache.http.client.HttpClient httpClient = new DefaultHttpClient();
+        String fileName = "FIsInGene_071012.txt";
+        FileBody fileContent = new FileBody(new File(fileName));
+        MultipartEntity reqEntity = new MultipartEntity();
+        reqEntity.addPart("file", fileContent);
+        String url = RESTFUL_URL + "uploadInteractionFile";
+        HttpPost httpPost = new HttpPost(url);
+        httpPost.setEntity(reqEntity);
+        org.apache.http.HttpResponse respone = httpClient.execute(httpPost);
+        HttpEntity resEntity = respone.getEntity();
+        String rtn = readMethodReturn(resEntity.getContent());
+        System.out.println("Return: " + rtn);
+        
+        // Test uploaded interaction
+        Long dbId = 66212L; // EWAS FASL
+        url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + rtn;
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nQuery interactions for " + dbId + " in " + rtn + ":");
+        prettyPrintXML(text);
+    }
+        
     @Test
     public void testReferenceEntity() throws Exception {
         Long dbId = 66212L; // EWAS FASL
@@ -597,30 +640,34 @@ public class RESTfulAPIResourceTest {
             method = new GetMethod(url); // Default
             client = new HttpClient();
         }
-//        method.setRequestHeader("Accept", "text/plain, application/xml");
-        method.setRequestHeader("Accept", "application/json");
+        method.setRequestHeader("Accept", "text/plain, application/xml");
+//        method.setRequestHeader("Accept", "application/json");
         int responseCode = client.executeMethod(method);
         if (responseCode == HttpStatus.SC_OK) {
             InputStream is = method.getResponseBodyAsStream();
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader reader = new BufferedReader(isr);
-            StringBuilder builder = new StringBuilder();
-            String line = null;
-            while ((line = reader.readLine()) != null)
-                builder.append(line).append("\n");
-            reader.close();
-            isr.close();
-            is.close();
-            // Remove the last new line
-            String rtn = builder.toString();
-            // Just in case an empty string is returned
-            if (rtn.length() == 0)
-                return rtn;
-            return rtn.substring(0, rtn.length() - 1);
+            return readMethodReturn(is);
         } else {
             System.err.println("Error from server: " + method.getResponseBodyAsString());
             throw new IllegalStateException(method.getResponseBodyAsString());
         }
+    }
+
+    private String readMethodReturn(InputStream is) throws IOException {
+        InputStreamReader isr = new InputStreamReader(is);
+        BufferedReader reader = new BufferedReader(isr);
+        StringBuilder builder = new StringBuilder();
+        String line = null;
+        while ((line = reader.readLine()) != null)
+            builder.append(line).append("\n");
+        reader.close();
+        isr.close();
+        is.close();
+        // Remove the last new line
+        String rtn = builder.toString();
+        // Just in case an empty string is returned
+        if (rtn.length() == 0)
+            return rtn;
+        return rtn.substring(0, rtn.length() - 1);
     }
 
     private HttpClient initializeHTTPClient(PostMethod post, String query) throws UnsupportedEncodingException {
