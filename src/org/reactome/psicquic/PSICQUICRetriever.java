@@ -4,8 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -35,6 +33,13 @@ public class PSICQUICRetriever {
     private ServiceManager sm;
     private List<String> userData = null;
     
+    /**
+     * The default constructor is used for subclassing.
+     */
+    protected PSICQUICRetriever() {
+        
+    }
+    
     public PSICQUICRetriever(List<String> userData) {
         this.URL = "User data";
         this.serviceName = "User data";
@@ -54,17 +59,18 @@ public class PSICQUICRetriever {
         this.sm = new DefaultServiceManager();
     }
     
-    public QueryResults getDataFromRest(Map<String, String> queryRefid) throws IOException {
-        return getDataFromRest(queryRefid, 
+    public QueryResults getDataFromRest(Map<String, String> accessionToRefSeqId) throws IOException {
+        return getDataFromRest(accessionToRefSeqId, 
                                -1);
     }
     
     @SuppressWarnings("rawtypes")
-    public QueryResults getDataFromRest(Map<String, String> queryRefid, int maxResults) throws IOException {
+    private QueryResults getDataFromRest(Map<String, String> accessionToRefId,
+                                         int maxResults) throws IOException {
         List<SimpleQueryResult> sqrList = new ArrayList<SimpleQueryResult>();
         
         InteractionClusterScore ics = new InteractionClusterScore();
-        String restQuery = StringUtils.join(queryRefid.keySet().iterator(), " OR ");
+        String restQuery = StringUtils.join(accessionToRefId.keySet().iterator(), " OR ");
         PsicquicSimpleClient client = new PsicquicSimpleClient(this.URL);
         InputStream result = client.getByQuery(restQuery);
         PsimiTabReader reader = new psidev.psi.mi.tab.PsimiTabReader();
@@ -81,14 +87,14 @@ public class PSICQUICRetriever {
         Map<String, SimpleInteractorList> querySIL = new HashMap<String, SimpleInteractorList>();
         for(EncoreInteraction ei : interactionMapping.values() ){
             query = ei.getInteractorA();
-            addResultToQuerySIL(ei, query, queryRefid, querySIL);
+            addResultToQuerySIL(ei, query, accessionToRefId, querySIL);
             
             query = ei.getInteractorB();
-            addResultToQuerySIL(ei, query, queryRefid, querySIL);
+            addResultToQuerySIL(ei, query, accessionToRefId, querySIL);
         }
         
         for(String queryAux : querySIL.keySet()){
-            String refid = queryRefid.get(queryAux);
+            String refid = accessionToRefId.get(queryAux);
             SimpleInteractorList sil = querySIL.get(queryAux);
             SimpleQueryResult sqr = new SimpleQueryResult(queryAux,refid,sil);
             sqr.setMaxResults(maxResults);
@@ -130,11 +136,12 @@ public class PSICQUICRetriever {
      * 
      * @param ei
      * @param query
-     * @param queryRefid
+     * @param accessionToRefSeqId
      * @param querySIL
      */
-    private void addResultToQuerySIL(EncoreInteraction ei, String query,
-                                     Map<String, String> queryRefid,
+    private void addResultToQuerySIL(EncoreInteraction ei, 
+                                     String query,
+                                     Map<String, String> accessionToRefSeqId,
                                      Map<String, SimpleInteractorList> querySIL){
         // Reactome use ids only. Some databases may attached db name before the ids.
         // Need a little parsing here
@@ -143,7 +150,7 @@ public class PSICQUICRetriever {
             int index = query.indexOf(":");
             id = query.substring(index + 1);
         }
-        if(queryRefid.keySet().contains(id)) {
+        if(accessionToRefSeqId.keySet().contains(id)) {
             SimpleInteractor si = this.sm.getSimpleInteractor(ei, query);
             
             // Next lines get an existing SimpleInteractorList from querySIL or
@@ -162,21 +169,12 @@ public class PSICQUICRetriever {
     
     /**
      * Return interactions in a raw text.
-     * @param queryRefid
+     * @param accessionToRefEntId
      * @return
      * @throws IOException
      */
-    public String exportInteractions(Map<String, String> queryRefid) throws IOException {
-        StringWriter writer = new StringWriter();
-        PrintWriter pWriter = new PrintWriter(writer);
-        for(String line : getInteractionListFromRest(queryRefid.keySet())){
-            pWriter.println(line);
-        }
-        pWriter.flush();
-        writer.flush();
-        String rtn = writer.toString();
-        pWriter.close();
-        writer.close();
-        return rtn;
+    public String exportInteractions(Map<String, String> accessionToRefEntId) throws IOException {
+        List<String> lines = getInteractionListFromRest(accessionToRefEntId.keySet());
+        return StringUtils.join(lines, '\n');
     }
 }
