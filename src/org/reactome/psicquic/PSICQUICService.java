@@ -49,7 +49,7 @@ import org.reactome.psicquic.service.Service;
  */
 public class PSICQUICService {
     private static final Logger logger = Logger.getLogger(PSICQUICService.class);
-	private String psicquicRegistry; // The URL of the psicquic registry to query.
+//	private String psicquicRegistry; // The URL of the psicquic registry to query.
 	
 //	private int startIndex; // Equal to number of services returned from psicquic
 //							// registry + 1. Used in each user session as starting
@@ -65,6 +65,8 @@ public class PSICQUICService {
 	private int maxResults; // cap the number of results that will be returned to client
 	private MySQLAdaptor dba;
 	private Map<String, Service> nameToServiceMap;
+	// For local temp file
+	private String tempDir;
 	
 	public PSICQUICService() {
 	    try {
@@ -73,6 +75,14 @@ public class PSICQUICService {
 	    catch(PsicquicRegistryClientException e) {
 	        logger.error(e.getMessage(), e);
 	    }
+	}
+	
+	public void setTempDir(String dir) {
+	    this.tempDir = dir;
+	}
+	
+	public String getTempDir() {
+	    return this.tempDir;
 	}
 	
 	public void setMaxResults(int results) {
@@ -553,6 +563,13 @@ public class PSICQUICService {
 //			ps = new PSICQUICRetriever(serviceURL);
 //		}
 //	    return ps;
+	    if (name.startsWith(CustomizedInteractionService.FILE_PREFIX)) { // A label for an user uploaded interaction file
+	        CustomizedInteractionService service = new CustomizedInteractionService();
+	        service.setTempDir(tempDir);
+	        service.setDba(dba);
+	        service.setFileName(name);
+	        return service;
+	    }
 	    Service service = nameToServiceMap.get(name);
 	    if (service == null)
 	        return null;
