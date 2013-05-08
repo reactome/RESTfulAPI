@@ -233,6 +233,7 @@ public class PSICQUICService {
 	            PSICQUICRetriever pr = getPISCQUICRetrieverFromName(serviceName);
 	            return pr.getDataFromRest(accessionToRefSeqId);
 	        }
+	        return new QueryResults(); // Create an empty array to avoid null exception
 	    }
 	    catch(Exception e) { // If there is an exception, send the error message to the client.
 	        logger.error(e.getMessage(), e);
@@ -240,7 +241,6 @@ public class PSICQUICService {
 	        results.setErrorMessage(e.getMessage());
 	        return results;
 	    }
-	    return new QueryResults(); // Create an empty array to avoid null exception
 	}
 	
 	public String exportInteractions(Long dbId,
