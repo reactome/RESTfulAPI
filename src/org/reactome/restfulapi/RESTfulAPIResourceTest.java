@@ -22,9 +22,11 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.http.HttpEntity;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.gk.util.FileUtilities;
 import org.jdom.Document;
@@ -569,25 +571,47 @@ public class RESTfulAPIResourceTest {
      */
     @Test
     public void testUploadInteractionFile() throws Exception {
-        org.apache.http.client.HttpClient httpClient = new DefaultHttpClient();
+        // Test for gene-gene interactions in gene names
         String fileName = "FIsInGene_071012.txt";
+        String fileType = "gene";
+        
+        String rtn = uploadFile(fileName, fileType);
+        System.out.println("Return: " + rtn);
+        
+        // Test uploaded interaction
+        Long dbId = 66212L; // EWAS FASL
+        String url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + rtn;
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nQuery interactions for " + dbId + " in " + rtn + " based on gene-gene interactions:");
+        prettyPrintXML(text);
+        
+        // Test for protein-protein interactions
+        fileName = "FIs_Reactome.txt";
+        fileType = "protein";
+        rtn = uploadFile(fileName, fileType);
+        System.out.println("Return: " + rtn);
+        url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + rtn;
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nQuery interactions for " + dbId + " in " + rtn + " based on protein-protein interactions:");
+        prettyPrintXML(text);
+    }
+
+    private String uploadFile(String fileName, String fileType)
+            throws UnsupportedEncodingException, IOException,
+            ClientProtocolException {
+        org.apache.http.client.HttpClient httpClient = new DefaultHttpClient();
         FileBody fileContent = new FileBody(new File(fileName));
         MultipartEntity reqEntity = new MultipartEntity();
         reqEntity.addPart("file", fileContent);
+        StringBody fileTypeContent = new StringBody(fileType);
+        reqEntity.addPart("fileType", fileTypeContent);
         String url = RESTFUL_URL + "uploadInteractionFile";
         HttpPost httpPost = new HttpPost(url);
         httpPost.setEntity(reqEntity);
         org.apache.http.HttpResponse respone = httpClient.execute(httpPost);
         HttpEntity resEntity = respone.getEntity();
         String rtn = readMethodReturn(resEntity.getContent());
-        System.out.println("Return: " + rtn);
-        
-        // Test uploaded interaction
-        Long dbId = 66212L; // EWAS FASL
-        url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + rtn;
-        String text = callHttp(url, HTTP_GET, "");
-        System.out.println("\nQuery interactions for " + dbId + " in " + rtn + ":");
-        prettyPrintXML(text);
+        return rtn;
     }
         
     @Test
