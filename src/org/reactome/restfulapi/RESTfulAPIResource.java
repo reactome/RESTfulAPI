@@ -479,13 +479,15 @@ public class RESTfulAPIResource {
     @Path("/uploadInteractionFile")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
-    public String uploadInteractionFile(@FormDataParam("file") InputStream uploadIs) throws IOException {
+    public String uploadInteractionFile(@FormDataParam("file") InputStream uploadIs,
+                                        @FormDataParam("fileType") String fileType) throws IOException {
         // Though you may use FormDataContentDisposition to get some information about the uploaded
         // file, however, the file size value is -1, which is empty!
         try {
             CustomizedInteractionService ppiService = new CustomizedInteractionService();
             ppiService.setTempDir(service.getOutputdir());
-            return ppiService.uploadInteractions(uploadIs);
+            return ppiService.uploadInteractions(fileType,
+                                                 uploadIs);
         }
         catch(IOException e) {
             logger.error(e.getMessage(), e);
