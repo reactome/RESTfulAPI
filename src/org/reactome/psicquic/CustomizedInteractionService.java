@@ -11,11 +11,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.log4j.Logger;
 import org.gk.model.GKInstance;
@@ -49,9 +51,13 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
      * @return
      * @throws IOException
      */
-    public String uploadInteractions(InputStream uploadedIs) throws IOException {
+    public String uploadInteractions(String fileType,
+                                     InputStream uploadedIs) throws IOException {
         File file = getFile();
         FileOutputStream fos = new FileOutputStream(file);
+        // Output file type first as an annotation line
+        String fileTypeLine = "#FileType:" + fileType + "\n";
+        fos.write(fileTypeLine.getBytes());
         int read = 0;
         byte[] bytes = new byte[10240]; // 10 k
         while ((read = uploadedIs.read(bytes)) > 0) {
@@ -67,14 +73,9 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
      * @return
      */
     private File getFile() {
-        // Use a nano-second in order to construct a unqiue file name and id
-        long ns = System.nanoTime();
-        File file = new File(tempDir, FILE_PREFIX + ns);
-        int count = 0;
-        while (file.exists()) {
-            count++;
-            file = new File(tempDir, FILE_PREFIX + ns + "_" + count);
-        }
+        // A 128 bit value: there is almost no chance to have a duplicated value using this UUID
+        String uuid = UUID.randomUUID().toString();
+        File file = new File(tempDir, FILE_PREFIX + uuid);
         return file;
     }
     
@@ -102,6 +103,53 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
     public void setDba(MySQLAdaptor dba) {
         this.dba = dba;
     }
+    
+    @SuppressWarnings("unchecked")
+    private Map<String, String> queryGeneNameToUniProtId(MySQLAdaptor dba,
+                                                         Collection<String> genes) {
+        try {
+            Collection<GKInstance> c = dba.fetchInstanceByAttribute(ReactomeJavaConstants.ReferenceGeneProduct,
+                                                                    ReactomeJavaConstants.geneName, 
+                                                                    "=", 
+                                                                    genes);
+            Map<String, String> geneToId = new HashMap<String, String>();
+            for (GKInstance inst : c) {
+                List<String> geneNames = inst.getAttributeValuesList(ReactomeJavaConstants.geneName);
+                String id = (String) inst.getAttributeValue(ReactomeJavaConstants.identifier);
+                for (String geneName : geneNames) {
+                    geneToId.put(geneName, id);
+                }
+            }
+            return geneToId;
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return new HashMap<String, String>();
+    }
+    
+    private Map<String, String> queryUniProtIdToGeneName(MySQLAdaptor dba,
+                                                         Collection<String> ids) {
+        try {
+            Collection<GKInstance> c = dba.fetchInstanceByAttribute(ReactomeJavaConstants.ReferenceGeneProduct,
+                                                                    ReactomeJavaConstants.identifier,
+                                                                    "=",
+                                                                    ids);
+            Map<String, String> idToGeneName = new HashMap<String, String>();
+            for (GKInstance inst : c) {
+                String id = (String) inst.getAttributeValue(ReactomeJavaConstants.identifier);
+                String geneName = (String) inst.getAttributeValue(ReactomeJavaConstants.geneName);
+                if (geneName == null)
+                    continue;
+                idToGeneName.put(id, geneName);
+            }
+            return idToGeneName;
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return new HashMap<String, String>();
+    }
 
     /**
      * A local version for querying interactions though it is still called the same
@@ -127,20 +175,157 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
             logger.error(e.getMessage(), e);
         }
         // Support gene-gene interaction
-        QueryResults results = new QueryResults();
-        try {
-            File file = new File(tempDir, fileName);
+        File file = new File(tempDir, fileName);
+        FileReader reader = new FileReader(file);
+        BufferedReader br = new BufferedReader(reader);
+        // The first line should be the file type
+        String line = br.readLine();
+        String fileType = getFileType(line);
+        // Get the file type
+        br.close();
+        reader.close();
+        LocalInteractionQuerier localQuerier = getLocalInteractionQuerier(fileType);
+        QueryResults results = localQuerier.queryInteractionsFromLocalFile(accessionToRefSeqId, 
+                                                                           file);
+        return results;
+    }
+    
+    private String getFileType(String line) {
+        int index = line.indexOf(":");
+        return line.substring(index + 1);
+    }
+    
+    private LocalInteractionQuerier getLocalInteractionQuerier(String type) {
+        if (type.equals("gene"))
+            return new GeneGeneInteractionQuerier();
+        if (type.equals("protein"))
+            return new ProteinProteinInteractionQuerier();
+        return null;
+    }
+    
+    private String getInteractionPartner(String query, String[] tokens) {
+        if (query.equals(tokens[0]))
+            return tokens[1];
+        if (query.equals(tokens[1]))
+            return tokens[0];
+        return null;
+    }
+    
+    /**
+     * A local version for exporting a list of interactions based on whatever format
+     * is used.
+     */
+    @Override
+    public String exportInteractions(Map<String, String> accessionToRefEntId)
+            throws IOException {
+        
+        return super.exportInteractions(accessionToRefEntId);
+    }
+    
+    private interface LocalInteractionQuerier {
+        public QueryResults queryInteractionsFromLocalFile(Map<String, String> accessionToRefSeqId,
+                                                           File file) throws IOException;
+    }
+    
+    private class ProteinProteinInteractionQuerier implements LocalInteractionQuerier {
+        
+        public ProteinProteinInteractionQuerier() {
+        }
+
+        @Override
+        public QueryResults queryInteractionsFromLocalFile(Map<String, String> accessionToRefSeqId,
+                                                           File file) throws IOException {
+            Map<String, Set<String>> accToPartner = new HashMap<String, Set<String>>();
+            FileReader fileReader = new FileReader(file);
+            BufferedReader br = new BufferedReader(fileReader);
+            String line = null;
+            Set<String> uniprotIds = new HashSet<String>();
+            while ((line = br.readLine()) != null) {
+                if (line.startsWith("#"))
+                    continue; // Comments
+                String[] tokens = line.split("\t");
+                for (String acc : accessionToRefSeqId.keySet()) {
+                    String partner = getInteractionPartner(acc,
+                                                           tokens);
+                    if (partner == null)
+                        continue;
+                    // In this case, partner should be protein accession
+                    Set<String> set = accToPartner.get(acc);
+                    if (set == null) {
+                        set = new HashSet<String>();
+                        accToPartner.put(acc, set);
+                    }
+                    set.add(partner);
+                    uniprotIds.add(partner);
+                }
+            }
+            br.close();
+            fileReader.close();
+            Map<String, String> uniprotIdToGeneName = queryUniProtIdToGeneName(dba, uniprotIds);
+            // Convert the map to results
+            QueryResults results = new QueryResults();
+            for (String acc : accToPartner.keySet()) {
+                SimpleQueryResult result = new SimpleQueryResult();
+                results.addSimpleQueryResult(result);
+                result.setQuery(acc);
+                result.setRefSeqDBId(accessionToRefSeqId.get(acc));
+                SimpleInteractorList interactorList = new SimpleInteractorList();
+                result.setInteractionList(interactorList);
+                List<SimpleInteractor> interactors = new ArrayList<SimpleInteractor>();
+                interactorList.setInteractors(interactors); // Use this method to avoid a requirement in SimpleInteractor
+                                                            // accession cannot be null for equal check
+                for (String partner : accToPartner.get(acc)) {
+                    SimpleInteractor interactor = new SimpleInteractor();
+                    interactor.setAccession(partner);
+                    String geneName = uniprotIdToGeneName.get(partner);
+                    interactor.setGenename(geneName);
+                    interactors.add(interactor);
+                }
+            }
+            return results;
+        }
+    }
+    
+    private class GeneGeneInteractionQuerier implements LocalInteractionQuerier {
+        
+        public GeneGeneInteractionQuerier() {
+        }
+        
+        @Override
+        public QueryResults queryInteractionsFromLocalFile(Map<String, String> accessionToRefSeqId,
+                                                           File file) throws IOException {
+            // Want to map from protein accession to gene name based on Reactome database
+            Map<String, String> uniprotIdToGeneName = new HashMap<String, String>();
+            try {
+                for (String acc : accessionToRefSeqId.keySet()) {
+                    String dbId = accessionToRefSeqId.get(acc);
+                    GKInstance inst = dba.fetchInstance(new Long(dbId));
+                    if (inst == null)
+                        continue;
+                    String geneName = (String) inst.getAttributeValue(ReactomeJavaConstants.geneName);
+                    if (geneName == null)
+                        continue;
+                    uniprotIdToGeneName.put(acc, geneName);
+                }
+            }
+            catch(Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+            Map<String, Set<String>> accToPartner = new HashMap<String, Set<String>>();
+            Set<String> allGeneNames = new HashSet<String>();
+            // Start reading
             FileReader reader = new FileReader(file);
             BufferedReader br = new BufferedReader(reader);
-            String line = null;
-            Map<String, Set<String>> accToPartner = new HashMap<String, Set<String>>();
+            // The first line should be the file type
+            String line = br.readLine(); // Escape this line
             while ((line = br.readLine()) != null) {
                 String[] tokens = line.split("\t");
                 for (String acc : accessionToRefSeqId.keySet()) {
-                    String gene = proteinToGene.get(acc);
+                    String gene = uniprotIdToGeneName.get(acc);
                     if (gene == null)
                         continue;
-                    String partner = getInteractionPartner(gene, tokens);
+                    String partner = getInteractionPartner(gene,
+                                                           tokens);
                     if (partner == null)
                         continue;
                     Set<String> set = accToPartner.get(acc);
@@ -149,11 +334,15 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
                         accToPartner.put(acc, set);
                     }
                     set.add(partner);
+                    allGeneNames.add(partner);
                 }
             }
             br.close();
             reader.close();
+            Map<String, String> geneNameToUniProtId = queryGeneNameToUniProtId(dba,
+                                                                               allGeneNames);
             // Convert the map to results
+            QueryResults results = new QueryResults();
             for (String acc : accToPartner.keySet()) {
                 SimpleQueryResult result = new SimpleQueryResult();
                 results.addSimpleQueryResult(result);
@@ -167,35 +356,13 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
                 for (String partner : accToPartner.get(acc)) {
                     SimpleInteractor interactor = new SimpleInteractor();
                     interactor.setGenename(partner);
+                    String uniprotId = geneNameToUniProtId.get(partner);
+                    interactor.setAccession(uniprotId);
                     interactors.add(interactor);
                 }
             }
+            return results;
         }
-        catch(IOException e) {
-            logger.error(e.getMessage(), e);
-            results.setErrorMessage(e.getMessage());
-        }
-        return results;
     }
-    
-    private String getInteractionPartner(String query, String[] tokens) {
-        if (query.equals(tokens[0]))
-            return tokens[1];
-        if (query.equals(tokens[1]))
-            return tokens[0];
-        return null;
-    }
-
-    /**
-     * A local version for exporting a list of interactions based on whatever format
-     * is used.
-     */
-    @Override
-    public String exportInteractions(Map<String, String> accessionToRefEntId)
-            throws IOException {
-        
-        return super.exportInteractions(accessionToRefEntId);
-    }
-    
     
 }
