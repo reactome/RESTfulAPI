@@ -185,6 +185,8 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
         br.close();
         reader.close();
         LocalInteractionQuerier localQuerier = getLocalInteractionQuerier(fileType);
+        if (localQuerier == null)
+            return new QueryResults(); // Return an empty result instead of null to avoid a NullException.
         QueryResults results = localQuerier.queryInteractionsFromLocalFile(accessionToRefSeqId, 
                                                                            file);
         return results;
@@ -200,6 +202,8 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
             return new GeneGeneInteractionQuerier();
         if (type.equals("protein"))
             return new ProteinProteinInteractionQuerier();
+        if (type.equals("psimitab"))
+            return new PSIMITabInteractionQuerier();
         return null;
     }
     
@@ -225,6 +229,100 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
     private interface LocalInteractionQuerier {
         public QueryResults queryInteractionsFromLocalFile(Map<String, String> accessionToRefSeqId,
                                                            File file) throws IOException;
+    }
+    
+    private class PSIMITabInteractionQuerier implements LocalInteractionQuerier {
+        
+        public PSIMITabInteractionQuerier() {
+        }
+
+        @Override
+        public QueryResults queryInteractionsFromLocalFile(Map<String, String> accessionToRefSeqId,
+                                                           File file) throws IOException {
+            Map<String, SimpleInteractorList> accToInteractorList = new HashMap<String, SimpleInteractorList>();
+            FileReader fileReader = new FileReader(file);
+            BufferedReader br = new BufferedReader(fileReader);
+            String line = null;
+            Set<String> uniprotIds = new HashSet<String>();
+            while ((line = br.readLine()) != null) {
+                if (line.startsWith("#"))
+                    continue; // Comments
+                // Need to esacpe the first title line
+                if (line.startsWith("unique id A"))
+                    continue;
+                String[] tokens = line.split("\t");
+                for (String acc : accessionToRefSeqId.keySet()) {
+                    SimpleInteractor interactor = checkInteraction(acc, tokens);
+                    if (interactor == null)
+                        continue;
+                    SimpleInteractorList list = accToInteractorList.get(acc);
+                    if (list == null) {
+                        list = new SimpleInteractorList();
+                        accToInteractorList.put(acc, list);
+                    }
+                    list.add(interactor);
+                }
+            }
+            br.close();
+            fileReader.close();
+            // Convert the map to results
+            QueryResults results = new QueryResults();
+            for (String acc : accToInteractorList.keySet()) {
+                SimpleQueryResult result = new SimpleQueryResult();
+                results.addSimpleQueryResult(result);
+                result.setQuery(acc);
+                result.setRefSeqDBId(accessionToRefSeqId.get(acc));
+                SimpleInteractorList interactorList = accToInteractorList.get(acc);
+                result.setInteractionList(interactorList);
+            }
+            return results;
+        }
+        
+        /**
+         * Check if a parsed line from a PSI-MI tab contains interaction for a 
+         * passed protein UniProt accession. If true, a SimpleInterctor will be
+         * created. Otherwise, a null will be returned. The contents in the
+         * tokens should be based on the PSI-MI tab spec described in this page:
+         * http://code.google.com/p/psimi/wiki/PsimiTabFormat
+         * @param acc
+         * @param tokens
+         * @return
+         */
+        private SimpleInteractor checkInteraction(String acc,
+                                                  String[] tokens) {
+            // First id
+            String firstId = getFirstValue(tokens[0]);
+            // Second id
+            String secondId = getFirstValue(tokens[1]);
+            if (!firstId.equals(acc) && !secondId.equals(acc))
+                return null;
+            SimpleInteractor interactor = new SimpleInteractor();
+            if (firstId.equals(acc)) { // Second protein is the partner
+                interactor.setAccession(secondId);
+                // Get gene name
+                interactor.setGenename(getFirstValue(tokens[3]));
+            }
+            else { // First protein is the partner
+                interactor.setAccession(firstId);
+                interactor.setGenename(getFirstValue(tokens[2]));
+            }
+            // Check if there is a score
+            if (tokens.length >= 15 && tokens[14].length() > 0 && !tokens[14].equals("-")) {
+                String scoreText = getFirstValue(tokens[14]);
+                try {
+                    interactor.setScore(new Double(scoreText)); 
+                }
+                catch(NumberFormatException e) {} // Just ignore it
+            }
+            return interactor;
+        }
+        
+        private String getFirstValue(String token) {
+            String[] tokens = token.split("\\|");
+            int index = tokens[0].indexOf(":");
+            return tokens[0].substring(index + 1);
+        }
+        
     }
     
     private class ProteinProteinInteractionQuerier implements LocalInteractionQuerier {
