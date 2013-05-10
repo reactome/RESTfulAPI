@@ -594,6 +594,16 @@ public class RESTfulAPIResourceTest {
         text = callHttp(url, HTTP_GET, "");
         System.out.println("\nQuery interactions for " + dbId + " in " + rtn + " based on protein-protein interactions:");
         prettyPrintXML(text);
+        
+        // Test for PSI-MI tab
+        fileName = "FIsInMITTab.txt";
+        fileType = "psimitab";
+        rtn = uploadFile(fileName, fileType);
+        System.out.println("Return: " + rtn);
+        url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + rtn;
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nQuery interactions for " + dbId + " in " + rtn + " based on protein-protein interactions:");
+        prettyPrintXML(text);
     }
 
     private String uploadFile(String fileName, String fileType)
