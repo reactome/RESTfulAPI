@@ -496,6 +496,20 @@ public class RESTfulAPIResource {
     }
     
     /**
+     * Submit a PSICQUIC URL for later use. The submitted URL will be kept in the server-side
+     * for 24 hours only!
+     * @param url // url should be the sole content posted from the client
+     * @return
+     */
+    @POST
+    @Path("/submitNewPSICQUIC")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String submitNewPSICQUIC(String url) { 
+        CustomizedInteractionService service = new CustomizedInteractionService();
+        return service.registerUserPSICQUIC(url);
+    }
+    
+    /**
      * Get a list of ReferenceEntity for an Event or PE defined by its DB_ID.
      * @param dbId
      * @return
