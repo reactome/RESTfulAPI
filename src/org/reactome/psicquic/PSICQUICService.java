@@ -570,6 +570,14 @@ public class PSICQUICService {
 	        service.setFileName(name);
 	        return service;
 	    }
+	    else if (name.startsWith(CustomizedInteractionService.PSICQUIC_PREFIX)) { // A user submit PSICQUIC
+	        CustomizedInteractionService service = new CustomizedInteractionService();
+	        String url = service.getRegisteredPSICQUICUrl(name);
+	        if (url == null)
+	            return null;
+	        PSICQUICRetriever retriver = new PSICQUICRetriever(url);
+	        return retriver;
+	    }
 	    Service service = nameToServiceMap.get(name);
 	    if (service == null)
 	        return null;

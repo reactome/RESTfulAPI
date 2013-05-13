@@ -35,13 +35,37 @@ import org.reactome.psicquic.model.SimpleQueryResult;
  */
 public class CustomizedInteractionService extends PSICQUICRetriever {
     private final Logger logger = Logger.getLogger(CustomizedInteractionService.class);
+    // For user uploaded interaction files
     protected static final String FILE_PREFIX = "Interaction_File_";
+    // For user submitted PSICQUIC URL
+    protected static final String PSICQUIC_PREFIX = "USER_PSICQUIC_Service_";
     private String tempDir;
     private String fileName;
     // Database that is used to do gene name to protein accession mapping
     private MySQLAdaptor dba;
     
     public CustomizedInteractionService() {
+    }
+    
+    /**
+     * Use this method to register a user submitted PSICQUIC service.
+     * @param url the url for the user submitted PSICQUIC service
+     * @return a unique service name for the registered service.
+     */
+    public String registerUserPSICQUIC(String url) {
+        String id = createUniqueId();
+        String serviceName = PSICQUIC_PREFIX + id;
+        CustomizedPSIQUICRegistry.getRegistry().registry(serviceName, url);
+        return serviceName;
+    }
+    
+    /**
+     * Get a pre-registered PSICQUIC service URL.
+     * @param serviceName
+     * @return
+     */
+    public String getRegisteredPSICQUICUrl(String serviceName) {
+        return CustomizedPSIQUICRegistry.getRegistry().getRegistedPSICQUICUrl(serviceName);
     }
     
     /**
@@ -73,10 +97,15 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
      * @return
      */
     private File getFile() {
-        // A 128 bit value: there is almost no chance to have a duplicated value using this UUID
-        String uuid = UUID.randomUUID().toString();
+        String uuid = createUniqueId();
         File file = new File(tempDir, FILE_PREFIX + uuid);
         return file;
+    }
+
+    private String createUniqueId() {
+        // A 128 bit value: there is almost no chance to have a duplicated value using this UUID
+        String uuid = UUID.randomUUID().toString();
+        return uuid;
     }
     
     public void setTempDir(String dir) {
@@ -128,6 +157,7 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
         return new HashMap<String, String>();
     }
     
+    @SuppressWarnings("unchecked")
     private Map<String, String> queryUniProtIdToGeneName(MySQLAdaptor dba,
                                                          Collection<String> ids) {
         try {

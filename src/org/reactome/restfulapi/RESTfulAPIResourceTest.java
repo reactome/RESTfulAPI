@@ -565,6 +565,28 @@ public class RESTfulAPIResourceTest {
     }
     
     /**
+     * This method is used to test a new user-submit PSICQUIC service.
+     * @throws Exception
+     */
+    @Test
+    public void testNewPSICQUIC() throws Exception {
+        // Reactome FI service
+        String psicquicUrl = "http://www.ebi.ac.uk/Tools/webservices/psicquic/reactome-fi/webservices/current/search/";
+        String url = RESTFUL_URL + "submitNewPSICQUIC";
+        String rtn = callHttp(url, 
+                              HTTP_POST, 
+                              psicquicUrl);
+        System.out.println("registed name: " + rtn);
+        
+        // Test uploaded interaction
+        Long dbId = 66212L; // EWAS FASL
+        url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + rtn;
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nQuery interactions for " + dbId + " in " + rtn + " based on new PSICQUIC:");
+        prettyPrintXML(text);
+    }
+    
+    /**
      * This test method is based on this web page: 
      * http://puspendu.wordpress.com/2012/08/23/restful-webservice-file-upload-with-jersey/
      * @throws Exception
