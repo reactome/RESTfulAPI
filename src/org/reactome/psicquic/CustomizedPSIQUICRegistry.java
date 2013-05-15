@@ -4,6 +4,7 @@
  */
 package org.reactome.psicquic;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,14 +13,16 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 /**
- * This singleton class is used to regist a user submit PSICQUIC service. The user submitted
- * service will be kept for 24 hours since it was registered. After 24 hours it will be removed
+ * This singleton class is used to register a user submit PSICQUIC service and a user submit interaction file. 
+ * The user submitted interaction file or service will be kept for 24 hours since it was registered. After 24 hours it will be removed
  * automatically.
  * @author gwu
  *
  */
 public class CustomizedPSIQUICRegistry {
     private final Logger logger = Logger.getLogger(CustomizedPSIQUICRegistry.class);
+    // For test
+//    private final long CLEAN_UP_TIME = 60000; // 1 minute for test
     private final long CLEAN_UP_TIME = 24 * 60 * 60000; // Keep for 24 hours!
     private static CustomizedPSIQUICRegistry registry;
     // Registered service
@@ -71,14 +74,23 @@ public class CustomizedPSIQUICRegistry {
                 toBeRemoved.add(name);
         }
         logger.info("Delete registed services: " + toBeRemoved);
+        // Delete files
+        for (String name : toBeRemoved) {
+            String url = nameToUrl.get(name);
+            if (url.startsWith("http:"))
+                continue; // This is a URL
+            File file = new File(url);
+            if (file.exists())
+                file.delete();
+        }
         nameToUrl.keySet().removeAll(toBeRemoved);
         nameToTime.keySet().removeAll(toBeRemoved);
     }
     
     /**
-     * Register a PSIQUIC server with a unique name and its URL.
+     * Register a PSIQUIC service or a user uploaded file with a unique name and its URL.
      * @param serviceName
-     * @param url
+     * @param url a URL or a full path file name
      */
     public void registry(String serviceName,
                          String url) {

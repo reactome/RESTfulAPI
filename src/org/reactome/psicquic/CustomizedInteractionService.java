@@ -89,6 +89,10 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
         }
         fos.flush();
         fos.close();
+        // Register so that these saved file can be taken care in order to be
+        // removed
+        CustomizedPSIQUICRegistry.getRegistry().registry(file.getName(), 
+                                                         file.getAbsolutePath());
         return file.getName();
     }
     
