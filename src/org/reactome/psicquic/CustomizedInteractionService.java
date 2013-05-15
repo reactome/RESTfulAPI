@@ -4,10 +4,8 @@
  */
 package org.reactome.psicquic;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -23,6 +21,7 @@ import org.apache.log4j.Logger;
 import org.gk.model.GKInstance;
 import org.gk.model.ReactomeJavaConstants;
 import org.gk.persistence.MySQLAdaptor;
+import org.gk.util.FileUtilities;
 import org.reactome.psicquic.model.QueryResults;
 import org.reactome.psicquic.model.SimpleInteractor;
 import org.reactome.psicquic.model.SimpleInteractorList;
@@ -207,14 +206,13 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
     
     private LocalInteractionQuerier getLocalInteractionQuerier() throws IOException {
         File file = new File(tempDir, fileName);
-        FileReader reader = new FileReader(file);
-        BufferedReader br = new BufferedReader(reader);
+        FileUtilities fu = new FileUtilities();
+        fu.setInput(file.getAbsolutePath());
         // The first line should be the file type
-        String line = br.readLine();
+        String line = fu.readLine();
         String fileType = getFileType(line);
         // Get the file type
-        br.close();
-        reader.close();
+        fu.close();
         if (fileType.equals("gene"))
             return new GeneGeneInteractionQuerier();
         if (fileType.equals("protein"))
@@ -286,11 +284,11 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
         @Override
         public List<String> exportInteractions(Map<String, String> accessionToRefEntityId,
                                                File file) throws IOException {
-            FileReader fileReader = new FileReader(file);
-            BufferedReader br = new BufferedReader(fileReader);
+            FileUtilities fu = new FileUtilities();
+            fu.setInput(file.getAbsolutePath());
             String line = null;
             List<String> foundLines = new ArrayList<String>();
-            while ((line = br.readLine()) != null) {
+            while ((line = fu.readLine()) != null) {
                 if (shouldEscape(line))
                     continue;
                 String[] tokens = line.split("\t");
@@ -299,8 +297,7 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
                         foundLines.add(line);
                 }
             }
-            br.close();
-            fileReader.close();
+            fu.close();
             return foundLines;
         }
         
@@ -317,11 +314,11 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
         public QueryResults queryInteractionsFromLocalFile(Map<String, String> accessionToRefSeqId,
                                                            File file) throws IOException {
             Map<String, SimpleInteractorList> accToInteractorList = new HashMap<String, SimpleInteractorList>();
-            FileReader fileReader = new FileReader(file);
-            BufferedReader br = new BufferedReader(fileReader);
+            FileUtilities fu = new FileUtilities();
+            fu.setInput(file.getAbsolutePath());
             String line = null;
             Set<String> uniprotIds = new HashSet<String>();
-            while ((line = br.readLine()) != null) {
+            while ((line = fu.readLine()) != null) {
                 if (shouldEscape(line))
                     continue;
                 String[] tokens = line.split("\t");
@@ -337,8 +334,7 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
                     list.add(interactor);
                 }
             }
-            br.close();
-            fileReader.close();
+            fu.close();
             // Convert the map to results
             QueryResults results = new QueryResults();
             for (String acc : accToInteractorList.keySet()) {
@@ -425,10 +421,10 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
         public List<String> exportInteractions(Map<String, String> accessionToRefEntityId,
                                                File file) throws IOException {
             List<String> rtn = new ArrayList<String>();
-            FileReader fileReader = new FileReader(file);
-            BufferedReader br = new BufferedReader(fileReader);
+            FileUtilities fu = new FileUtilities();
+            fu.setInput(file.getAbsolutePath());
             String line = null;
-            while ((line = br.readLine()) != null) {
+            while ((line = fu.readLine()) != null) {
                 if (line.startsWith("#"))
                     continue;
                 String[] tokens = line.split("\t");
@@ -439,8 +435,7 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
                     rtn.add(line);
                 }
             }
-            br.close();
-            fileReader.close();
+            fu.close();
             return rtn;
         }
 
@@ -448,11 +443,11 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
         public QueryResults queryInteractionsFromLocalFile(Map<String, String> accessionToRefSeqId,
                                                            File file) throws IOException {
             Map<String, Set<String>> accToPartner = new HashMap<String, Set<String>>();
-            FileReader fileReader = new FileReader(file);
-            BufferedReader br = new BufferedReader(fileReader);
+            FileUtilities fu = new FileUtilities();
+            fu.setInput(file.getAbsolutePath());
             String line = null;
             Set<String> uniprotIds = new HashSet<String>();
-            while ((line = br.readLine()) != null) {
+            while ((line = fu.readLine()) != null) {
                 if (line.startsWith("#"))
                     continue; // Comments
                 String[] tokens = line.split("\t");
@@ -471,8 +466,7 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
                     uniprotIds.add(partner);
                 }
             }
-            br.close();
-            fileReader.close();
+            fu.close();
             Map<String, String> uniprotIdToGeneName = queryUniProtIdToGeneName(dba, uniprotIds);
             // Convert the map to results
             QueryResults results = new QueryResults();
@@ -510,10 +504,10 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
                                                File file) throws IOException {
             Map<String, String> uniprotAccToGeneName = createAccessionToGeneNameMap(accessionToRefEntityId);
             List<String> rtn = new ArrayList<String>();
-            FileReader fileReader = new FileReader(file);
-            BufferedReader br = new BufferedReader(fileReader);
-            String line = br.readLine(); // File type line, which should be escaped
-            while ((line = br.readLine()) != null) {
+            FileUtilities fu = new FileUtilities();
+            fu.setInput(file.getAbsolutePath());
+            String line = fu.readLine(); // File type line, which should be escaped
+            while ((line = fu.readLine()) != null) {
                 String[] tokens = line.split("\t");
                 for (String acc : accessionToRefEntityId.keySet()) {
                     String gene = uniprotAccToGeneName.get(acc);
@@ -526,8 +520,7 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
                     rtn.add(line);
                 }
             }
-            br.close();
-            fileReader.close();
+            fu.close();
             return rtn;
         }
 
@@ -538,11 +531,11 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
             Map<String, Set<String>> accToPartner = new HashMap<String, Set<String>>();
             Set<String> allGeneNames = new HashSet<String>();
             // Start reading
-            FileReader reader = new FileReader(file);
-            BufferedReader br = new BufferedReader(reader);
+            FileUtilities fu = new FileUtilities();
+            fu.setInput(file.getAbsolutePath());
             // The first line should be the file type
-            String line = br.readLine(); // Escape this line
-            while ((line = br.readLine()) != null) {
+            String line = fu.readLine(); // Escape this line
+            while ((line = fu.readLine()) != null) {
                 String[] tokens = line.split("\t");
                 for (String acc : accessionToRefSeqId.keySet()) {
                     String gene = uniprotAccToGeneName.get(acc);
@@ -561,8 +554,7 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
                     allGeneNames.add(partner);
                 }
             }
-            br.close();
-            reader.close();
+            fu.close();
             Map<String, String> geneNameToUniProtId = queryGeneNameToUniProtId(dba,
                                                                                allGeneNames);
             // Convert the map to results
