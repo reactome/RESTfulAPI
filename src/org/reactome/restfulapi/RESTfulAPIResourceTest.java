@@ -599,32 +599,31 @@ public class RESTfulAPIResourceTest {
         
         String rtn = uploadFile(fileName, fileType);
         System.out.println("Return: " + rtn);
+        testUploadInteractionFile(rtn);
         
+        // Test for protein-protein interactions
+        fileName = "FIs_Reactome.txt";
+        fileType = "protein";
+        rtn = uploadFile(fileName, fileType);
+        testUploadInteractionFile(rtn);
+        
+        // Test for PSI-MI tab
+        fileName = "FIsInMITTab.txt";
+        fileType = "psimitab";
+        rtn = uploadFile(fileName, fileType);
+        testUploadInteractionFile(rtn);
+    }
+
+    private void testUploadInteractionFile(String rtn) throws IOException, JDOMException {
         // Test uploaded interaction
         Long dbId = 66212L; // EWAS FASL
         String url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + rtn;
         String text = callHttp(url, HTTP_GET, "");
         System.out.println("\nQuery interactions for " + dbId + " in " + rtn + " based on gene-gene interactions:");
         prettyPrintXML(text);
-        
-        // Test for protein-protein interactions
-        fileName = "FIs_Reactome.txt";
-        fileType = "protein";
-        rtn = uploadFile(fileName, fileType);
-        System.out.println("Return: " + rtn);
-        url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + rtn;
+        System.out.println("\nExport interactions");
+        url = RESTFUL_URL + "exportPsiquicInteractions/" + dbId + "/" + rtn;
         text = callHttp(url, HTTP_GET, "");
-        System.out.println("\nQuery interactions for " + dbId + " in " + rtn + " based on protein-protein interactions:");
-        prettyPrintXML(text);
-        
-        // Test for PSI-MI tab
-        fileName = "FIsInMITTab.txt";
-        fileType = "psimitab";
-        rtn = uploadFile(fileName, fileType);
-        System.out.println("Return: " + rtn);
-        url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + rtn;
-        text = callHttp(url, HTTP_GET, "");
-        System.out.println("\nQuery interactions for " + dbId + " in " + rtn + " based on protein-protein interactions:");
         prettyPrintXML(text);
     }
 

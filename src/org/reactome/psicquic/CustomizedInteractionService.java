@@ -191,36 +191,10 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
      */
     @Override
     public QueryResults getDataFromRest(Map<String, String> accessionToRefSeqId) throws IOException {
-        // Want to map from protein accession to gene name based on Reactome database
-        Map<String, String> proteinToGene = new HashMap<String, String>();
-        try {
-            for (String acc : accessionToRefSeqId.keySet()) {
-                String dbId = accessionToRefSeqId.get(acc);
-                GKInstance inst = dba.fetchInstance(new Long(dbId));
-                if (inst == null)
-                    continue;
-                String geneName = (String) inst.getAttributeValue(ReactomeJavaConstants.geneName);
-                if (geneName == null)
-                    continue;
-                proteinToGene.put(acc, geneName);
-            }
-        }
-        catch(Exception e) {
-            logger.error(e.getMessage(), e);
-        }
-        // Support gene-gene interaction
-        File file = new File(tempDir, fileName);
-        FileReader reader = new FileReader(file);
-        BufferedReader br = new BufferedReader(reader);
-        // The first line should be the file type
-        String line = br.readLine();
-        String fileType = getFileType(line);
-        // Get the file type
-        br.close();
-        reader.close();
-        LocalInteractionQuerier localQuerier = getLocalInteractionQuerier(fileType);
+        LocalInteractionQuerier localQuerier = getLocalInteractionQuerier();
         if (localQuerier == null)
             return new QueryResults(); // Return an empty result instead of null to avoid a NullException.
+        File file = new File(tempDir, fileName);
         QueryResults results = localQuerier.queryInteractionsFromLocalFile(accessionToRefSeqId, 
                                                                            file);
         return results;
@@ -231,12 +205,21 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
         return line.substring(index + 1);
     }
     
-    private LocalInteractionQuerier getLocalInteractionQuerier(String type) {
-        if (type.equals("gene"))
+    private LocalInteractionQuerier getLocalInteractionQuerier() throws IOException {
+        File file = new File(tempDir, fileName);
+        FileReader reader = new FileReader(file);
+        BufferedReader br = new BufferedReader(reader);
+        // The first line should be the file type
+        String line = br.readLine();
+        String fileType = getFileType(line);
+        // Get the file type
+        br.close();
+        reader.close();
+        if (fileType.equals("gene"))
             return new GeneGeneInteractionQuerier();
-        if (type.equals("protein"))
+        if (fileType.equals("protein"))
             return new ProteinProteinInteractionQuerier();
-        if (type.equals("psimitab"))
+        if (fileType.equals("psimitab"))
             return new PSIMITabInteractionQuerier();
         return null;
     }
@@ -256,18 +239,78 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
     @Override
     public String exportInteractions(Map<String, String> accessionToRefEntId)
             throws IOException {
-        
         return super.exportInteractions(accessionToRefEntId);
     }
     
+    @Override
+    protected List<String> getInteractionListFromRest(Map<String, String> accessionToRefEntityId) throws IOException {
+        LocalInteractionQuerier querier = getLocalInteractionQuerier();
+        if (querier == null)
+            return new ArrayList<String>(); // A type is not supported
+        File file = new File(tempDir, fileName);
+        return querier.exportInteractions(accessionToRefEntityId, file);
+    }
+
+    /**
+     * A private interface for search and exporting interactions.
+     * @author gwu
+     *
+     */
     private interface LocalInteractionQuerier {
+        /**
+         * Query for a passed map from protein accession numbers to ReferenceEntity DB_IDs.
+         * @param accessionToRefSeqId
+         * @param file the temp file containing interactions
+         * @return
+         * @throws IOException
+         */
         public QueryResults queryInteractionsFromLocalFile(Map<String, String> accessionToRefSeqId,
                                                            File file) throws IOException;
+        
+        /**
+         * Export interactions into a list of lines.
+         * @param accessionList
+         * @param file
+         * @return
+         * @throws IOException
+         */
+        public List<String> exportInteractions(Map<String, String> accessionToRefEntityId,
+                                               File file) throws IOException;
     }
     
     private class PSIMITabInteractionQuerier implements LocalInteractionQuerier {
         
         public PSIMITabInteractionQuerier() {
+        }
+        
+        @Override
+        public List<String> exportInteractions(Map<String, String> accessionToRefEntityId,
+                                               File file) throws IOException {
+            FileReader fileReader = new FileReader(file);
+            BufferedReader br = new BufferedReader(fileReader);
+            String line = null;
+            List<String> foundLines = new ArrayList<String>();
+            while ((line = br.readLine()) != null) {
+                if (shouldEscape(line))
+                    continue;
+                String[] tokens = line.split("\t");
+                for (String acc : accessionToRefEntityId.keySet()) {
+                    if (containInteraction(acc, tokens))
+                        foundLines.add(line);
+                }
+            }
+            br.close();
+            fileReader.close();
+            return foundLines;
+        }
+        
+        private boolean shouldEscape(String line) {
+            if (line.startsWith("#"))
+                return true; // Comments
+            // Need to esacpe the first title line
+            if (line.startsWith("unique id A"))
+                return true;
+            return false;
         }
 
         @Override
@@ -279,10 +322,7 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
             String line = null;
             Set<String> uniprotIds = new HashSet<String>();
             while ((line = br.readLine()) != null) {
-                if (line.startsWith("#"))
-                    continue; // Comments
-                // Need to esacpe the first title line
-                if (line.startsWith("unique id A"))
+                if (shouldEscape(line))
                     continue;
                 String[] tokens = line.split("\t");
                 for (String acc : accessionToRefSeqId.keySet()) {
@@ -310,6 +350,23 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
                 result.setInteractionList(interactorList);
             }
             return results;
+        }
+        
+        /**
+         * Check if a parsed line has interaction for a passed UniProt accession.
+         * @param acc
+         * @param tokens
+         * @return
+         */
+        private boolean containInteraction(String acc,
+                                           String[] tokens) {
+            // First id
+            String firstId = getFirstValue(tokens[0]);
+            // Second id
+            String secondId = getFirstValue(tokens[1]);
+            if (firstId.equals(acc) || secondId.equals(acc))
+                return true;
+            return false;
         }
         
         /**
@@ -362,6 +419,29 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
     private class ProteinProteinInteractionQuerier implements LocalInteractionQuerier {
         
         public ProteinProteinInteractionQuerier() {
+        }
+        
+        @Override
+        public List<String> exportInteractions(Map<String, String> accessionToRefEntityId,
+                                               File file) throws IOException {
+            List<String> rtn = new ArrayList<String>();
+            FileReader fileReader = new FileReader(file);
+            BufferedReader br = new BufferedReader(fileReader);
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                if (line.startsWith("#"))
+                    continue;
+                String[] tokens = line.split("\t");
+                for (String acc : accessionToRefEntityId.keySet()) {
+                    String partner = getInteractionPartner(acc, tokens);
+                    if (partner == null)
+                        continue;
+                    rtn.add(line);
+                }
+            }
+            br.close();
+            fileReader.close();
+            return rtn;
         }
 
         @Override
@@ -423,26 +503,38 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
         public GeneGeneInteractionQuerier() {
         }
         
+        // TODO: This method and another queryInteractionsFromLocalFile() have some code duplicated. Probably a
+        // refactor is needed.
+        @Override
+        public List<String> exportInteractions(Map<String, String> accessionToRefEntityId,
+                                               File file) throws IOException {
+            Map<String, String> uniprotAccToGeneName = createAccessionToGeneNameMap(accessionToRefEntityId);
+            List<String> rtn = new ArrayList<String>();
+            FileReader fileReader = new FileReader(file);
+            BufferedReader br = new BufferedReader(fileReader);
+            String line = br.readLine(); // File type line, which should be escaped
+            while ((line = br.readLine()) != null) {
+                String[] tokens = line.split("\t");
+                for (String acc : accessionToRefEntityId.keySet()) {
+                    String gene = uniprotAccToGeneName.get(acc);
+                    if (gene == null)
+                        continue;
+                    String partner = getInteractionPartner(gene,
+                                                           tokens);
+                    if (partner == null)
+                        continue;
+                    rtn.add(line);
+                }
+            }
+            br.close();
+            fileReader.close();
+            return rtn;
+        }
+
         @Override
         public QueryResults queryInteractionsFromLocalFile(Map<String, String> accessionToRefSeqId,
                                                            File file) throws IOException {
-            // Want to map from protein accession to gene name based on Reactome database
-            Map<String, String> uniprotIdToGeneName = new HashMap<String, String>();
-            try {
-                for (String acc : accessionToRefSeqId.keySet()) {
-                    String dbId = accessionToRefSeqId.get(acc);
-                    GKInstance inst = dba.fetchInstance(new Long(dbId));
-                    if (inst == null)
-                        continue;
-                    String geneName = (String) inst.getAttributeValue(ReactomeJavaConstants.geneName);
-                    if (geneName == null)
-                        continue;
-                    uniprotIdToGeneName.put(acc, geneName);
-                }
-            }
-            catch(Exception e) {
-                logger.error(e.getMessage(), e);
-            }
+            Map<String, String> uniprotAccToGeneName = createAccessionToGeneNameMap(accessionToRefSeqId);
             Map<String, Set<String>> accToPartner = new HashMap<String, Set<String>>();
             Set<String> allGeneNames = new HashSet<String>();
             // Start reading
@@ -453,7 +545,7 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
             while ((line = br.readLine()) != null) {
                 String[] tokens = line.split("\t");
                 for (String acc : accessionToRefSeqId.keySet()) {
-                    String gene = uniprotIdToGeneName.get(acc);
+                    String gene = uniprotAccToGeneName.get(acc);
                     if (gene == null)
                         continue;
                     String partner = getInteractionPartner(gene,
@@ -494,6 +586,27 @@ public class CustomizedInteractionService extends PSICQUICRetriever {
                 }
             }
             return results;
+        }
+
+        private Map<String, String> createAccessionToGeneNameMap(Map<String, String> accessionToRefSeqId) {
+            // Want to map from protein accession to gene name based on Reactome database
+            Map<String, String> uniprotAccToGeneName = new HashMap<String, String>();
+            try {
+                for (String acc : accessionToRefSeqId.keySet()) {
+                    String dbId = accessionToRefSeqId.get(acc);
+                    GKInstance inst = dba.fetchInstance(new Long(dbId));
+                    if (inst == null)
+                        continue;
+                    String geneName = (String) inst.getAttributeValue(ReactomeJavaConstants.geneName);
+                    if (geneName == null)
+                        continue;
+                    uniprotAccToGeneName.put(acc, geneName);
+                }
+            }
+            catch(Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+            return uniprotAccToGeneName;
         }
     }
     
