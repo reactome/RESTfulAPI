@@ -103,13 +103,13 @@ public class PSICQUICRetriever {
         return new QueryResults(sqrList);
     }
     
-    private List<String> getInteractionListFromRest(Set<String> accessionList) throws IOException {
+    protected List<String> getInteractionListFromRest(Map<String, String> accessionToRefEntityId) throws IOException {
         //if the object contains USER data, this method will return that without
         //querying any service and without taken into account the interaction list
         if (this.userData!=null) 
             return this.userData;
-        
-        String restQuery = StringUtils.join(accessionList, " OR ");
+        Set<String> accessions = accessionToRefEntityId.keySet();
+        String restQuery = StringUtils.join(accessions, " OR ");
         //restQuery = "identifier:(" + restQuery + ")";
         
         //		System.err.println("PSICQUICRetriever.getInteractionListFromRest: Service Name: " + this.serviceName);
@@ -174,7 +174,8 @@ public class PSICQUICRetriever {
      * @throws IOException
      */
     public String exportInteractions(Map<String, String> accessionToRefEntId) throws IOException {
-        List<String> lines = getInteractionListFromRest(accessionToRefEntId.keySet());
+        List<String> lines = getInteractionListFromRest(accessionToRefEntId);
         return StringUtils.join(lines, '\n');
     }
+    
 }
