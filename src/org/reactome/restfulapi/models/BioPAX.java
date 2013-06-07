@@ -1,9 +1,12 @@
 package org.reactome.restfulapi.models;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * Author: Stanislav Palatnik
  * Date: 8/10/11
  */
+@XmlRootElement
 class  BioPAX {
     private long dbID;
     private String biopaxxml;

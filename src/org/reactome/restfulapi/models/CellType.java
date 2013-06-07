@@ -1,21 +1,20 @@
 /*
- * Created on Jun 26, 2012
+ * Created on Jun 7, 2013
  *
  */
 package org.reactome.restfulapi.models;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-
 /**
  * @author gwu
  *
  */
 @XmlRootElement
-public class Disease extends ExternalOntology {
-
-    public Disease() {
+public class CellType extends ExternalOntology {
+    
+    public CellType() {
+        
     }
-
     
 }
