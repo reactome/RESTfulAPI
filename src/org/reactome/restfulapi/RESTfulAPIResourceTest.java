@@ -341,6 +341,18 @@ public class RESTfulAPIResourceTest {
         System.out.println("Output for a reaction having regulators:");
         prettyPrintXML(text);
         
+        // Check a reaction with entityFunctionalStatus and entityOnOtherCell
+        url = RESTFUL_URL + "queryById/ReactionlikeEvent/2220944";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("Output for a reaction having entityFunctionalStauts and entityOnOtherCell:");
+        prettyPrintXML(text);
+        
+        // Check EntityFunctionalStatus
+        url = RESTFUL_URL + "queryById/EntityFunctionalStatus/2362350";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("Output for an EntityFunctionalStatus:");
+        prettyPrintXML(text);
+        
         // Check for InstanceEdit
 //        String url = RESTFUL_URL + "querybyid/InstanceEdit/168269";
 //        String text = callHttp(url, HTTP_GET, url);
@@ -433,6 +445,16 @@ public class RESTfulAPIResourceTest {
         prettyPrintXML(text);
         long time2 = System.currentTimeMillis();
         System.out.println("Time: " + (time2 - time1));
+        // Check entityFunctionalStatus
+        url = RESTFUL_URL + "detailedView/DatabaseObject/2219536";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput from detailedView:");
+        prettyPrintXML(text);
+        // Check entityOnOtherCells
+        url = RESTFUL_URL + "detailedView/DatabaseObject/2220944";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput from detailedView:");
+        prettyPrintXML(text);
     }
     
 //    
