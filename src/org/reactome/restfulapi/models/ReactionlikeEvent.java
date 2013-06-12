@@ -19,6 +19,7 @@ public class ReactionlikeEvent extends Event {
     private List<PhysicalEntity> requiredInputComponent;
     private ReactionlikeEvent hasMember;
     private List<CatalystActivity> catalystActivity;
+    private List<ReactionlikeEvent> normalReaction;
     private List<EntityFunctionalStatus> entityFunctionalStatus;
 
     public List<PhysicalEntity> getInput() {
@@ -81,6 +82,14 @@ public class ReactionlikeEvent extends Event {
         this.isChimeric = isChimeric;
     }
 
+	public List<ReactionlikeEvent> getNormalReaction() {
+		return this.normalReaction;
+	}
+
+	public void setNormalReaction(List<ReactionlikeEvent> normalReaction) {
+		this.normalReaction = normalReaction;
+	}
+
     public List<EntityFunctionalStatus> getEntityFunctionalStatus() {
         return entityFunctionalStatus;
     }
@@ -88,5 +97,4 @@ public class ReactionlikeEvent extends Event {
     public void setEntityFunctionalStatus(List<EntityFunctionalStatus> entityFunctionalStatus) {
         this.entityFunctionalStatus = entityFunctionalStatus;
     }
-
 }
