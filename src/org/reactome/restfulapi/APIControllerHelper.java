@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -497,6 +498,16 @@ public class APIControllerHelper {
             for (GKInstance comp : components) {
                 PhysicalEntity pe = (PhysicalEntity) converter.createObject(comp);
                 rtn.add(pe);
+                // Export referenceEntity if available
+                if (comp.getSchemClass().isValidAttribute(ReactomeJavaConstants.referenceEntity)) {
+                    GKInstance refEnt = (GKInstance) comp.getAttributeValue(ReactomeJavaConstants.referenceEntity);
+                    if (refEnt != null) {
+                        ReferenceEntity refEntInst = (ReferenceEntity) converter.createObject(refEnt);
+                        Method method = ReflectionUtility.getNamedMethod(pe, "setReferenceEntity");
+                        if (method != null)
+                            method.invoke(pe, refEntInst);
+                    }
+                }
             }
             return rtn;
         }
