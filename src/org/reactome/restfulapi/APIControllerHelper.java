@@ -387,10 +387,9 @@ public class APIControllerHelper {
             } else {
                 throw new Exception("Unsupported Media Type");
             }
-        } catch (QueryNotSupportedException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
+        }
+        catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
         return rtn;
     }
