@@ -6,18 +6,15 @@ import java.util.List;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.reactome.restfulapi.details.pmolecules.types.MoleculeType;
 
+@XmlRootElement
 public class ResultContainer {
 	
-	/**  */
 	private Boolean success = true;
-	
-	/**  */
 	private String errorMessage;
-	
-	/**  */
 	private List<MoleculeList> molecules = new ArrayList<MoleculeList>();
 		
 	public ResultContainer() {
@@ -30,12 +27,11 @@ public class ResultContainer {
 		this.errorMessage = errorMessage;
 	}
 	
-	@XmlElement(type=Boolean.class)
+	@XmlElement
 	public Boolean getSuccess() {
 		return this.success;
 	}
 
-	@XmlElement
 	public String getErrorMessage() {
 		return errorMessage;
 	}
