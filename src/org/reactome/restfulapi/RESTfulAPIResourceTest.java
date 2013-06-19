@@ -124,6 +124,13 @@ public class RESTfulAPIResourceTest {
         String text = callHttp(url, HTTP_POST, genes);
         decodeInBase64(text, "HighlightG2_MTransition.pdf");
         
+        // Some users' list returns 204 error code
+        url = RESTFUL_URL + "highlightPathwayDiagram/3449037/xml";
+        genes = "LEFTY1,LEFTY2,TDGF1,NODAL";
+        text = callHttp(url, HTTP_POST, genes);
+        System.out.println(text);
+//        decodeInBase64(text, "Test.pdf");
+        
         //        // Test for a gene list in a file
         //        String dir = "/Users/gwu/Documents/wgm/work/ctbioscience/";
         //        String fileName = dir + "CellCycleCheckpointsGenes.txt";
@@ -533,7 +540,9 @@ public class RESTfulAPIResourceTest {
                 2658043L,
                 375987L, //ABL1
                 418812L, // CandidateSet DAPKs [Cytosol]
-                418812L
+                418812L,
+                418842L, // Complex: Unc5B with death domain:DAPK
+                169911L // Pathway: Regulation of Apoptosis
         };
         String[] serviceNames = new String[] {
                 "IntAct",
@@ -543,10 +552,12 @@ public class RESTfulAPIResourceTest {
                 "MatrixDB",
                 "ChEMBL",
                 "IntAct",
-                "MatrixDB"
+                "MatrixDB",
+                "IntAct",
+                "IntAct"
         };
         for (int i = 0; i < dbIds.length; i++) {
-            if (i != 5 && i != 6)
+            if (i != (dbIds.length - 1))
                 continue;
             Long dbId = dbIds[i];
             String serviceName = serviceNames[i];
@@ -565,6 +576,7 @@ public class RESTfulAPIResourceTest {
                 209799L, // SmallMolecule: Cu for MatrixDB.
                 2658043L,
                 375987L, //ABL1
+                169911L // Pathway: Regulation of Apoptosis
         };
         String[] serviceNames = new String[] {
                 "IntAct",
@@ -572,10 +584,11 @@ public class RESTfulAPIResourceTest {
                 //serviceName = "MINT";
                 "MatrixDB",
                 "MatrixDB",
-                "ChEMBL"
+                "ChEMBL",
+                "IntAct"
         };
         for (int i = 0; i < dbIds.length; i++) {
-            if (i != 0)
+            if (i != dbIds.length - 1)
                 continue;
             Long dbId = dbIds[i];
             String serviceName = serviceNames[i];
@@ -725,6 +738,7 @@ public class RESTfulAPIResourceTest {
             return readMethodReturn(is);
         } else {
             System.err.println("Error from server: " + method.getResponseBodyAsString());
+            System.out.println("Response code: " + responseCode);
             throw new IllegalStateException(method.getResponseBodyAsString());
         }
     }
