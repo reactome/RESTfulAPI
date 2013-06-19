@@ -9,13 +9,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.gk.model.GKInstance;
+import org.gk.model.InstanceUtilities;
 import org.gk.model.ReactomeJavaConstants;
 import org.gk.persistence.MySQLAdaptor;
 import org.hupo.psi.mi.psicquic.registry.ServiceType;
@@ -227,7 +227,8 @@ public class PSICQUICService {
 	    try {
 	        GKInstance dbObj = dba.fetchInstance(dbId);
 	        // Currently it support PhysicalEntity only
-	        if (dbObj.getSchemClass().isa(ReactomeJavaConstants.PhysicalEntity)) {
+	        if (dbObj.getSchemClass().isa(ReactomeJavaConstants.PhysicalEntity) ||
+	            dbObj.getSchemClass().isa(ReactomeJavaConstants.Event)) {
 	            Set<GKInstance> refSeqs = queryReferenceEntities(dbObj);
 	            Map<String, String> accessionToRefSeqId = getAccToRefIdMapping(refSeqs);
 	            PSICQUICRetriever pr = getPISCQUICRetrieverFromName(serviceName);
@@ -243,12 +244,19 @@ public class PSICQUICService {
 	    }
 	}
 	
+	/**
+	 * Export protein-protein interactions as a single String.
+	 * @param dbId
+	 * @param serviceName
+	 * @return
+	 */
 	public String exportInteractions(Long dbId,
 	                                 String serviceName) {
 	    try {
 	        GKInstance dbObj = dba.fetchInstance(dbId);
             // Currently it support PhysicalEntity only
-            if (dbObj.getSchemClass().isa(ReactomeJavaConstants.PhysicalEntity)) {
+            if (dbObj.getSchemClass().isa(ReactomeJavaConstants.PhysicalEntity) ||
+                dbObj.getSchemClass().isa(ReactomeJavaConstants.Event)) {
                 Set<GKInstance> refSeqs = queryReferenceEntities(dbObj);
                 Map<String, String> accessionToRefSeqId = getAccToRefIdMapping(refSeqs);
                 PSICQUICRetriever pr = getPISCQUICRetrieverFromName(serviceName);
@@ -262,53 +270,30 @@ public class PSICQUICService {
 	}
 	
 	/**
-	 * A helper method to grep all ReferenceEntities for a PhysicalEntity (any type).
-	 * @param pe
+	 * Get a set of ReferenceEntities contained by an Event (Pathway or ReactionLikeEvent) or
+	 * a PhysicalEntity.
+	 * @param inst
 	 * @return
 	 * @throws Exception
 	 */
-	@SuppressWarnings("unchecked")
-	private Set<GKInstance> queryReferenceEntities(GKInstance pe) throws Exception {
-	    Set<GKInstance> rtn = new HashSet<GKInstance>();
-	    String[] attributes = new String[] {
-	            ReactomeJavaConstants.hasMember,
-	            ReactomeJavaConstants.hasCandidate,
-	            ReactomeJavaConstants.hasCandidate,
-	            ReactomeJavaConstants.referenceEntity
-	    };
-	    int preSize = rtn.size();
-	    Set<GKInstance> checking = new HashSet<GKInstance>();
-	    checking.add(pe);
-	    Set<GKInstance> next = new HashSet<GKInstance>();
-	    while (true) {
-	        preSize = rtn.size();
-	        for (GKInstance inst : checking) {
-	            rtn.add(inst);
-	            for (String att : attributes) {
-	                if (!inst.getSchemClass().isValidAttribute(att))
-	                    continue;
-	                List<GKInstance> values = inst.getAttributeValuesList(att);
-	                if (values != null && values.size() > 0)
-	                    next.addAll(values);
-	            }
+	private Set<GKInstance> queryReferenceEntities(GKInstance inst) throws Exception {
+	    if (inst.getSchemClass().isa(ReactomeJavaConstants.PhysicalEntity))
+	        return InstanceUtilities.grepReferenceEntitiesForPE(inst);
+	    if (inst.getSchemClass().isa(ReactomeJavaConstants.Event)) {
+	        Set<GKInstance> pes = InstanceUtilities.grepPathwayParticipants(inst);
+	        Set<GKInstance> set = new HashSet<GKInstance>();
+	        for (GKInstance pe : pes) {
+	            // Support EWASes only
+	            if (pe.getSchemClass().isa(ReactomeJavaConstants.EntityWithAccessionedSequence))
+	                set.addAll(InstanceUtilities.grepReferenceEntitiesForPE(pe));
 	        }
-	        checking.clear();
-	        checking.addAll(next);
-	        next.clear();
-	        if (preSize == rtn.size())
-	            break;
+	        return set;
 	    }
-	    // Do a little filtering
-	    for (Iterator<GKInstance> it = rtn.iterator(); it.hasNext();) {
-	        GKInstance inst = it.next();
-	        if (inst.getSchemClass().isa(ReactomeJavaConstants.ReferenceEntity))
-	            continue;
-	        it.remove();
-	    }
-	    return rtn;
+	    return new HashSet<GKInstance>(); // Return an empty HashSet to avoid an null exception.
 	}
+
 	
-//	
+	//	
 //	/**
 //	 * 
 //	 * User has requested export of raw PSIMI-TAB data of all proteins interaction
@@ -472,30 +457,6 @@ public class PSICQUICService {
 		return accToRefidMap;
     }
     
-//    /*
-//	 * dbid is pathway dbid.
-//	 */
-//	private List getAccessionsInPathway(ReactomeDatabaseTools mainReactomeDatabaseTools, String dbId){
-//		List accList = null;
-//		try {
-//			accList = mainReactomeDatabaseTools.getPathwayProteinAccessions(dbId);
-//		} catch (Exception e) {
-//			System.err.println(e);
-//		}
-//		return accList;
-//	}
-//    
-//    private List getRefIdsPathway(ReactomeDatabaseTools mainReactomeDatabaseTools, String dbId){
-//    	List refList = null;
-//		try {
-//			refList = mainReactomeDatabaseTools.getPathwayProteinRefIds(dbId);
-//		} catch (Exception e) {
-//			System.err.println(e);
-//		}
-//		return refList;
-//	}
-    
-	
 	/**
 	 * Get a list of registered PSICQUIC services from the EBI service site.
 	 * @throws PsicquicRegistryClientException
