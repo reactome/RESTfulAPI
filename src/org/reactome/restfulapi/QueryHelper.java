@@ -18,8 +18,6 @@ import org.gk.persistence.MySQLAdaptor;
 import org.gk.schema.SchemaClass;
 import org.junit.Test;
 import org.reactome.restfulapi.models.Event;
-import org.reactome.restfulapi.models.ListOfShellInstances;
-import org.reactome.restfulapi.models.ShellInstance;
 
 /**
  * This class is used to handle some complicated query for CaBioDomainService class.
@@ -40,6 +38,51 @@ public class QueryHelper {
     
     public void setConverter(ReactomeToRESTfulAPIConverter converter) {
         this.converter = converter;
+    }
+    
+    /**
+     * Query Event instances by names and species. This method uses a "LIKE" search.
+     * @param pattern
+     * @param species
+     * @return
+     * @throws Exception
+     */
+    public List<GKInstance> queryByNameAndSpecies(String clsName,
+                                                  String pattern,
+                                                  String speciesName) throws Exception {
+        SchemaClass cls = dba.getSchema().getClassByName(clsName);
+        // If name is a valid attribute, use name. Otherwise, use _displayName
+        String att = null;
+        if (cls.isValidAttribute(ReactomeJavaConstants.name))
+            att = ReactomeJavaConstants.name;
+        else
+            att = ReactomeJavaConstants._displayName;
+        Collection<GKInstance> instances = dba.fetchInstanceByAttribute(clsName, 
+                                                                        att, 
+                                                                        "like", 
+                                                                        "%" + pattern + "%");
+        if (instances == null)
+            instances = new ArrayList<GKInstance>();
+        // Do a filter if speciesName is provided and species is a valid name
+        if (speciesName != null && speciesName.length() > 0 && cls.isValidAttribute(ReactomeJavaConstants.species)) {
+            boolean remove = true;
+            for (Iterator<GKInstance> it = instances.iterator(); it.hasNext();) {
+                GKInstance inst = it.next();
+                remove = true;
+                List<GKInstance> species = inst.getAttributeValuesList(ReactomeJavaConstants.species);
+                if (species != null && species.size() > 0) {
+                    for (GKInstance tmp : species) {
+                        if (tmp.getDisplayName().equalsIgnoreCase(speciesName)) {
+                            remove = false;
+                            break;
+                        }
+                    }
+                }
+                if (remove)
+                    it.remove();
+            }
+        }
+        return (instances instanceof List) ? (List<GKInstance>)instances : new ArrayList<GKInstance>(instances);
     }
 
     public List<GKInstance> query(String className,
@@ -162,6 +205,21 @@ public class QueryHelper {
                 System.out.print(inst.getDisplayName() + "||");
             System.out.println();
         }
+    }
+    
+    @Test
+    public void testQueryByNameAndSpecies() throws Exception {
+        MySQLAdaptor dba = new MySQLAdaptor("localhost", 
+                                            "gk_current_ver42", 
+                                            "root",
+                                            "macmysql01");
+        setMySQLAdaptor(dba);
+        Collection<GKInstance> c = queryByNameAndSpecies(ReactomeJavaConstants.Event,
+                                                         "Apoptosis",
+                                                         "Homo sapiens");
+        System.out.println("Total instances: " + c.size());
+        for (GKInstance inst : c)
+            System.out.println(inst);
     }
 
 }
