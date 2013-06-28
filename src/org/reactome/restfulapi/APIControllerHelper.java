@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -15,7 +14,6 @@ import java.util.*;
 import javax.imageio.ImageIO;
 
 import org.apache.log4j.Logger;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.gk.graphEditor.PathwayEditor;
 import org.gk.model.GKInstance;
 import org.gk.model.InstanceUtilities;
@@ -538,27 +536,40 @@ public class APIControllerHelper {
     public List<DatabaseObject> listByQuery(String className, 
                                             String propertyName, 
                                             String propertyValue) {
-        //currenty this only returns proxies
-        List<DatabaseObject> rtn = new ArrayList<DatabaseObject>();
-        List<GKInstance> instances;
-        StringWriter sw = new StringWriter();
-        ObjectMapper mapper = new ObjectMapper();
         try {
-            instances = queryHelper.query(className,
+            List<GKInstance> instances = queryHelper.query(className,
                                           propertyName,
                                           propertyValue);
-            if( instances.size() == 0)
-                return rtn;
-            
-            for (GKInstance gkInstance : instances) {
-                DatabaseObject converted = (DatabaseObject) converter.createObject(gkInstance);
-                rtn.add(converted);
-            }
+            return convertInstanceList(instances);
         } 
         catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
+        return new ArrayList<DatabaseObject>();
+    }
+
+    private List<DatabaseObject> convertInstanceList(List<GKInstance> instances) throws Exception {
+        List<DatabaseObject> rtn = new ArrayList<DatabaseObject>();
+        for (GKInstance gkInstance : instances) {
+            DatabaseObject converted = (DatabaseObject) converter.createObject(gkInstance);
+            rtn.add(converted);
+        }
         return rtn;
+    }
+    
+    public List<DatabaseObject> listByNameAndSpecies(String className,
+                                                     String containedName,
+                                                     String species) {
+        try {
+            List<GKInstance> instances = queryHelper.queryByNameAndSpecies(className, 
+                                                                           containedName, 
+                                                                           species);
+            return convertInstanceList(instances);
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return new ArrayList<DatabaseObject>();
     }
     
     /**

@@ -206,13 +206,36 @@ public class RESTfulAPIResource {
      */
     @POST
     @Path("/listByQuery/{className}")
-    public List<DatabaseObject> listByQuery(@PathParam("className") final String className,
+    public List<DatabaseObject> listByQuery(@PathParam("className") String className,
                                             String post) {
         //parse POST query for key field and key values
         StringTokenizer keyvalues = new StringTokenizer(post, "=");
         String propertyField = keyvalues.nextToken();
         String propertyValue = keyvalues.nextToken();
         return service.listByQuery(className, propertyField, propertyValue);
+    }
+    
+    /**
+     * Query an Event object based on name and a species. A pattern match will be done by
+     * this method. The species value can be empty.
+     * @return
+     */
+    @GET
+    @Path("/listByName/{className}/{containedName}/{species}")
+    public List<DatabaseObject> listByNameAndSpecies(@PathParam("className") String className,
+                                                     @PathParam("containedName") String containedName,
+                                                     @PathParam("species") String species) {
+        try {
+            String name = URLDecoder.decode(containedName, "UTF-8");
+            String speciesName = URLDecoder.decode(species, "UTF-8");
+            if (speciesName.equalsIgnoreCase("null"))
+                speciesName = null;
+            return service.listByNameAndSpecies(className, name, speciesName);
+        }
+        catch(UnsupportedEncodingException e) {
+            logger.error(e.getMessage(), e);
+            return null;
+        }
     }
 
     /**
