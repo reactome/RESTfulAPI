@@ -124,11 +124,11 @@ public class RESTfulAPIResourceTest {
         String text = callHttp(url, HTTP_POST, genes);
         decodeInBase64(text, "HighlightG2_MTransition.pdf");
         
-        // Some users' list returns 204 error code
-        url = RESTFUL_URL + "highlightPathwayDiagram/3449037/xml";
-        genes = "LEFTY1,LEFTY2,TDGF1,NODAL";
-        text = callHttp(url, HTTP_POST, genes);
-        System.out.println(text);
+//        // Some users' list returns 204 error code
+//        url = RESTFUL_URL + "highlightPathwayDiagram/3449037/xml";
+//        genes = "LEFTY1,LEFTY2,TDGF1,NODAL";
+//        text = callHttp(url, HTTP_POST, genes);
+//        System.out.println(text);
 //        decodeInBase64(text, "Test.pdf");
         
         //        // Test for a gene list in a file
@@ -405,6 +405,24 @@ public class RESTfulAPIResourceTest {
 //        text = callHttp(url, HTTP_POST, "species=3042819");
         System.out.println("\nOutput from listByQuery for species=48887:\n");
         prettyPrintXML(text);
+        
+        url = RESTFUL_URL + "listByQuery/PathwayDiagram";
+        text = callHttp(url, HTTP_POST, "representedPathway=169911");
+        System.out.println("\nOutput from listByQuery for pathway=169911:\n");
+        prettyPrintXML(text);
+    }
+    
+    @Test
+    public void testListByName() throws Exception {
+        String url = RESTFUL_URL + "listByName/Event/Apoptosis/Homo+sapiens";
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("Query for Apoptosis for human");
+        prettyPrintXML(text);
+        
+        url = RESTFUL_URL + "listByName/Event/Apoptosis/null";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("Query for Apoptosis for all species");
+        prettyPrintXML(text);
     }
 
     @Test
@@ -459,6 +477,11 @@ public class RESTfulAPIResourceTest {
         prettyPrintXML(text);
         // Check entityOnOtherCells
         url = RESTFUL_URL + "detailedView/DatabaseObject/2220944";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput from detailedView:");
+        prettyPrintXML(text);
+        // Check a pathway
+        url = RESTFUL_URL + "detailedView/DatabaseObject/109581";
         text = callHttp(url, HTTP_GET, "");
         System.out.println("\nOutput from detailedView:");
         prettyPrintXML(text);
