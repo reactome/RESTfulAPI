@@ -216,7 +216,7 @@ public class RESTfulAPIResource {
     }
     
     /**
-     * Query an Event object based on name and a species. A pattern match will be done by
+     * Query an Event object based on name and a species. A pattern match will be performed by
      * this method. The species value can be empty.
      * @return
      */
@@ -233,6 +233,27 @@ public class RESTfulAPIResource {
             return service.listByNameAndSpecies(className, name, speciesName);
         }
         catch(UnsupportedEncodingException e) {
+            logger.error(e.getMessage(), e);
+            return null;
+        }
+    }
+    
+    /**
+     * This method is used to query an Event's species and its summation objects for a list
+     * of Event ids by using a POST method.
+     */
+    @POST
+    @Path("/queryEventSpeciesAndSummation")
+    public List<Event> queryEventSpeciesAndSummation(String query) {
+        String[] tokens = query.split(",");
+        List<Long> dbIds = new ArrayList<Long>();
+        for (String token : tokens)
+            dbIds.add(new Long(token));
+        try {
+            List<Event> events = service.queryEventSpeciesAndSummation(dbIds);
+            return events;
+        }
+        catch(Exception e) {
             logger.error(e.getMessage(), e);
             return null;
         }

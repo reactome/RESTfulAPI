@@ -30,6 +30,7 @@ import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.gk.util.FileUtilities;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
@@ -49,7 +50,7 @@ public class RESTfulAPIResourceTest {
     private final static String HTTP_POST = "Post";
 //    private final static String RESTFUL_URL = "http://www.reactome.org:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
     private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
@@ -422,6 +423,31 @@ public class RESTfulAPIResourceTest {
         url = RESTFUL_URL + "listByName/Event/Apoptosis/null";
         text = callHttp(url, HTTP_GET, "");
         System.out.println("Query for Apoptosis for all species");
+        prettyPrintXML(text);
+    }
+    
+    @Test
+    public void testqueryEventNameAndSummation() throws Exception {
+        // Get a list of events first
+        String url = RESTFUL_URL + "listByName/Event/Apoptosis/null";
+        String text = callHttp(url, HTTP_GET, "");
+        System.out.println("Query for Apoptosis for all species");
+        prettyPrintXML(text);
+        // Query event's species and summation.
+        SAXBuilder builder = new SAXBuilder();
+        StringReader reader = new StringReader(text);
+        Document document = builder.build(reader);
+        Element root = document.getRootElement();
+        StringBuilder ids = new StringBuilder();
+        for (Object child : root.getChildren()) {
+            Element childElm = (Element) child;
+            String dbId = childElm.getChildText("dbId");
+            ids.append(dbId).append(",");
+        }
+        ids.deleteCharAt(ids.length() - 1);
+        url = RESTFUL_URL + "queryEventSpeciesAndSummation";
+        text = callHttp(url, HTTP_POST, ids.toString());
+        System.out.println("\nQuery for species and summation for Apoptosis:\n");
         prettyPrintXML(text);
     }
 
