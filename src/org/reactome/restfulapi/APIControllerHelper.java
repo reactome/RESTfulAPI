@@ -36,15 +36,7 @@ import org.reactome.biopax.ReactomeToBioPAX3XMLConverter;
 import org.reactome.biopax.ReactomeToBioPAXXMLConverter;
 import org.reactome.restfulapi.details.pmolecules.ParticipatingMolecules;
 import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
-import org.reactome.restfulapi.models.Complex;
-import org.reactome.restfulapi.models.DatabaseObject;
-import org.reactome.restfulapi.models.Event;
-import org.reactome.restfulapi.models.Pathway;
-import org.reactome.restfulapi.models.PhysicalEntity;
-import org.reactome.restfulapi.models.PhysicalToReferenceEntityMap;
-import org.reactome.restfulapi.models.Publication;
-import org.reactome.restfulapi.models.ReferenceEntity;
-import org.reactome.restfulapi.models.Species;
+import org.reactome.restfulapi.models.*;
 
 import com.googlecode.gwt.crypto.gwtx.io.IOException;
 import com.sun.jersey.spi.resource.Singleton;
@@ -198,6 +190,52 @@ public class APIControllerHelper {
             logger.error(e.getMessage(), e);
         }
         return new ArrayList<PhysicalToReferenceEntityMap>();
+    }
+    
+    /**
+     * This method is used to query species and filled summation instances for a list of
+     * event ids.
+     * @param eventIds
+     * @return
+     * @throws Exception
+     */
+    public List<Event> queryEventSpeciesAndSummation(List<Long> eventIds) throws Exception {
+        List<Event> events = new ArrayList<Event>();
+        for (Long eventId : eventIds) {
+            GKInstance event = dba.fetchInstance(eventId);
+            if (event == null) {
+                logger.error(eventId + " cannot be found!");
+                continue;
+            }
+            if (!event.getSchemClass().isa(ReactomeJavaConstants.Event)) {
+                logger.error(eventId + " is not an Event!");
+                continue;
+            }
+            Event eventObj = (Event) converter.createObject(event);
+            events.add(eventObj);
+            // Attach species
+            List<GKInstance> species = event.getAttributeValuesList(ReactomeJavaConstants.species);
+            if (species != null && species.size() > 0) {
+                List<DatabaseObject> dbObjList = convertInstanceList(species);
+                List<Species> speciesList = new ArrayList<Species>(dbObjList.size());
+                for (DatabaseObject dbObj : dbObjList) {
+                    if (dbObj instanceof Species)
+                        speciesList.add((Species)dbObj);
+                }
+                eventObj.setSpecies(speciesList);
+            }
+            // Attach summation
+            List<GKInstance> summations = event.getAttributeValuesList(ReactomeJavaConstants.summation);
+            if (summations != null && summations.size() > 0) {
+                List<Summation> summationList = new ArrayList<Summation>();
+                for (GKInstance summation : summations) {
+                    Summation summationObj = (Summation) converter.convert(summation);
+                    summationList.add(summationObj);
+                }
+                eventObj.setSummation(summationList);
+            }
+        }
+        return events;
     }
     
     /**
