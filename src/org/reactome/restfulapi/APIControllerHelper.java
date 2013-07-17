@@ -833,7 +833,7 @@ public class APIControllerHelper {
         return rtnList;
     }
     
-    public List<Pathway> listFrontPageItem(String speciesName) {
+    public synchronized List<Pathway> listFrontPageItem(String speciesName) {
         try {
             List<GKInstance> frontPageItems = getFrontPageItems(speciesName);
             if (frontPageItems == null)
