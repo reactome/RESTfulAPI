@@ -30,6 +30,7 @@ import org.gk.sbml.SBMLAndLayoutBuilderFields;
 import org.gk.schema.InvalidAttributeException;
 import org.gk.schema.SchemaAttribute;
 import org.gk.schema.SchemaClass;
+import org.gk.util.FileUtilities;
 import org.gk.util.SwingImageCreator;
 import org.jdom.output.DOMOutputter;
 import org.reactome.biopax.ReactomeToBioPAX3XMLConverter;
@@ -49,7 +50,12 @@ public class APIControllerHelper {
     private ReactomeToRESTfulAPIConverter converter;
     private QueryHelper queryHelper;
     private String outputdir;
+    // cache release number
+    private Integer releaseNumber;
 
+    public APIControllerHelper() {
+    }
+    
     public String getOutputdir() {
         return outputdir;
     }
@@ -58,7 +64,11 @@ public class APIControllerHelper {
         this.outputdir = outputdir;
     }
 
-    public APIControllerHelper() {
+    private Integer getReleaseNumber() throws Exception {
+        if (releaseNumber != null)
+            return releaseNumber;
+        releaseNumber = dba.getReleaseNumber();
+        return releaseNumber;
     }
 
     public void setConverter(ReactomeToRESTfulAPIConverter converter) {
@@ -353,13 +363,67 @@ public class APIControllerHelper {
     }
     
     /**
+     * Generating a pathway diagram needs to redraw it first, which is an expensive process.
+     * Caching a drawn diagram in XML can save a lot of time. However, each release should have
+     * its own cached folder for diagram updating. The old ones can be deleted during deployment.
+     * @TODO: Need to figure out why the saved XML in the database cannot be used directly. It is 
+     * true for disease pathways, diagrams are dynamically generated. But how about for normal diagrams?
+     * Probably some update is needed in gk_central?
+     * @param pathway
+     * @param pathwayDigram
+     * @return
+     */
+    private String getCachedPathwayDiagramXML(GKInstance pathway,
+                                              GKInstance pathwayDigram) throws Exception {
+        String dirName = outputdir + File.separator + getReleaseNumber(); 
+        File dir = new File(dirName);
+        if (!dir.exists())
+            return null;
+        String fileName = pathway.getDBID() + "_" + pathwayDigram.getDBID() + ".xml";
+        File file = new File(dir, fileName);
+        if (!file.exists())
+            return null;
+        FileUtilities fu = new FileUtilities();
+        fu.setInput(file.getAbsolutePath());
+        StringBuilder builder = new StringBuilder();
+        String line = null;
+        while ((line = fu.readLine()) != null)
+            builder.append(line).append("\n");
+        fu.close();
+        return builder.toString();
+    }
+    
+    /**
+     * Cache a generated pathway diagram for future use in order to save time to re-generate it.
+     * @param pathway
+     * @param pathwayDiagram
+     * @param xml
+     * @throws Exception
+     * @link getCachedPathwayDiagramXML(GKInstance, GKInstance)
+     */
+    private void cachPathwayDiagramXML(GKInstance pathway,
+                                       GKInstance pathwayDiagram,
+                                       String xml) throws Exception {
+        String dirName = outputdir + File.separator + getReleaseNumber(); 
+        File dir = new File(dirName);
+        if (!dir.exists())
+            dir.mkdir();
+        String fileName = pathway.getDBID() + "_" + pathwayDiagram.getDBID() + ".xml";
+        File file = new File(dir, fileName);
+        FileUtilities fu = new FileUtilities();
+        fu.setOutput(file.getAbsolutePath());
+        fu.printLine(xml);
+        fu.close();
+    }
+    
+    /**
      * Get a PathwayDiagram encoded in Base64 string for PDF or PNG, or in XML.
      * @param pathwayId
      * @param type
      * @param geneNames genes should be highlighted in the returned pathway diagram.
      * @return
      */
-    public String getPathwayDiagram(long pathwayId, 
+    public synchronized String getPathwayDiagram(long pathwayId, 
                                     String type,
                                     String[] geneNames) {
         String rtn = null;
@@ -381,8 +445,13 @@ public class APIControllerHelper {
 
             GKInstance diagram = (GKInstance) c.iterator().next();
             if (type.equals("xml")) {
+                String xml = getCachedPathwayDiagramXML(pathway, diagram);
+                if (xml != null)
+                    return xml;
                 PathwayDiagramXMLGenerator xmlGenerator = new PathwayDiagramXMLGenerator();
-                return xmlGenerator.generateXMLForPathwayDiagram(diagram, pathway);
+                xml = xmlGenerator.generateXMLForPathwayDiagram(diagram, pathway);
+                cachPathwayDiagramXML(pathway, diagram, xml);
+                return xml;
             }
             DiagramGKBReader reader = new DiagramGKBReader();
             RenderablePathway renderablePathway = reader.openDiagram(diagram);
