@@ -12,7 +12,7 @@ public class PathwayDiagram extends PathwayDiagramItem {
 
     private Integer height;
     private Pathway representedPathway;
-    private String storedAtxml;
+    private String storedATXML;
     private Integer width;
 
     public PathwayDiagram() {
@@ -34,12 +34,12 @@ public class PathwayDiagram extends PathwayDiagramItem {
         this.representedPathway = representedPathway;
     }
 
-    public String getStoredAtxml() {
-        return this.storedAtxml;
+    public String getStoredATXML() {
+        return storedATXML;
     }
 
-    public void setStoredAtxml(String storedAtxml) {
-        this.storedAtxml = storedAtxml;
+    public void setStoredATXML(String storedATXML) {
+        this.storedATXML = storedATXML;
     }
 
     public Integer getWidth() {
