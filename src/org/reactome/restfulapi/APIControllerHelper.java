@@ -587,15 +587,23 @@ public class APIControllerHelper {
         return rtn;
     }
     
+    /**
+     * Get Complex subunits recursively.
+     * @param dbId
+     * @return
+     */
     public List<PhysicalEntity> getComplexSubunits(Long dbId) {
         try {
             GKInstance complex = dba.fetchInstance(dbId);
             Set<GKInstance> components = InstanceUtilities.getContainedInstances(complex,
-                                                                                 ReactomeJavaConstants.hasComponent);
+                                                                                 ReactomeJavaConstants.hasComponent,
+                                                                                 ReactomeJavaConstants.hasMember,
+                                                                                 ReactomeJavaConstants.hasCandidate);
             // Do a filter to remove complex instances
             for (Iterator<GKInstance> it = components.iterator(); it.hasNext();) {
                 GKInstance comp = it.next();
-                if (comp.getSchemClass().isa(ReactomeJavaConstants.Complex))
+                if (comp.getSchemClass().isa(ReactomeJavaConstants.Complex) ||
+                    comp.getSchemClass().isa(ReactomeJavaConstants.EntitySet))
                     it.remove();
             }
             List<PhysicalEntity> rtn = new ArrayList<PhysicalEntity>(components.size());
