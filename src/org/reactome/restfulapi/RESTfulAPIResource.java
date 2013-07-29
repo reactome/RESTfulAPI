@@ -279,6 +279,7 @@ public class RESTfulAPIResource {
      */
     @GET
     @Path("/getContainedEventIds/{dbId}")
+    @Produces(MediaType.TEXT_PLAIN)
     public String getContainedEventIds(@PathParam("dbId") Long pathwayId) {
         List<Long> dbIds = service.getContainedEventIds(pathwayId);
         StringBuilder builder = new StringBuilder();
