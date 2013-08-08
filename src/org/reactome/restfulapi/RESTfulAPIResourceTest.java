@@ -50,7 +50,7 @@ public class RESTfulAPIResourceTest {
     private final static String HTTP_POST = "Post";
 //    private final static String RESTFUL_URL = "http://www.reactome.org:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
     private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
@@ -105,6 +105,12 @@ public class RESTfulAPIResourceTest {
         url = RESTFUL_URL + "pathwayDiagram/1643713/pdf";
         text = callHttp(url, HTTP_GET, "");
         decodeInBase64(text, "1643713.pdf");
+        
+        // Pathway diagram containing multiple EntitySet
+        url = RESTFUL_URL + "pathwayDiagram/71387/xml";
+        System.out.println(url);
+        text = callHttp(url, HTTP_GET, "");
+        prettyPrintXML(text);
     }
     
     @Test
@@ -366,7 +372,11 @@ public class RESTfulAPIResourceTest {
 //        String text = callHttp(url, HTTP_GET, url);
 //        System.out.println("Output from query InstanceEdit 168267:");
 //        prettyPrintXML(text);
-                
+        
+        // Check a PathwayDiagram instance
+        url = RESTFUL_URL + "queryById/PathwayDiagram/2162173";
+        text = callHttp(url, HTTP_GET, "");
+        prettyPrintXML(text);
     }
 
     @Test
@@ -553,6 +563,11 @@ public class RESTfulAPIResourceTest {
         String text = callHttp(url, HTTP_GET, "");
         System.out.println("Output from complex subunits (4 should be returned):");
         prettyPrintXML(text);
+        // A complex has a DefinedSet as its subunit
+        url = RESTFUL_URL + "complexSubunits/188362";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput from complex having a DefinedSet as its subunit:");
+        prettyPrintXML(text);        
     }
     
     @Test
