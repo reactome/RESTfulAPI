@@ -78,6 +78,17 @@ public class RESTfulAPIResource {
     }
     
     /**
+     * Get the database name preconfigued in the RESTful API.
+     * @return
+     */
+    @GET
+    @Path("/getDBName")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getDBName() {
+    	return service.getDBName();
+    }
+    
+    /**
      * Export SBML for an Event. 
      * @param dbId
      * @return

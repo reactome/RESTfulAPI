@@ -237,6 +237,13 @@ public class RESTfulAPIResourceTest {
     }
     
     @Test
+    public void testGetDBName() throws Exception {
+    	String url = RESTFUL_URL + "getDBName";
+    	String text = callHttp(url, HTTP_GET, "");
+    	System.out.println("DB Name: " + text);
+    }
+    
+    @Test
     public void testSpeciesList() throws Exception {
         String url = RESTFUL_URL + "speciesList";
         String text = callHttp(url, HTTP_GET, "");

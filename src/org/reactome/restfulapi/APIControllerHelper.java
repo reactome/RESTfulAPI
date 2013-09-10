@@ -9,7 +9,19 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
 
 import javax.imageio.ImageIO;
 
@@ -37,7 +49,16 @@ import org.reactome.biopax.ReactomeToBioPAX3XMLConverter;
 import org.reactome.biopax.ReactomeToBioPAXXMLConverter;
 import org.reactome.restfulapi.details.pmolecules.ParticipatingMolecules;
 import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
-import org.reactome.restfulapi.models.*;
+import org.reactome.restfulapi.models.Complex;
+import org.reactome.restfulapi.models.DatabaseObject;
+import org.reactome.restfulapi.models.Event;
+import org.reactome.restfulapi.models.Pathway;
+import org.reactome.restfulapi.models.PhysicalEntity;
+import org.reactome.restfulapi.models.PhysicalToReferenceEntityMap;
+import org.reactome.restfulapi.models.Publication;
+import org.reactome.restfulapi.models.ReferenceEntity;
+import org.reactome.restfulapi.models.Species;
+import org.reactome.restfulapi.models.Summation;
 
 import com.googlecode.gwt.crypto.gwtx.io.IOException;
 import com.sun.jersey.spi.resource.Singleton;
@@ -85,6 +106,12 @@ public class APIControllerHelper {
     
     public MySQLAdaptor getDba() {
         return this.dba;
+    }
+    
+    public String getDBName() {
+    	if (this.dba == null)
+    		return null;
+    	return this.dba.getDBName();
     }
 
     public void setQueryHelper(QueryHelper queryHelper) {
