@@ -213,12 +213,19 @@ public class APIControllerHelper {
                 if (refEntities == null || refEntities.size() == 0)
                     continue;
                 PhysicalToReferenceEntityMap map = new PhysicalToReferenceEntityMap();
-                List<Long> refDbIds = new ArrayList<Long>();
-                for (GKInstance refEntity : refEntities) {
-                    refDbIds.add(refEntity.getDBID());
+                List<ReferenceEntity> refs = new ArrayList<ReferenceEntity>();
+                for (GKInstance ref : refEntities) {
+                	DatabaseObject databaseObj = converter.createObject(ref);
+                	if (databaseObj instanceof ReferenceEntity)
+                		refs.add((ReferenceEntity)databaseObj);
                 }
+//                List<Long> refDbIds = new ArrayList<Long>();
+//                for (GKInstance refEntity : refEntities) {
+//                    refDbIds.add(refEntity.getDBID());
+//                }
                 map.setPeDbId(pe.getDBID());
-                map.setRefDbIds(refDbIds);
+                map.setRefEntities(refs);
+//                map.setRefDbIds(refDbIds);
                 maps.add(map);
             }
             return maps;
