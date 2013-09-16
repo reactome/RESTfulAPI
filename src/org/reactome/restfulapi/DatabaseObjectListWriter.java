@@ -81,8 +81,12 @@ public class DatabaseObjectListWriter implements MessageBodyWriter<List<? extend
         return false;
     }
 
+    /**
+     * This is a synchronized method since the marshaller is shared among threads, which
+     * may cause data writing issues (e.g. index out of bounds -1).
+     */
     @Override
-    public void writeTo(List<? extends DatabaseObject> list, 
+    public synchronized void writeTo(List<? extends DatabaseObject> list, 
                         Class<?> type, 
                         Type genericType, 
                         Annotation[] annotations, 
