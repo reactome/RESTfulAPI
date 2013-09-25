@@ -1034,6 +1034,7 @@ public class APIControllerHelper {
 //      Query the list of Reactions containing instances
         // Have to consider all complexes those GKInstances participate too
         try {
+            //TODO: Should we also check with EntitySet?
             Set<GKInstance> complexes = grepComplexesForEntities(instances);
             instances.addAll(complexes);
             Set<GKInstance> reactions = getParticipatingReactions(instances);
