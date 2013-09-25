@@ -1079,7 +1079,6 @@ public class APIControllerHelper {
 
     private List<Pathway> grepTopPathwaysFromReactions(Collection reactions) throws Exception {
         // Create the paths from the passed Pathways to the top level Pathways
-        List<GKInstance> topPathways = new ArrayList<GKInstance>();
         List<List<GKInstance>> paths = new ArrayList<List<GKInstance>>();
         for (Iterator it = reactions.iterator(); it.hasNext(); ) {
             GKInstance pathway = (GKInstance) it.next();
@@ -1099,14 +1098,15 @@ public class APIControllerHelper {
                 }
             }
         }
+        List<GKInstance> topPathways = new ArrayList<GKInstance>();
         for (GKInstance instance : set) {
-            Pathway pathway = (Pathway) converter.convert(instance);
             topPathways.add(instance);
         }
+        InstanceUtilities.sortInstances(topPathways);
         // Convert the topPathways to Pathway objects
         List<Pathway> rtn = new ArrayList<Pathway>();
         for (GKInstance pathwayInstance : topPathways) {
-            Pathway pathway = (Pathway) converter.convert(pathwayInstance);
+            Pathway pathway = (Pathway) converter.createObject(pathwayInstance);
             rtn.add(pathway);
         }
         return rtn;
@@ -1115,14 +1115,14 @@ public class APIControllerHelper {
     private Set<GKInstance> getParticipatingReactions(Collection<GKInstance> entities) throws Exception {
         Set<GKInstance> reactions = new HashSet<GKInstance>();
         // Inputs
-        Collection collection = dba.fetchInstanceByAttribute(ReactomeJavaConstants.Reaction,
+        Collection collection = dba.fetchInstanceByAttribute(ReactomeJavaConstants.ReactionlikeEvent,
                 ReactomeJavaConstants.input,
                 "=",
                 entities);
         if (collection != null)
             reactions.addAll(collection);
         // Outputs
-        collection = dba.fetchInstanceByAttribute(ReactomeJavaConstants.Reaction,
+        collection = dba.fetchInstanceByAttribute(ReactomeJavaConstants.ReactionlikeEvent,
                 ReactomeJavaConstants.output,
                 "=",
                 entities);
@@ -1135,7 +1135,7 @@ public class APIControllerHelper {
                 "=",
                 entities);
         if (collection != null && collection.size() > 0) {
-            Collection collection1 = dba.fetchInstanceByAttribute(ReactomeJavaConstants.Reaction,
+            Collection collection1 = dba.fetchInstanceByAttribute(ReactomeJavaConstants.ReactionlikeEvent,
                     ReactomeJavaConstants.catalystActivity,
                     "=",
                     collection);
@@ -1150,7 +1150,7 @@ public class APIControllerHelper {
         if (collection != null && collection.size() > 0) {
             for (Iterator it = collection.iterator(); it.hasNext(); ) {
                 GKInstance tmp = (GKInstance) it.next();
-                if (tmp.getSchemClass().isa(ReactomeJavaConstants.Reaction))
+                if (tmp.getSchemClass().isa(ReactomeJavaConstants.ReactionlikeEvent))
                     reactions.add(tmp);
             }
         }
