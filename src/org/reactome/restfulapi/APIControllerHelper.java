@@ -479,12 +479,15 @@ public class APIControllerHelper {
 
             GKInstance diagram = (GKInstance) c.iterator().next();
             if (type.equals("xml")) {
-                String xml = getCachedPathwayDiagramXML(pathway, diagram);
-                if (xml != null)
-                    return xml;
+                if (dba.isUseCache()) {
+                    String xml = getCachedPathwayDiagramXML(pathway, diagram);
+                    if (xml != null)
+                        return xml;
+                }
                 PathwayDiagramXMLGenerator xmlGenerator = new PathwayDiagramXMLGenerator();
-                xml = xmlGenerator.generateXMLForPathwayDiagram(diagram, pathway);
-                cachPathwayDiagramXML(pathway, diagram, xml);
+                String xml = xmlGenerator.generateXMLForPathwayDiagram(diagram, pathway);
+                if (dba.isUseCache())
+                    cachPathwayDiagramXML(pathway, diagram, xml);
                 return xml;
             }
             DiagramGKBReader reader = new DiagramGKBReader();
