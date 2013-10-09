@@ -1,7 +1,5 @@
 package org.reactome.restfulapi.models;
 
-import java.util.List;
-
 import javax.xml.bind.annotation.XmlRootElement;
 
 // Generated Jul 8, 2011 1:48:55 PM by Hibernate Tools 3.4.0.CR1
@@ -11,17 +9,19 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 public class SimpleEntity extends PhysicalEntity {
-    private List<ReferenceMolecule> referenceEntity;
+    // Because a bug in the data model, this attribute is multiple valued.
+    // However, it should be single valued. Here is the correct version.
+    private ReferenceMolecule referenceEntity;
     private Species species;
 
     public SimpleEntity() {
     }
 
-    public List<ReferenceMolecule> getReferenceEntity() {
+    public ReferenceMolecule getReferenceEntity() {
         return referenceEntity;
     }
 
-    public void setReferenceEntity(List<ReferenceMolecule> referenceEntity) {
+    public void setReferenceEntity(ReferenceMolecule referenceEntity) {
         this.referenceEntity = referenceEntity;
     }
 
