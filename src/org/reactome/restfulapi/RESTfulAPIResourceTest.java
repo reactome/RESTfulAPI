@@ -48,10 +48,12 @@ public class RESTfulAPIResourceTest {
     // Two methods used in this class
     private final static String HTTP_GET = "Get";
     private final static String HTTP_POST = "Post";
-//    private final static String RESTFUL_URL = "http://www.reactome.org:8080/ReactomeRESTfulAPI/RESTfulWS/";
+    // Use the default port 80 since apache has been configured to relay to the 6080 port after the firewall.
+//    private final static String RESTFUL_URL = "http://www.reactome.org/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
+    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomecurator.oicr.on.ca:9080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
     
@@ -583,7 +585,12 @@ public class RESTfulAPIResourceTest {
         url = RESTFUL_URL + "complexSubunits/188362";
         text = callHttp(url, HTTP_GET, "");
         System.out.println("\nOutput from complex having a DefinedSet as its subunit:");
-        prettyPrintXML(text);        
+        prettyPrintXML(text);     
+        // Complex has SimpleEntity 
+        url = RESTFUL_URL + "complexSubunits/2026019";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nComplex containing SimpleEntity:");
+        prettyPrintXML(text);
     }
     
     @Test
