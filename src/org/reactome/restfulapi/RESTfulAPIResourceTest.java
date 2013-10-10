@@ -51,8 +51,8 @@ public class RESTfulAPIResourceTest {
 //    private final static String RESTFUL_URL = "http://www.reactome.org:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
-    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
+    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
     
     @Test
@@ -549,6 +549,15 @@ public class RESTfulAPIResourceTest {
 //    }
 
     @Test
+	public void testGetContainedEventIds() throws Exception {
+	    String url = RESTFUL_URL + "getContainedEventIds/109581";
+	    System.out.println(url);
+	    String text = callHttp(url, HTTP_GET, "");
+	    System.out.println("Contained Event DB_IDs for Apoptosis: " + text.length() + "\n");
+	    prettyPrintXML(text);
+	}
+
+	@Test
     public void testQueryPathwaysforEntities() throws Exception {
         String url = RESTFUL_URL + "pathwaysForEntities";
 //        String text = callHttp(url,
@@ -582,15 +591,6 @@ public class RESTfulAPIResourceTest {
         String url = RESTFUL_URL + "queryReferences/140547";
         String text = callHttp(url, HTTP_GET, "");
         System.out.println("Output from queryReferences:\n");
-        prettyPrintXML(text);
-    }
-    
-    @Test
-    public void testGetContainedEventIds() throws Exception {
-        String url = RESTFUL_URL + "getContainedEventIds/109581";
-        System.out.println(url);
-        String text = callHttp(url, HTTP_GET, "");
-        System.out.println("Contained Event DB_IDs for Apoptosis: " + text.length() + "\n");
         prettyPrintXML(text);
     }
     
@@ -755,6 +755,7 @@ public class RESTfulAPIResourceTest {
     public void testReferenceEntity() throws Exception {
         Long dbId = 66212L; // EWAS FASL
         dbId = 75975L;
+        dbId = 109607L;
         String url = RESTFUL_URL + "referenceEntity/" + dbId;
         String text = callHttp(url, HTTP_GET, "");
         System.out.println("Query ReferenceEntity for " + dbId + ":");
