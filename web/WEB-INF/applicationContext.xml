@@ -10,17 +10,21 @@
     <bean id="dba" class="org.gk.persistence.MySQLAdaptor">
         <constructor-arg index="0" value="localhost"/>
 <!--         Production site -->
-<!--        <constructor-arg index="1" value="gk_current"/> -->
-<!--        <constructor-arg index="2" value="curator"/> -->
-<!--        <constructor-arg index="3" value="Ixact1y"/> -->
-        <!-- Development site -->
-<!--         <constructor-arg index="1" value="test_reactome_45"/> -->
+       <constructor-arg index="1" value="gk_current"/>
+       <constructor-arg index="2" value="curator"/>
+       <constructor-arg index="3" value="Ixact1y"/>
+        <!-- reactomecurator site -->
+<!--         <constructor-arg index="1" value="gk_central"/> -->
+<!--         <constructor-arg index="2" value="authortool"/> -->
+<!--         <constructor-arg index="3" value="***REMOVED***" /> -->
+<!--         Development site -->
+<!--         <constructor-arg index="1" value="test_reactome_46"/> -->
 <!--         <constructor-arg index="2" value="authortool"/> -->
 <!--         <constructor-arg index="3" value="***REMOVED***" /> -->
 <!--         Local site -->
-        <constructor-arg index="1" value="gk_current_ver44"/>
-        <constructor-arg index="2" value="root"/>
-        <constructor-arg index="3" value="macmysql01"/>
+<!--         <constructor-arg index="1" value="gk_current_ver44"/> -->
+<!--         <constructor-arg index="2" value="root"/> -->
+<!--         <constructor-arg index="3" value="macmysql01"/> -->
         <!-- useCache should be set to false for gk_central deployed in the curator machine
              so that any change in an instance can be seen without restarting tomcat. Otherwise,
              it should be set to true for performance reason. -->
@@ -55,12 +59,12 @@
         <property name="dba">
             <ref bean="dba"/>
         </property>
-        <!-- For reactomedev -->
-<!--         <property name="outputdir" value="/tmp"></property> -->
+        <!-- For all reactome servers -->
+        <property name="outputdir" value="/tmp"></property>
         <!-- For reactome production server -->
 <!--         <property name="outputdir" value="/usr/local/apache-tomcat/temp"></property> -->
         <!-- For local test -->
-        <property name="outputdir" value="/Users/gwu/Documents/temp"></property>
+<!--         <property name="outputdir" value="/Users/gwu/Documents/temp"></property> -->
     </bean>
 
     <bean id="biopaxService" class="org.reactome.restfulapi.BioPAXExporterService">
