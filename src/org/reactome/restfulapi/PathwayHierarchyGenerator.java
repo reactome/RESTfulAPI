@@ -5,6 +5,8 @@
 package org.reactome.restfulapi;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.gk.model.GKInstance;
@@ -49,6 +51,19 @@ public class PathwayHierarchyGenerator {
         Element elm = new Element(inst.getSchemClass().getName());
         elm.setAttribute("dbId", inst.getDBID().toString());
         elm.setAttribute("displayName", inst.getDisplayName());
+        // Check if it has PathwayDiagram associated
+        if (inst.getSchemClass().isa(ReactomeJavaConstants.Pathway)) {
+            Collection<?> diagrams = inst.getReferers(ReactomeJavaConstants.representedPathway);
+            if (diagrams != null && diagrams.size() > 0) {
+                for (Iterator<?> it = diagrams.iterator(); it.hasNext();) {
+                    GKInstance diagram = (GKInstance) it.next();
+                    if (diagram.getSchemClass().isa(ReactomeJavaConstants.PathwayDiagram)) {
+                        elm.setAttribute("hasDiagram", Boolean.TRUE + "");
+                        break;
+                    }
+                }
+            }
+        }
         parentElm.addContent(elm);
         // Add children
         if (inst.getSchemClass().isValidAttribute(ReactomeJavaConstants.hasEvent)) {
