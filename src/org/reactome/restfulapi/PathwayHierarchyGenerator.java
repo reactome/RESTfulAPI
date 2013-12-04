@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.gk.model.GKInstance;
 import org.gk.model.ReactomeJavaConstants;
+import org.gk.persistence.MySQLAdaptor;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -35,8 +36,16 @@ public class PathwayHierarchyGenerator {
     public String generatePathwayHierarchy(List<GKInstance> pathways,
                                            String speciesName) throws Exception {
         Element root = new Element("Pathways");
-        if (speciesName != null)
+        if (speciesName != null) {
             root.setAttribute("species", speciesName);
+            // Add a version
+            if (pathways.get(0).getDbAdaptor() instanceof MySQLAdaptor) {
+                MySQLAdaptor dba = (MySQLAdaptor) pathways.get(0).getDbAdaptor();
+                Integer version = dba.getReleaseNumber();
+                if (version != null)
+                    root.setAttribute("release", version + "");
+            }
+        }
         for (GKInstance pathway : pathways)
             addEvent(pathway, 
                      root);
