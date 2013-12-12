@@ -9,19 +9,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import javax.imageio.ImageIO;
 
@@ -49,16 +37,7 @@ import org.reactome.biopax.ReactomeToBioPAX3XMLConverter;
 import org.reactome.biopax.ReactomeToBioPAXXMLConverter;
 import org.reactome.restfulapi.details.pmolecules.ParticipatingMolecules;
 import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
-import org.reactome.restfulapi.models.Complex;
-import org.reactome.restfulapi.models.DatabaseObject;
-import org.reactome.restfulapi.models.Event;
-import org.reactome.restfulapi.models.Pathway;
-import org.reactome.restfulapi.models.PhysicalEntity;
-import org.reactome.restfulapi.models.PhysicalToReferenceEntityMap;
-import org.reactome.restfulapi.models.Publication;
-import org.reactome.restfulapi.models.ReferenceEntity;
-import org.reactome.restfulapi.models.Species;
-import org.reactome.restfulapi.models.Summation;
+import org.reactome.restfulapi.models.*;
 
 import com.googlecode.gwt.crypto.gwtx.io.IOException;
 import com.sun.jersey.spi.resource.Singleton;
@@ -491,6 +470,7 @@ public class APIControllerHelper {
                 return xml;
             }
             DiagramGKBReader reader = new DiagramGKBReader();
+            reader.setPersistenceAdaptor(diagram.getDbAdaptor());
             RenderablePathway renderablePathway = reader.openDiagram(diagram);
             if (geneNames != null)
                 highlightPathwayDiagram(renderablePathway, geneNames);
