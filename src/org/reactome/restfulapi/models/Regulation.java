@@ -24,8 +24,18 @@ public class Regulation extends DatabaseObject {
     private List<InstanceEdit> reviewed;
     private List<InstanceEdit> revised;
     private List<Summation> summation;
+    // New attribute in December, 2013
+    private List<Pathway> containedInPathway;
     
     public Regulation() {
+    }
+    
+    public List<Pathway> getContainedInPathway() {
+        return containedInPathway;
+    }
+
+    public void setContainedInPathway(List<Pathway> containedInPathway) {
+        this.containedInPathway = containedInPathway;
     }
 
     public InstanceEdit getAuthored() {
