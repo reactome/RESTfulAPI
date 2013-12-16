@@ -2,6 +2,8 @@ package org.reactome.restfulapi.models;
 
 // Generated Jul 8, 2011 1:48:55 PM by Hibernate Tools 3.4.0.CR1
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -15,8 +17,18 @@ public class Person extends DatabaseObject {
     private String initial;
     private String project;
     private String surname;
+    // A new attribute added in December, 2013
+    private List<DatabaseIdentifier> crossReference;
 
     public Person() {
+    }
+    
+    public List<DatabaseIdentifier> getCrossReference() {
+        return crossReference;
+    }
+
+    public void setCrossReference(List<DatabaseIdentifier> crossReference) {
+        this.crossReference = crossReference;
     }
 
     public String getEmailAddress() {
