@@ -985,7 +985,7 @@ public class APIControllerHelper {
     public DatabaseObject getDetailedView(String className,
                                           String dbId) {
         DatabaseObject rtn = queryById(className, dbId);
-        if (rtn != null && rtn.getDbId() > 0) {
+        if (rtn != null && rtn.getDbId() != null) {
             try {
                 GKInstance instance = dba.fetchInstance(rtn.getDbId());
                 converter.fillInDetails(instance, rtn);
