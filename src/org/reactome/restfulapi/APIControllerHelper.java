@@ -9,7 +9,19 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
 
 import javax.imageio.ImageIO;
 
@@ -37,7 +49,16 @@ import org.reactome.biopax.ReactomeToBioPAX3XMLConverter;
 import org.reactome.biopax.ReactomeToBioPAXXMLConverter;
 import org.reactome.restfulapi.details.pmolecules.ParticipatingMolecules;
 import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
-import org.reactome.restfulapi.models.*;
+import org.reactome.restfulapi.models.Complex;
+import org.reactome.restfulapi.models.DatabaseObject;
+import org.reactome.restfulapi.models.Event;
+import org.reactome.restfulapi.models.Pathway;
+import org.reactome.restfulapi.models.PhysicalEntity;
+import org.reactome.restfulapi.models.PhysicalToReferenceEntityMap;
+import org.reactome.restfulapi.models.Publication;
+import org.reactome.restfulapi.models.ReferenceEntity;
+import org.reactome.restfulapi.models.Species;
+import org.reactome.restfulapi.models.Summation;
 
 import com.googlecode.gwt.crypto.gwtx.io.IOException;
 import com.sun.jersey.spi.resource.Singleton;
@@ -188,6 +209,7 @@ public class APIControllerHelper {
             Set<GKInstance> pes = InstanceUtilities.grepPathwayParticipants(pathway);
             List<PhysicalToReferenceEntityMap> maps = new ArrayList<PhysicalToReferenceEntityMap>();
             for (GKInstance pe : pes) {
+//            	System.out.println("Check " + pe + "...");
                 Set<GKInstance> refEntities = InstanceUtilities.grepReferenceEntitiesForPE(pe);
                 if (refEntities == null || refEntities.size() == 0)
                     continue;
@@ -830,7 +852,7 @@ public class APIControllerHelper {
             Set<GKInstance> species = new HashSet<GKInstance>();
             for (GKInstance pathway : values) {
                 List<GKInstance> speciesList = pathway.getAttributeValuesList(ReactomeJavaConstants.species);
-                if (speciesList != null)
+                if (speciesList != null) 
                     species.addAll(speciesList);
                 List<GKInstance> orEvents = pathway.getAttributeValuesList(ReactomeJavaConstants.orthologousEvent);
                 if (orEvents == null)
@@ -841,10 +863,16 @@ public class APIControllerHelper {
                         species.addAll(speciesList);
                 }
             }
+            // In case of not using cache in the server-side, using HashSet will create duplicated entries
+            // So using a HashMap keyed by DB_IDs should avoid this problem
+            Map<Long, GKInstance> dbIdToInst = new HashMap<Long, GKInstance>();
+            for (GKInstance inst : species) {
+            	dbIdToInst.put(inst.getDBID(), inst);
+            }
             List<Species> rtn = new ArrayList<Species>();
             // Place the human in the top: this is special
             Species human = null;
-            for (GKInstance s : species) {
+            for (GKInstance s : dbIdToInst.values()) {
                 Species converted = (Species) converter.createObject(s);
                 if (s.getDBID().equals(48887L))
                     human = converted;
