@@ -2,6 +2,8 @@ package org.reactome.restfulapi.models;
 
 // Generated Jul 8, 2011 1:48:55 PM by Hibernate Tools 3.4.0.CR1
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -13,6 +15,7 @@ public class CatalystActivity extends DatabaseObject implements Regulator {
     private GO_MolecularFunction activity;
     private PhysicalEntity physicalEntity;
     private String physicalEntityClass;
+    private List<Domain> activeUnit;
 
     public CatalystActivity() {
     }
@@ -41,4 +44,12 @@ public class CatalystActivity extends DatabaseObject implements Regulator {
         this.physicalEntityClass = physicalEntityClass;
     }
 
+	public List<Domain> getActiveUnit() {
+		return activeUnit;
+	}
+
+	public void setActiveUnit(List<Domain> activeUnit) {
+		this.activeUnit = activeUnit;
+	}
+    
 }

@@ -16,7 +16,7 @@ public class ReactionlikeEvent extends Event {
     private List<PhysicalEntity> input;
     private List<PhysicalEntity> output;
     private List<PhysicalEntity> entityOnOtherCell;
-    private List<PhysicalEntity> requiredInputComponent;
+    private List<DatabaseObject> requiredInputComponent;
     private ReactionlikeEvent hasMember;
     private List<CatalystActivity> catalystActivity;
     private List<ReactionlikeEvent> normalReaction;
@@ -47,11 +47,11 @@ public class ReactionlikeEvent extends Event {
         this.entityOnOtherCell = entityOnOtherCell;
     }
 
-    public List<PhysicalEntity> getRequiredInputComponent() {
+    public List<DatabaseObject> getRequiredInputComponent() {
         return requiredInputComponent;
     }
 
-    public void setRequiredInputComponent(List<PhysicalEntity> requiredInputComponent) {
+    public void setRequiredInputComponent(List<DatabaseObject> requiredInputComponent) {
         this.requiredInputComponent = requiredInputComponent;
     }
 
