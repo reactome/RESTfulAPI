@@ -39,6 +39,7 @@ public class PhysicalEntity extends DatabaseObject implements Regulator {
     private List<Event> requiredEvent;
     private List<Event> producedByEvent;
     private List<Event> consumedByEvent;
+    private List<Domain> hasDomain;
     
     public PhysicalEntity() {
         
@@ -253,4 +254,13 @@ public class PhysicalEntity extends DatabaseObject implements Regulator {
     public void setConsumedByEvent(List<Event> consumedByEvent) {
         this.consumedByEvent = consumedByEvent;
     }
+
+	public List<Domain> getHasDomain() {
+		return hasDomain;
+	}
+
+	public void setHasDomain(List<Domain> hasDomain) {
+		this.hasDomain = hasDomain;
+	}
+    
 }
