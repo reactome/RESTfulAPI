@@ -51,10 +51,10 @@ public class RESTfulAPIResourceTest {
     // Use the default port 80 since apache has been configured to relay to the 6080 port after the firewall.
 //    private final static String RESTFUL_URL = "http://www.reactome.org/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomecurator.oicr.on.ca:9080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
+    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
     
     @Test
@@ -87,40 +87,47 @@ public class RESTfulAPIResourceTest {
 
     @Test
     public void testPathwayDiagram() throws Exception {
-        String url = RESTFUL_URL + "pathwayDiagram/109581/png";
-        String text = callHttp(url,
-                HTTP_GET,
-                "");
-        System.out.println("Output from pathwaydiagram:\n");
-        System.out.println(text);
-        decodeInBase64(text, "69278.png");
+//        String url = RESTFUL_URL + "pathwayDiagram/109581/png";
+//        String text = callHttp(url,
+//                HTTP_GET,
+//                "");
+//        System.out.println("Output from pathwaydiagram:\n");
+//        System.out.println(text);
+//        decodeInBase64(text, "69278.png");
+//        
+//        url = RESTFUL_URL + "pathwayDiagram/109581/pdf";
+//        text = callHttp(url,
+//                HTTP_GET,
+//                "");
+//        System.out.println("Output from pathwaydiagram:\n");
+//        System.out.println(text);
+//        decodeInBase64(text, "69278.pdf");
+//        
+//        // A disease diagram: signaling by EGFR in cancer
+//        url = RESTFUL_URL + "pathwayDiagram/1643713/pdf";
+//        text = callHttp(url, HTTP_GET, "");
+//        decodeInBase64(text, "1643713.pdf");
+//        
+//        // Pathway diagram containing multiple EntitySet
+//        url = RESTFUL_URL + "pathwayDiagram/71387/xml";
+//        System.out.println(url);
+//        text = callHttp(url, HTTP_GET, "");
+//        prettyPrintXML(text);
         
-        url = RESTFUL_URL + "pathwayDiagram/109581/pdf";
-        text = callHttp(url,
-                HTTP_GET,
-                "");
-        System.out.println("Output from pathwaydiagram:\n");
-        System.out.println(text);
-        decodeInBase64(text, "69278.pdf");
-        
-        // A disease diagram: signaling by EGFR in cancer
-        url = RESTFUL_URL + "pathwayDiagram/1643713/pdf";
-        text = callHttp(url, HTTP_GET, "");
-        decodeInBase64(text, "1643713.pdf");
-        
-        // Pathway diagram containing multiple EntitySet
-        url = RESTFUL_URL + "pathwayDiagram/71387/xml";
-        System.out.println(url);
-        text = callHttp(url, HTTP_GET, "");
+        String url = RESTFUL_URL + "pathwayDiagram/190236/xml";
+        String text = callHttp(url, HTTP_GET, "");
         prettyPrintXML(text);
     }
     
     @Test
     public void testGetPhysicalToReferenceEntityMap() throws Exception {
         // Regulation of Apoptosis
-        String url = RESTFUL_URL + "getPhysicalToReferenceEntityMaps/169911";
+    	Long dbId = 169911L;
+    	// A very big Chicken pathway containing many small pathways
+    	dbId = 5225808L;
+        String url = RESTFUL_URL + "getPhysicalToReferenceEntityMaps/" + dbId;
         String text = callHttp(url, HTTP_GET, "");
-        System.out.println("\ngetPhysicalToReferenceEntityMaps for 169911:");
+        System.out.println("\ngetPhysicalToReferenceEntityMaps for " + dbId + ":");
         System.out.println(text);
     }
     
@@ -385,6 +392,12 @@ public class RESTfulAPIResourceTest {
         // Check a PathwayDiagram instance
         url = RESTFUL_URL + "queryById/PathwayDiagram/2162173";
         text = callHttp(url, HTTP_GET, "");
+        prettyPrintXML(text);
+        
+        // A reaction uses Domain
+        url = RESTFUL_URL + "queryById/ReactionlikeEvent/74707";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("Reaction has two requiredInputComponent of Domain:");
         prettyPrintXML(text);
     }
 
