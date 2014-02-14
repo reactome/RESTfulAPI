@@ -9,16 +9,16 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 public class GenomeEncodedEntity extends PhysicalEntity {
-    private Species species;
+    private Taxon species;
 
     public GenomeEncodedEntity() {
     }
 
-    public Species getSpecies() {
+    public Taxon getSpecies() {
         return species;
     }
 
-    public void setSpecies(Species species) {
+    public void setSpecies(Taxon species) {
         this.species = species;
     }
 
