@@ -225,7 +225,6 @@ public class APIControllerHelper {
 //                    refDbIds.add(refEntity.getDBID());
 //                }
                 map.setPeDbId(pe.getDBID());
-                map.setDisplayName(pe.getDisplayName());
                 map.setRefEntities(refs);
 //                map.setRefDbIds(refDbIds);
                 maps.add(map);
@@ -233,6 +232,51 @@ public class APIControllerHelper {
             return maps;
         }
         catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return new ArrayList<PhysicalToReferenceEntityMap>();
+    }
+    
+    public List<PhysicalToReferenceEntityMap> getPathwayParticipantPEToRefEntityMap(Long pathwayId){
+    	Set<GKInstance> pes = new HashSet<GKInstance>(); 
+    	try{
+	    	GKInstance pathway = dba.fetchInstance(pathwayId);
+	        if (pathway == null)
+	            throw new InstanceNotFoundException(pathwayId);
+	        if (!pathway.getSchemClass().isa(ReactomeJavaConstants.Pathway))
+	            throw new IllegalArgumentException(pathway + " is not a pathway!");
+	        Set<GKInstance> aux = InstanceUtilities.grepPathwayParticipants(pathway);
+	        for(GKInstance inst : aux){
+	        	Set<GKInstance> components = InstanceUtilities.getContainedInstances(inst, ReactomeJavaConstants.hasComponent,
+                                                                                 		   ReactomeJavaConstants.hasMember,
+                                                                                 		   ReactomeJavaConstants.hasCandidate);
+	        	if(components!=null && !components.isEmpty()){
+	        		pes.addAll(components);
+	        	}else{
+	        		pes.add(inst);
+	        	}
+	        }
+	        List<PhysicalToReferenceEntityMap> maps = new ArrayList<PhysicalToReferenceEntityMap>();
+            for (GKInstance pe : pes) {
+                Set<GKInstance> refEntities = InstanceUtilities.grepReferenceEntitiesForPE(pe);
+                if (refEntities == null || refEntities.size() == 0)
+                    continue;
+                PhysicalToReferenceEntityMap map = new PhysicalToReferenceEntityMap();
+                List<ReferenceEntity> refs = new ArrayList<ReferenceEntity>();
+                for (GKInstance ref : refEntities) {
+                	DatabaseObject databaseObj = converter.createObject(ref);
+                	if (databaseObj instanceof ReferenceEntity)
+                		refs.add((ReferenceEntity)databaseObj);
+                }
+
+                map.setPeDbId(pe.getDBID());
+                map.setDisplayName(pe.getDisplayName());
+                map.setSchemaClass(pe.getSchemClass().getName());
+                map.setRefEntities(refs);
+                maps.add(map);
+            }
+            return maps;
+    	}catch(Exception e) {
             logger.error(e.getMessage(), e);
         }
         return new ArrayList<PhysicalToReferenceEntityMap>();
