@@ -225,6 +225,7 @@ public class APIControllerHelper {
 //                    refDbIds.add(refEntity.getDBID());
 //                }
                 map.setPeDbId(pe.getDBID());
+                map.setDisplayName(pe.getDisplayName());
                 map.setRefEntities(refs);
 //                map.setRefDbIds(refDbIds);
                 maps.add(map);
