@@ -18,6 +18,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class PhysicalToReferenceEntityMap {
     private Long peDbId;
+    private String displayName;
     private List<Long> refDbIds;
     private List<ReferenceEntity> refEntities;
     
@@ -26,6 +27,10 @@ public class PhysicalToReferenceEntityMap {
 
     public Long getPeDbId() {
         return peDbId;
+    }
+    
+    public String getDisplayName(){
+    	return displayName;
     }
 
     public void setPeDbId(Long peDbId) {
@@ -38,6 +43,10 @@ public class PhysicalToReferenceEntityMap {
 
     public void setRefDbIds(List<Long> refDbIds) {
         this.refDbIds = refDbIds;
+    }
+    
+    public void setDisplayName(String displayName){
+    	this.displayName = displayName;
     }
 
 	public List<ReferenceEntity> getRefEntities() {
