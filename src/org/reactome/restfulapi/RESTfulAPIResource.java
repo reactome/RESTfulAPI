@@ -170,6 +170,16 @@ public class RESTfulAPIResource {
     public List<PhysicalToReferenceEntityMap> getPathwayPEToRefEntityMap(@PathParam("dbId") Long pathwayId) {
         return service.getPathwayPEToRefEntityMap(pathwayId);
     }
+    
+    /**
+     * Get a list of maps from PhysicalEntity DB_IDs (directly in the diagram and contained in other PE) to their ReferenceEntity DB_IDs.
+     * @return The PhysicalEntities participants and their associated ReferenceEntities for a given Event dbId 
+     */
+    @GET
+    @Path("/getParticipantsToReferenceEntityMaps/{dbId}")
+    public List<PhysicalToReferenceEntityMap> getPathwayParticipantsPEToRefEntityMap(@PathParam("dbId") Long pathwayId) {
+        return service.getPathwayParticipantPEToRefEntityMap(pathwayId);
+    }
 
     /**
      * @param className Class Name of Object you are querying for
