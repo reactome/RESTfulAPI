@@ -202,6 +202,27 @@ The returned result can be specified as either XML or JSON. The user can view th
 </li>
 
 <li>
+<h4>PathwayComplexes: <code>pathwayComplexes/{dbId : \\d+}</code></h4>
+<dl>
+	<dd class="description">
+		This API lets you query for a list of complexes belonging to a pathway using a Pathway database identifier.  It returns a list of all PhysicalEntity objects that participate in the Pathway. 
+	</dd>
+	<dd>
+		<dl>
+			<dt><b>Request Type:</b></dt><dd><code>GET</code></dd>
+			<dt><b>Parameters:</b></dt>
+			<dd><code>Integer</code> - Pathway database identifier</dd>
+			<dt><b>Output:</b></dt><dd>list of fully encoded PhysicalEntity objects in JSON or XML</dd>
+			<dt><b>Example:</b></dt>
+			<dd>To get a list of PhysicalEntity objects participating in <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current&FOCUS_SPECIES_ID=48887&FOCUS_PATHWAY_ID=109581&ID=109581" target="example">Apoptosis</a>, 
+			use <a href="/ReactomeRESTfulAPI/RESTfulWS/pathwayComplexes/109581" target="example"><code>pathwayComplexes/109581</code></a>
+			</dd>
+		</dl>
+	</dd>
+</dl>
+</li>
+
+<li>
 <h4>QueryById: <code>queryById/{className}/{dbId: \\d+}</code></h4>
 <dl>
 	<dd class="description">This API lets you query the Reactome Database for a specific object. It requires passing class name of the object, as well as the database identifier or the stable identifier of the object. The class name is required. It returns a full object, including full class information about all the attributes of the returned object. For example, if the object has one PublicationSource attribute, it will return a full PublicationSource object within the returned object.</dd>
