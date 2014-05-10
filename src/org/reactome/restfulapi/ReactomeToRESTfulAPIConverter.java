@@ -10,12 +10,14 @@ import static org.reactome.restfulapi.ReflectionUtility.lowerFirst;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.gk.model.GKInstance;
 import org.gk.model.InstanceUtilities;
+import org.gk.model.ReactomeJavaConstants;
 import org.reactome.restfulapi.models.DatabaseObject;
 import org.reactome.restfulapi.models.PhysicalEntity;
 
@@ -93,15 +95,37 @@ public class ReactomeToRESTfulAPIConverter {
      * @throws Exception
      */
     protected List<PhysicalEntity> listPathwayParticipants(GKInstance pathwayInstance) throws Exception {
-        Set<GKInstance> eventPartcipants = InstanceUtilities.grepPathwayParticipants(pathwayInstance);
+        Set<GKInstance> eventParticipants = InstanceUtilities.grepPathwayParticipants(pathwayInstance);
         List<PhysicalEntity> entities = new ArrayList<PhysicalEntity>();
-        for (GKInstance entity : eventPartcipants) {
-            PhysicalEntity convertedEntity = (PhysicalEntity) createObject(entity);
-            entities.add(convertedEntity);
+
+        for (GKInstance entity : eventParticipants) {
+        		PhysicalEntity convertedEntity = (PhysicalEntity) createObject(entity);
+        		entities.add(convertedEntity);
         }
         return entities;
     }
 
+    /**
+     * A helper method that is used to get a list of converted Complex instances contained by a 
+     * passed Pathway instance.
+     * @param pathwayInstance
+     * @return
+     * @throws Exception
+     */
+    protected List<PhysicalEntity> listPathwayComplexes(GKInstance pathwayInstance) throws Exception {
+        Set<GKInstance> eventParticipants = InstanceUtilities.grepPathwayParticipants(pathwayInstance);
+        List<PhysicalEntity> entities = new ArrayList<PhysicalEntity>();
+
+        // only complexes
+        for (GKInstance entity : eventParticipants) {
+        		PhysicalEntity convertedEntity = (PhysicalEntity) createObject(entity);
+        		if (entity.getSchemClass().isa(ReactomeJavaConstants.Complex)) {
+        			entities.add(convertedEntity);
+        		}
+        }
+        return entities;
+    }
+    
     /**
      * Create a Database object for the passed instance. Only dbId and _displayName have been placed in
      * the created DatabaseObject.

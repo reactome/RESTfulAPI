@@ -8,11 +8,11 @@
     </bean>
 
     <bean id="dba" class="org.gk.persistence.MySQLAdaptor">
-        <constructor-arg index="0" value="localhost"/>
+        <constructor-arg index="0" value="reactomedev.oicr.on.ca"/>
 <!--         Production site -->
-       <constructor-arg index="1" value="gk_current"/>
-       <constructor-arg index="2" value="curator"/>
-       <constructor-arg index="3" value="Ixact1y"/>
+       <constructor-arg index="1" value="test_reactome_48"/>
+       <constructor-arg index="2" value="authortool"/>
+       <constructor-arg index="3" value="***REMOVED***"/>
         <!-- reactomecurator site -->
 <!--         <constructor-arg index="1" value="gk_central"/> -->
 <!--         <constructor-arg index="2" value="authortool"/> -->

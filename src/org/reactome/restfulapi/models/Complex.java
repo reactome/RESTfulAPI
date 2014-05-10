@@ -16,7 +16,7 @@ public class Complex extends PhysicalEntity {
     private String totalProt;
     private String maxHomologues;
     private String inferredProt;
-    private java.util.List<PhysicalEntity> hasComponent;
+    private java.util.List<PhysicalEntity> hasComponent;    
     private List<PhysicalEntity> entityOnOthercell;
     private List<EntityCompartment> includedLocation;
     private List<Species> species;
@@ -52,7 +52,7 @@ public class Complex extends PhysicalEntity {
     public void setHasComponent(List<PhysicalEntity> hasComponent) {
         this.hasComponent = hasComponent;
     }
-
+    
     public Complex() {
     }
 
