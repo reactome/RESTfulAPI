@@ -846,6 +846,39 @@ public class APIControllerHelper {
         }
         return new ArrayList<PhysicalEntity>();
     }
+    
+    public List<PhysicalEntity> listPathwayComplexes(Long pathwayId) {
+        try {
+            GKInstance pathway = dba.fetchInstance(pathwayId);
+            if (pathway == null)
+                throw new InstanceNotFoundException(ReactomeJavaConstants.Pathway,
+                                                    pathwayId);
+            List<PhysicalEntity> complexes = converter.listPathwayComplexes(pathway);
+            List<PhysicalEntity> rtn = new ArrayList<PhysicalEntity>();
+            // Append each complex
+            for (PhysicalEntity complex : complexes) {
+            	rtn.add(complex);
+            	
+            	List<PhysicalEntity> subunits = this.getComplexSubunits(complex.getDbId()); 
+            	
+            	// Then append each subunit (with referenceEntities) after the complex
+            	for (PhysicalEntity subunit : subunits) {
+            		rtn.add(subunit);
+            	}
+            }
+            	
+            return rtn;
+        
+        }
+        catch(InstanceNotFoundException e) {
+            logger.error("Cannot find pathway " + pathwayId, e);
+        }
+        catch(Exception e) {
+            logger.error("Error in listPathwayParticipants for " + pathwayId, e);
+        }
+        return new ArrayList<PhysicalEntity>();
+        
+    }
 
     public List<Pathway> listTopLevelPathways() {
         List<QueryRequest> qr = new ArrayList<QueryRequest>();

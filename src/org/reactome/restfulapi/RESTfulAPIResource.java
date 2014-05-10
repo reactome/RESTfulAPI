@@ -292,6 +292,17 @@ public class RESTfulAPIResource {
     }
     
     /**
+     * @param PathwayId Pathway Id
+     * @return List of Complex instances that are present in an Event.
+     */
+    @GET
+    @Path("/pathwayComplexes/{dbId : \\d+}")
+    public List<PhysicalEntity> listPathwayComplexes(@PathParam("dbId") Long PathwayId) {
+        List<PhysicalEntity> entities = service.listPathwayComplexes(PathwayId);
+        return entities;
+    }
+    
+    /**
      * Get a list of DB_IDs for events contained by a Pathway with specified pathwayId. All events, both
      * Pathways and Reactions, should be in the returned list, recursively.
      * @param pathwayId DB_ID for a Pathway object.
