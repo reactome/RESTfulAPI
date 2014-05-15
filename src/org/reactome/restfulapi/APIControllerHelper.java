@@ -49,6 +49,7 @@ import org.reactome.biopax.ReactomeToBioPAX3XMLConverter;
 import org.reactome.biopax.ReactomeToBioPAXXMLConverter;
 import org.reactome.restfulapi.details.pmolecules.ParticipatingMolecules;
 import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
+import org.reactome.restfulapi.mapper.ReferenceSequenceMapper;
 import org.reactome.restfulapi.models.Complex;
 import org.reactome.restfulapi.models.DatabaseObject;
 import org.reactome.restfulapi.models.Event;
@@ -57,6 +58,7 @@ import org.reactome.restfulapi.models.PhysicalEntity;
 import org.reactome.restfulapi.models.PhysicalToReferenceEntityMap;
 import org.reactome.restfulapi.models.Publication;
 import org.reactome.restfulapi.models.ReferenceEntity;
+import org.reactome.restfulapi.models.ReferenceSequence;
 import org.reactome.restfulapi.models.Species;
 import org.reactome.restfulapi.models.Summation;
 
@@ -265,8 +267,18 @@ public class APIControllerHelper {
                 List<ReferenceEntity> refs = new ArrayList<ReferenceEntity>();
                 for (GKInstance ref : refEntities) {
                 	DatabaseObject databaseObj = converter.createObject(ref);
-                	if (databaseObj instanceof ReferenceEntity)
-                		refs.add((ReferenceEntity)databaseObj);
+                	if (databaseObj instanceof ReferenceEntity){
+                		ReferenceEntity re = (ReferenceEntity) databaseObj;
+                		try{
+                			if(ref.getSchemClass().isValidAttribute(ReactomeJavaConstants.identifier)){
+                				re.setIdentifier((String) ref.getAttributeValue(ReactomeJavaConstants.identifier));
+                			}
+                			converter.fillInDetails(ref, databaseObj);
+                		}catch(Exception e){
+                    		//Nothing here
+                		}
+                		refs.add(re);
+                	}
                 }
 
                 map.setPeDbId(pe.getDBID());
