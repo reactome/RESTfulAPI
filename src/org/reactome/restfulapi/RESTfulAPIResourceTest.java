@@ -125,6 +125,7 @@ public class RESTfulAPIResourceTest {
     	Long dbId = 169911L;
     	// A very big Chicken pathway containing many small pathways
     	dbId = 5225808L;
+    	dbId = 74160L;
         String url = RESTFUL_URL + "getPhysicalToReferenceEntityMaps/" + dbId;
         String text = callHttp(url, HTTP_GET, "");
         System.out.println("\ngetPhysicalToReferenceEntityMaps for " + dbId + ":");
@@ -398,6 +399,12 @@ public class RESTfulAPIResourceTest {
         url = RESTFUL_URL + "queryById/ReactionlikeEvent/74707";
         text = callHttp(url, HTTP_GET, "");
         System.out.println("Reaction has two requiredInputComponent of Domain:");
+        prettyPrintXML(text);
+        
+        // A new FragmentReplacedModification
+        url = RESTFUL_URL + "queryById/FragmentReplacedModification/3769430";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("FragmentReplacedModification:");
         prettyPrintXML(text);
     }
 
