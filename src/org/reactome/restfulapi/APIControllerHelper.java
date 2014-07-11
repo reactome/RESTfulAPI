@@ -1,6 +1,5 @@
 package org.reactome.restfulapi;
 
-import com.googlecode.gwt.crypto.gwtx.io.IOException;
 import com.sun.jersey.spi.resource.Singleton;
 import org.apache.log4j.Logger;
 import org.gk.graphEditor.PathwayEditor;
@@ -24,8 +23,6 @@ import org.gk.util.SwingImageCreator;
 import org.jdom.output.DOMOutputter;
 import org.reactome.biopax.ReactomeToBioPAX3XMLConverter;
 import org.reactome.biopax.ReactomeToBioPAXXMLConverter;
-import org.reactome.restfulapi.details.pmolecules.ParticipatingMolecules;
-import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
 import org.reactome.restfulapi.models.*;
 import org.reactome.restfulapi.models.Event;
 
@@ -248,7 +245,6 @@ public class APIControllerHelper {
                 		refs.add(re);
                 	}
                 }
-
                 map.setPeDbId(pe.getDBID());
                 map.setDisplayName(pe.getDisplayName());
                 map.setSchemaClass(pe.getSchemClass().getName());
@@ -1351,19 +1347,5 @@ public class APIControllerHelper {
             next.clear();
         }
         touchedComplexes.add(complex);
-    }
-
-    public ResultContainer getParticipatingMolecules(Long paramID){
-    	ResultContainer rtn;
-    	ParticipatingMolecules pm = new ParticipatingMolecules();
-    	pm.setDBA(dba);
-    	try {
-			rtn = pm.getParticipatingMolecules(paramID);
-		} catch (IOException e) {
-			rtn = new ResultContainer();
-			rtn.setErrorMessage(e.getMessage());
-			e.printStackTrace();
-		}
-    	return rtn;
     }
 }
