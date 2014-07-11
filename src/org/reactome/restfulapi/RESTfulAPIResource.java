@@ -188,8 +188,7 @@ public class RESTfulAPIResource {
                     if (method.getReturnType().equals(List.class)){
                         StringBuilder sb = new StringBuilder();
                         for (Object o : (List<?>) method.invoke(dbOject)) {
-                            DatabaseObject aux = (DatabaseObject) o;
-                            sb.append(aux.getDbId()).append("\n").append(aux.getDisplayName()).append("\n");
+                            sb.append(o.toString()).append("\n");
                         }
                         if(sb.length()>0) {
                             rtn = sb.deleteCharAt(sb.length()-1).toString();
