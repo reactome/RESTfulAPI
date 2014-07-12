@@ -50,6 +50,7 @@ import org.reactome.biopax.ReactomeToBioPAXXMLConverter;
 import org.reactome.restfulapi.details.pmolecules.ParticipatingMolecules;
 import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
 import org.reactome.restfulapi.mapper.ReferenceSequenceMapper;
+import org.reactome.restfulapi.mapper.ReferenceMoleculeMapper;
 import org.reactome.restfulapi.models.Complex;
 import org.reactome.restfulapi.models.DatabaseObject;
 import org.reactome.restfulapi.models.Event;
@@ -59,6 +60,7 @@ import org.reactome.restfulapi.models.PhysicalToReferenceEntityMap;
 import org.reactome.restfulapi.models.Publication;
 import org.reactome.restfulapi.models.ReferenceEntity;
 import org.reactome.restfulapi.models.ReferenceSequence;
+import org.reactome.restfulapi.models.ReferenceMolecule;
 import org.reactome.restfulapi.models.Species;
 import org.reactome.restfulapi.models.Summation;
 
