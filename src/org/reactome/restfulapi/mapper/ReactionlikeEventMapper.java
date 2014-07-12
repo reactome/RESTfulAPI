@@ -8,7 +8,6 @@ import org.gk.model.GKInstance;
 import org.gk.model.ReactomeJavaConstants;
 import org.reactome.restfulapi.ReactomeToRESTfulAPIConverter;
 import org.reactome.restfulapi.models.DatabaseObject;
-import org.reactome.restfulapi.models.Event;
 import org.reactome.restfulapi.models.ReactionlikeEvent;
 
 /**

@@ -9,6 +9,7 @@ import org.gk.model.PersistenceAdaptor;
 import org.gk.model.ReactomeJavaConstants;
 import org.reactome.restfulapi.models.DatabaseIdentifier;
 import org.reactome.restfulapi.models.DatabaseObject;
+import org.reactome.restfulapi.models.ReferenceMolecule;
 import org.reactome.restfulapi.models.ReferenceSequence;
 
 /**
@@ -86,6 +87,19 @@ public abstract class ReactomeModelPostMapper {
         GKInstance dbiInst = dba.fetchInstance(dbi.getDbId());
         String url = getURL(dbiInst);
         dbi.setUrl(url);
+    }
+    
+    /**
+     * One of utility methods.
+     * @param dba
+     * @param dbi
+     * @throws Exception
+     */
+    protected void assignValidURLToDatabaseIdentifier(PersistenceAdaptor dba,
+                                                      ReferenceMolecule rm) throws Exception {
+        GKInstance dbiInst = dba.fetchInstance(rm.getDbId());
+        String url = getURL(dbiInst);
+        rm.setUrl(url);
     }
     
     /**

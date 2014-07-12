@@ -1,1 +1,3 @@
-*.class
+/log4j.properties
+/org/
+/ReactomePostMapperConfiguration.xml

@@ -39,7 +39,7 @@
     
     <bean id="postMapperFactory" class="org.reactome.restfulapi.ReactomeModelPostMapperFactory">
         <property name="configuration">
-            <value>ReactomePostMapperConfigration.xml</value>
+            <value>ReactomePostMapperConfiguration.xml</value>
         </property>
     </bean>
     
