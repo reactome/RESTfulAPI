@@ -12,6 +12,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class ReferenceMolecule extends ReferenceEntity {
     private String atomicConnectivity;
     private String formula;
+    private String url;
 
     public ReferenceMolecule() {
     }
@@ -31,5 +32,13 @@ public class ReferenceMolecule extends ReferenceEntity {
     public void setFormula(String formula) {
         this.formula = formula;
     }
+
+    public String getUrl() {
+		return url;
+	}
+    
+	public void setUrl(String url) {
+		this.url = url;
+	}	
 
 }
