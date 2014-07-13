@@ -1,30 +1,6 @@
 package org.reactome.restfulapi;
 
-import java.awt.Color;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
-
-import javax.imageio.ImageIO;
-
+import com.sun.jersey.spi.resource.Singleton;
 import org.apache.log4j.Logger;
 import org.gk.graphEditor.PathwayEditor;
 import org.gk.model.GKInstance;
@@ -47,25 +23,21 @@ import org.gk.util.SwingImageCreator;
 import org.jdom.output.DOMOutputter;
 import org.reactome.biopax.ReactomeToBioPAX3XMLConverter;
 import org.reactome.biopax.ReactomeToBioPAXXMLConverter;
-import org.reactome.restfulapi.details.pmolecules.ParticipatingMolecules;
-import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
-import org.reactome.restfulapi.mapper.ReferenceSequenceMapper;
-import org.reactome.restfulapi.mapper.ReferenceMoleculeMapper;
-import org.reactome.restfulapi.models.Complex;
-import org.reactome.restfulapi.models.DatabaseObject;
+import org.reactome.restfulapi.models.*;
 import org.reactome.restfulapi.models.Event;
-import org.reactome.restfulapi.models.Pathway;
-import org.reactome.restfulapi.models.PhysicalEntity;
-import org.reactome.restfulapi.models.PhysicalToReferenceEntityMap;
-import org.reactome.restfulapi.models.Publication;
-import org.reactome.restfulapi.models.ReferenceEntity;
-import org.reactome.restfulapi.models.ReferenceSequence;
-import org.reactome.restfulapi.models.ReferenceMolecule;
-import org.reactome.restfulapi.models.Species;
-import org.reactome.restfulapi.models.Summation;
 
-import com.googlecode.gwt.crypto.gwtx.io.IOException;
-import com.sun.jersey.spi.resource.Singleton;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.*;
+import java.util.List;
 
 @Singleton
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -166,7 +138,7 @@ public class APIControllerHelper {
     /**
      * Export a Pathway or a Reaction into SBML. Only an Event can be export.
      * Otherwise, an emtpty string will be returned.
-     * @param dbId
+     * @param dbID
      * @return
      */
     public String sbmlExport(Long dbID) {
@@ -250,16 +222,7 @@ public class APIControllerHelper {
 	        if (!pathway.getSchemClass().isa(ReactomeJavaConstants.Pathway))
 	            throw new IllegalArgumentException(pathway + " is not a pathway!");
 	        Set<GKInstance> aux = InstanceUtilities.grepPathwayParticipants(pathway);
-	        for(GKInstance inst : aux){
-	        	Set<GKInstance> components = InstanceUtilities.getContainedInstances(inst, ReactomeJavaConstants.hasComponent,
-                                                                                 		   ReactomeJavaConstants.hasMember,
-                                                                                 		   ReactomeJavaConstants.hasCandidate);
-	        	if(components!=null && !components.isEmpty()){
-	        		pes.addAll(components);
-	        	}else{
-	        		pes.add(inst);
-	        	}
-	        }
+            pes.addAll(aux);
 	        List<PhysicalToReferenceEntityMap> maps = new ArrayList<PhysicalToReferenceEntityMap>();
             for (GKInstance pe : pes) {
                 Set<GKInstance> refEntities = InstanceUtilities.grepReferenceEntitiesForPE(pe);
@@ -282,7 +245,6 @@ public class APIControllerHelper {
                 		refs.add(re);
                 	}
                 }
-
                 map.setPeDbId(pe.getDBID());
                 map.setDisplayName(pe.getDisplayName());
                 map.setSchemaClass(pe.getSchemClass().getName());
@@ -1385,19 +1347,5 @@ public class APIControllerHelper {
             next.clear();
         }
         touchedComplexes.add(complex);
-    }
-
-    public ResultContainer getParticipatingMolecules(Long paramID){
-    	ResultContainer rtn;
-    	ParticipatingMolecules pm = new ParticipatingMolecules();
-    	pm.setDBA(dba);
-    	try {
-			rtn = pm.getParticipatingMolecules(paramID);
-		} catch (IOException e) {
-			rtn = new ResultContainer();
-			rtn.setErrorMessage(e.getMessage());
-			e.printStackTrace();
-		}
-    	return rtn;
     }
 }

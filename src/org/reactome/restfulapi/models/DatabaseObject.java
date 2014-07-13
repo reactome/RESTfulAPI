@@ -77,4 +77,9 @@ public class DatabaseObject implements java.io.Serializable {
     public void setStableIdentifier(StableIdentifier stableIdentifier) {
         this.stableIdentifier = stableIdentifier;
     }
+
+    @Override
+    public String toString() {
+        return  dbId + "\t" + displayName;
+    }
 }

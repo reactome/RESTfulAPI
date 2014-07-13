@@ -1,52 +1,27 @@
 package org.reactome.restfulapi;
 
+import com.sun.jersey.multipart.FormDataParam;
+import com.sun.jersey.spi.resource.Singleton;
+import org.apache.log4j.Logger;
+import org.reactome.psicquic.CustomizedInteractionService;
+import org.reactome.psicquic.PSICQUICService;
+import org.reactome.psicquic.model.QueryResults;
+import org.reactome.psicquic.service.Service;
+import org.reactome.restfulapi.models.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-
-import org.apache.log4j.Logger;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
-import org.reactome.psicquic.CustomizedInteractionService;
-import org.reactome.psicquic.PSICQUICService;
-import org.reactome.psicquic.model.QueryResults;
-import org.reactome.psicquic.service.Service;
-import org.reactome.restfulapi.details.pmolecules.converter.Converter;
-import org.reactome.restfulapi.details.pmolecules.converter.Data2Excel;
-import org.reactome.restfulapi.details.pmolecules.converter.ExportConfiguration;
-import org.reactome.restfulapi.details.pmolecules.model.ResultContainer;
-import org.reactome.restfulapi.details.pmolecules.types.FormatType;
-import org.reactome.restfulapi.details.pmolecules.types.QueryParams;
-import org.reactome.restfulapi.models.DatabaseObject;
-import org.reactome.restfulapi.models.DatabaseObjectList;
-import org.reactome.restfulapi.models.Event;
-import org.reactome.restfulapi.models.Pathway;
-import org.reactome.restfulapi.models.PhysicalEntity;
-import org.reactome.restfulapi.models.PhysicalToReferenceEntityMap;
-import org.reactome.restfulapi.models.Publication;
-import org.reactome.restfulapi.models.ReferenceEntity;
-import org.reactome.restfulapi.models.Species;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-
-import com.sun.jersey.multipart.FormDataParam;
-import com.sun.jersey.spi.resource.Singleton;
 
 
 /**
@@ -191,6 +166,41 @@ public class RESTfulAPIResource {
     public DatabaseObject queryById(@PathParam("className") final String className, @PathParam("dbId") final String dbID) {
         return service.queryById(className, dbID);
     }
+
+    /**
+     *
+     * @param className Class Name of Object you are querying for
+     * @param dbID
+     * @param attribute
+     * @return
+     */
+    @GET
+    @Path("/queryById/{className}/{dbId}/{attribute}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String queryAttributeById(@PathParam("className") final String className,
+                                     @PathParam("dbId") final String dbID,
+                                     @PathParam("attribute") final String attribute) {
+        String rtn = "";
+        DatabaseObject dbOject = service.queryById(className, dbID);
+        for (Method method : dbOject.getClass().getMethods()) {
+            if (method.getName().toLowerCase().equals("get" + attribute.toLowerCase())){
+                try {
+                    if (method.getReturnType().equals(List.class)){
+                        StringBuilder sb = new StringBuilder();
+                        for (Object o : (List<?>) method.invoke(dbOject)) {
+                            sb.append(o.toString()).append("\n");
+                        }
+                        if(sb.length()>0) {
+                            rtn = sb.deleteCharAt(sb.length()-1).toString();
+                        }
+                    } else {
+                        rtn = method.invoke(dbOject).toString();
+                    }
+                } catch (Exception e) { /* Nothing here */ }
+            }
+        }
+        return rtn;
+    }
     
     /**
      * Get a list of complex subunits that are no-complex PEs.
@@ -209,7 +219,7 @@ public class RESTfulAPIResource {
      */
     @POST
     @Path("/queryByIds/{className}")
-    public List<DatabaseObject> queryByIds(@PathParam("className") String className, 
+    public List<DatabaseObject> queryByIds(@PathParam("className") String className,
                                            String post) {
         if (post.length() == 0)
             return null;
@@ -235,7 +245,7 @@ public class RESTfulAPIResource {
         String propertyValue = keyvalues.nextToken();
         return service.listByQuery(className, propertyField, propertyValue);
     }
-    
+
     /**
      * Query an Event object based on name and a species. A pattern match will be performed by
      * this method. The species value can be empty.
@@ -301,7 +311,7 @@ public class RESTfulAPIResource {
         List<PhysicalEntity> entities = service.listPathwayComplexes(PathwayId);
         return entities;
     }
-    
+
     /**
      * Get a list of DB_IDs for events contained by a Pathway with specified pathwayId. All events, both
      * Pathways and Reactions, should be in the returned list, recursively.
@@ -480,15 +490,7 @@ public class RESTfulAPIResource {
         service.doPathwayEnrichmentAnalysis(IDs);
         return PathwayIdsStr;
     }
-    
-    @GET
-    @Path("/participatingMolecules/{dbId}")
-    public ResultContainer getParticipatingMolecules(@PathParam("dbId") final String dbID) {
-    	Long id = Long.parseLong(dbID);
-    	ResultContainer rc = service.getParticipatingMolecules(id);
-    	return rc;
-    }
-    
+
     /**
      * Get a list of species that should be used in a pathway browser.
      * @return
@@ -596,66 +598,5 @@ public class RESTfulAPIResource {
     public List<ReferenceEntity> queryReferenceEntity(@PathParam("dbId") Long dbId) {
         List<ReferenceEntity> entities = service.getReferenceEntity(dbId);
         return entities;
-    }
-
-    @POST
-    @Path("/participatingMolecules/export/{dbId}")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.TEXT_PLAIN)
-    public String exportParticipatingMolecules(@PathParam("dbId") final String dbID, String post) {   	
-    	post = java.net.URLDecoder.decode(post);
-    	StringTokenizer keyvalues = new StringTokenizer(post, "=");
-        String key = keyvalues.nextToken();
-        String value = keyvalues.nextToken();
-        
-        QueryParams params;
-    	try {
-			params = new QueryParams(new JSONObject(value));
-		} catch (JSONException e) {
-			return null;
-		}
-    	
-    	ExportConfiguration conf = new ExportConfiguration(params.getTypes(), params.getFields());
-    	ResultContainer rc = getParticipatingMolecules(dbID);
-    	Converter data = Converter.getConverter(params.getFormat(), rc, conf);
-    	return data.getStringData();
-    }
-    
-    @POST
-    @Path("/participatingMolecules/download/{dbId}")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response downloadParticipatingMolecules(@PathParam("dbId") final String dbID, String post) {
-    	post = java.net.URLDecoder.decode(post);
-    	StringTokenizer keyvalues = new StringTokenizer(post, "=");
-        String key = keyvalues.nextToken();
-        String value = keyvalues.nextToken();
-        
-        QueryParams params;
-    	try {
-			params = new QueryParams(new JSONObject(value));
-		} catch (JSONException e) {
-			return null;
-		}
-    	
-    	ExportConfiguration conf = new ExportConfiguration(params.getTypes(), params.getFields());
-    	ResultContainer rc = getParticipatingMolecules(dbID);
-    	Converter data = Converter.getConverter(params.getFormat(), rc, conf);
-	
-		Object rtnObject; String rtnType;
-    	if(params.getFormat().equals(FormatType.EXCEL)){
-    		HSSFWorkbook workbook = ((Data2Excel) data).getWorkbook();
-    		rtnObject = (Object) workbook.getBytes();
-			rtnType = "application/vnd.ms-excel";
-		}else{
-			rtnObject = (Object) data.getStringData();
-			rtnType = "application/octet-stream";
-		}
-    	
-    	String fileName = "data." + params.getFormat().getExtension();
-    	ResponseBuilder builder = Response.ok(rtnObject);
-    	builder.type(rtnType);
-    	builder.header("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
-		return builder.build();
     }
 }
