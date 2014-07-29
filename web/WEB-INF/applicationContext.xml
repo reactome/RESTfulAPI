@@ -8,28 +8,15 @@
     </bean>
 
     <bean id="dba" class="org.gk.persistence.MySQLAdaptor">
-        <constructor-arg index="0" value="reactomedev.oicr.on.ca"/>
-<!--         Production site -->
-       <constructor-arg index="1" value="test_reactome_48"/>
-       <constructor-arg index="2" value="authortool"/>
-       <constructor-arg index="3" value="***REMOVED***"/>
-        <!-- reactomecurator site -->
-<!--         <constructor-arg index="1" value="gk_central"/> -->
-<!--         <constructor-arg index="2" value="authortool"/> -->
-<!--         <constructor-arg index="3" value="***REMOVED***" /> -->
-<!--         Development site -->
-<!--         <constructor-arg index="1" value="test_reactome_46"/> -->
-<!--         <constructor-arg index="2" value="authortool"/> -->
-<!--         <constructor-arg index="3" value="***REMOVED***" /> -->
-<!--         Local site -->
-<!--         <constructor-arg index="1" value="gk_current_ver44"/> -->
-<!--         <constructor-arg index="2" value="root"/> -->
-<!--         <constructor-arg index="3" value="macmysql01"/> -->
+      <constructor-arg index="0" value="localhost"/>
+      <constructor-arg index="1" value="gk_current"/>
+      <constructor-arg index="2" value="reactome_user"/>
+      <constructor-arg index="3" value="reactome_pass"/>
         <!-- useCache should be set to false for gk_central deployed in the curator machine
              so that any change in an instance can be seen without restarting tomcat. Otherwise,
              it should be set to true for performance reason. -->
         <property name="useCache">
-            <value>true</value>
+          <value>true</value>
         </property>
     </bean>
 
