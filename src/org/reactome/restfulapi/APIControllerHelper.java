@@ -1,6 +1,7 @@
 package org.reactome.restfulapi;
 
 import com.sun.jersey.spi.resource.Singleton;
+
 import org.apache.log4j.Logger;
 import org.gk.graphEditor.PathwayEditor;
 import org.gk.model.GKInstance;
@@ -27,6 +28,7 @@ import org.reactome.restfulapi.models.*;
 import org.reactome.restfulapi.models.Event;
 
 import javax.imageio.ImageIO;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -35,6 +37,7 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 import java.util.List;
@@ -304,6 +307,21 @@ public class APIControllerHelper {
         return events;
     }
     
+
+    /**
+     * Connect to the denormalized database
+     * @throws SQLException 
+     * 
+     */
+    private Connection getDNConnection() throws SQLException {
+    	String connectionStr = "jdbc:mysql://" + dba.getDBHost() + ":" + dba.getDBPort() + "/" + dba.getDBName() + "_dn";
+    	Properties prop = new Properties();
+    	prop.setProperty("user", dba.getDBUser());
+    	prop.setProperty("password", dba.getDBPwd());
+    	Connection conn = DriverManager.getConnection(connectionStr, prop);
+    	return conn;
+    }  
+    
     /**
      * Query a list of pathways containing one or more genes from the passed gene
      * array.
@@ -312,13 +330,7 @@ public class APIControllerHelper {
      */
     public List<Pathway> queryHitPathways(String[] genes) {
         try {
-            // Connect to the de-normalized database
-            String connectionStr = "jdbc:mysql://" + dba.getDBHost() + ":" + dba.getDBPort() + "/" + dba.getDBName() + "_dn";
-            //+ "?autoReconnect=true";
-            Properties prop = new Properties();
-            prop.setProperty("user", dba.getDBUser());
-            prop.setProperty("password", dba.getDBPwd());
-            Connection conn = DriverManager.getConnection(connectionStr, prop);
+        	Connection conn = getDNConnection();
             String sql = "select ei.DB_ID from Event_2_indirectIdentifier ei, Event_2_species es, " +
             		     "Pathway p where ei.DB_ID = es.DB_ID AND es.species = 48887 AND " +
             		     "ei.DB_ID = p.DB_ID AND ei.indirectIdentifier in (";
@@ -342,6 +354,7 @@ public class APIControllerHelper {
                 return new ArrayList<Pathway>();
             }
             builder.deleteCharAt(builder.length() - 1);
+            System.err.println("pathways 1: "+builder.toString());
             resultSet.close();
             // Select pathways that have PathwayDiagrams
             sql = "SELECT representedPathway FROM PathwayDiagram_2_representedPathway " +
@@ -358,6 +371,7 @@ public class APIControllerHelper {
             resultSet.close();
             dbaStat.close();
             builder.deleteCharAt(builder.length() - 1);
+            System.err.println("pathways 2: "+builder.toString());
             // Want the get the lowest pathways that have pathway diagrams. These
             // pathways should provide most detailed information in diagrams.
             sql = "SELECT DB_ID, hasEveryComponent FROM Pathway_2_hasEveryComponent " +
@@ -376,7 +390,6 @@ public class APIControllerHelper {
             }
             resultSet.close();
             stat.close();
-            conn.close();
             // Only pick up pathways that don't have sub-pathway diagrams
             List<Pathway> rtn = new ArrayList<Pathway>();
             for (Long dbId : pathwayIds) {
@@ -399,7 +412,8 @@ public class APIControllerHelper {
         return new ArrayList<Pathway>();
     }
     
-    /**
+
+	/**
      * Generate an XML String for GeneSet in XML. This method is used by Reactome R analysis package.
      * @return
      */
@@ -592,7 +606,6 @@ public class APIControllerHelper {
     
     public DatabaseObject queryById(String className, 
                                     String id) {
-        GKInstance instance;
         DatabaseObject rtn = new DatabaseObject();
         try {
             rtn = fetchInstance(className, 
@@ -1095,15 +1108,15 @@ public class APIControllerHelper {
             logger.error(e.getMessage(), e);
         }
         if (instances.size() == 0)
-            return new ArrayList<Pathway>();
-//      Query the list of Reactions containing instances
+        	return new ArrayList<Pathway>();
+        //      Query the list of Reactions containing instances
         // Have to consider all complexes those GKInstances participate too
         try {
             //TODO: Should we also check with EntitySet?
             Set<GKInstance> complexes = grepComplexesForEntities(instances);
             instances.addAll(complexes);
             Set<GKInstance> reactions = getParticipatingReactions(instances);
-            rtn = grepTopPathwaysFromReactions(reactions);
+            rtn = getPathwaysFromReactions(reactions);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -1127,55 +1140,45 @@ public class APIControllerHelper {
      * @throws Exception
      */
     private Set<GKInstance> grepComplexesForEntities(Set<GKInstance> entities)
-            throws Exception {
-        Set<GKInstance> complexes = new HashSet<GKInstance>();
-        Collection query = new HashSet<GKInstance>(entities);
-        while (true) {
-            query = dba.fetchInstanceByAttribute(ReactomeJavaConstants.Complex,
-                    ReactomeJavaConstants.hasComponent,
-                    "=",
-                    query);
-            if (query != null && query.size() > 0)
-                complexes.addAll(query);
-            else
-                break;
-        }
-        return complexes;
+    		throws Exception {
+    	Set<GKInstance> complexes = new HashSet<GKInstance>();
+    	Collection query = new HashSet<GKInstance>(entities);
+    	while (true) {
+    		query = dba.fetchInstanceByAttribute(ReactomeJavaConstants.Complex,
+    				ReactomeJavaConstants.hasComponent,
+    				"=",
+    				query);
+    		if (query != null && query.size() > 0)
+    			complexes.addAll(query);
+    		else
+    			break;
+    	}
+    	return complexes;
     }
 
-    private List<Pathway> grepTopPathwaysFromReactions(Collection reactions) throws Exception {
-        // Create the paths from the passed Pathways to the top level Pathways
-        List<List<GKInstance>> paths = new ArrayList<List<GKInstance>>();
-        for (Iterator it = reactions.iterator(); it.hasNext(); ) {
-            GKInstance pathway = (GKInstance) it.next();
-            List<List<GKInstance>> paths1 = getAncestorPaths(pathway);
-            paths.addAll(paths1);
-        }
-        mergePaths(paths);
-        // Now get the top level pathways
-        Set<GKInstance> set = new HashSet<GKInstance>();
-        for (List<GKInstance> path : paths) {
-            // Only Pathways are needed
-            for (int i = path.size() - 1; i >= 0; i--) {
-                GKInstance bottom = path.get(i);
-                if (bottom.getSchemClass().isa(ReactomeJavaConstants.Pathway)) {
-                    set.add(bottom);
-                    break;
-                }
-            }
-        }
-        List<GKInstance> topPathways = new ArrayList<GKInstance>();
-        for (GKInstance instance : set) {
-            topPathways.add(instance);
-        }
-        InstanceUtilities.sortInstances(topPathways);
-        // Convert the topPathways to Pathway objects
-        List<Pathway> rtn = new ArrayList<Pathway>();
-        for (GKInstance pathwayInstance : topPathways) {
-            Pathway pathway = (Pathway) converter.createObject(pathwayInstance);
-            rtn.add(pathway);
-        }
-        return rtn;
+
+    private List<Pathway> getPathwaysFromReactions(Collection reactions) throws Exception {
+    	// Create the paths from the passed reactions
+    	List<List<GKInstance>> paths = new ArrayList<List<GKInstance>>();
+    	for (Iterator it = reactions.iterator(); it.hasNext(); ) {
+    		GKInstance reaction = (GKInstance) it.next();
+    		List<List<GKInstance>> paths1 = getParentPathways(reaction);
+    		paths.addAll(paths1);
+    	}
+    	mergePaths(paths);
+
+    	// Only Pathways are needed
+    	List<Pathway> rtn = new ArrayList<Pathway>();
+    	for (List<GKInstance> path : paths) {
+    		for (int i = path.size() - 1; i >= 0; i--) {
+    			GKInstance bottom = path.get(i);		
+    			if (bottom.getSchemClass().isa(ReactomeJavaConstants.Pathway)) {
+    				Pathway pathway = (Pathway) converter.createObject(bottom);
+    				rtn.add(pathway);
+    			}
+    		}
+    	}
+    	return rtn;
     }
 
     private Set<GKInstance> getParticipatingReactions(Collection<GKInstance> entities) throws Exception {
@@ -1223,16 +1226,15 @@ public class APIControllerHelper {
         return reactions;
     }
 
-    List<List<GKInstance>> getAncestorPaths(GKInstance pathway) throws Exception {
+    List<List<GKInstance>> getParentPathways(GKInstance reaction) throws Exception {
         List<List<GKInstance>> paths = new ArrayList<List<GKInstance>>();
         List<GKInstance> firstPath = new ArrayList<GKInstance>();
-        paths.add(firstPath);
-        getAncestorPaths(pathway, firstPath, paths);
+        getParentPathways(reaction, firstPath, paths);
         mergePaths(paths);
         return paths;
     }
 
-    private void getAncestorPaths(GKInstance pathway,
+    private void getParentPathways(GKInstance pathway,
                                   List<GKInstance> firstPath,
                                   List<List<GKInstance>> paths) throws Exception {
         firstPath.add(0, pathway);
@@ -1248,21 +1250,9 @@ public class APIControllerHelper {
             parents.addAll(collection);
         if (parents.size() == 0)
             return;
-        int c = 0;
-        // firstPath might be changes. Back it up
-        List<GKInstance> firstPathBackup = null;
-        if (parents.size() > 1)
-            firstPathBackup = new ArrayList<GKInstance>(firstPath);
-        for (GKInstance parent : parents) {
-            if (c == 0)
-                getAncestorPaths(parent, firstPath, paths);
-            else {
-                // Copy the original Paths
-                List<GKInstance> morePath = new ArrayList<GKInstance>(firstPathBackup);
-                paths.add(morePath);
-                getAncestorPaths(parent, morePath, paths);
-            }
-            c++;
+
+        if (parents.size() > 1) {
+        	paths.add(parents);
         }
     }
 
