@@ -80,6 +80,9 @@ public class PSICQUICRetriever {
         ics.setMappingIdDbNames(this.sm.getMappingIdDbNames());
         ics.runService();
         
+	// DEV-885 Note: the score is still retained at this point but it gets lost
+	// upon conversion to EncoreInteraction objects
+
         // Retrieve results
         Map<Integer, EncoreInteraction> interactionMapping = ics.getInteractionMapping();
         
