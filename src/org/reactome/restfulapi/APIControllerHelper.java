@@ -28,6 +28,7 @@ import org.reactome.restfulapi.models.*;
 import org.reactome.restfulapi.models.Event;
 
 import javax.imageio.ImageIO;
+import javax.ws.rs.PathParam;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -321,6 +322,139 @@ public class APIControllerHelper {
     	Connection conn = DriverManager.getConnection(connectionStr, prop);
     	return conn;
     }  
+    
+    // DEV-870 work starts here
+    // http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method 
+    private static boolean isValidEmailAddress(String email) {
+    	String ePattern = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$";
+    	java.util.regex.Pattern p = java.util.regex.Pattern.compile(ePattern);
+    	java.util.regex.Matcher m = p.matcher(email);
+    	return m.matches();
+    }	
+    
+    public List<DatabaseObject> getPeopleByName(String name) {
+    	try {
+    		// split into first and last names
+    		String[] names = name.split(" ");
+    		
+    		// ...but deal with situations where we only see one name
+    		StringBuilder string = new StringBuilder();
+    		if (names[0] != null && names.length > 1) {
+    			string.append(names[0]);
+    		}
+    		String firstName = string.toString();
+    		string.setLength(0);
+    		
+    		if (names.length > 1) {
+    			string.append(names[names.length-1]);
+    		}
+    		String lastName = string.toString();
+    		string.setLength(0);
+    		
+    		
+    		// Watch out for apostrophes in names -- use double quotes
+    		// and let's make matching a little fuzzy
+    		if (firstName.length() > 0 && lastName.length() > 0) {
+    			string.append("SELECT DB_ID from Person WHERE surname LIKE \"%"+ lastName + "%\""+
+    				" AND firstname LIKE \"%"+ firstName + "%\"");
+    		}
+    		else {	
+    			string.append("SELECT DB_ID from Person WHERE surname LIKE \"%"+ name + "%\""+
+    				" OR firstname LIKE \"%"+ name + "%\"");
+    		}
+    		String sql = string.toString();
+    		    		
+    		Connection dbaConn = dba.getConnection();
+    		Statement dbaStat = dbaConn.createStatement();
+    		ResultSet resultSet = dbaStat.executeQuery(sql);
+    		
+    		List<DatabaseObject> rtn = new ArrayList<DatabaseObject>();
+    		while (resultSet.next()) { 
+    			long personId = resultSet.getLong(1);
+                DatabaseObject person = fetchInstance("Person", String.valueOf(personId));
+                rtn.add(person);
+    		}
+    	
+    		return rtn;
+    	}
+    	catch(Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+    	
+    	return new ArrayList<DatabaseObject>();
+    }
+    
+    public List<DatabaseObject> getPeopleByEmail(String email) {
+    	try {
+    		if (! isValidEmailAddress(email)) {
+    			throw new IllegalArgumentException(email + " does not appear to be a valid email address.");
+    		}
+
+    		String sql = "SELECT DB_ID from Person WHERE eMailAddress LIKE '" + email + "'";
+
+    		Connection dbaConn = dba.getConnection();
+    		Statement dbaStat = dbaConn.createStatement();
+    		ResultSet resultSet = dbaStat.executeQuery(sql);
+
+    		List<DatabaseObject> rtn = new ArrayList<DatabaseObject>();
+    		while (resultSet.next()) { 
+    			Long personId = resultSet.getLong(1);
+    			DatabaseObject person = fetchInstance("Person", String.valueOf(personId));
+    			rtn.add(person);
+    		}
+
+    		return rtn;
+
+    	}
+    	catch(Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+    
+    	return new ArrayList<DatabaseObject>();
+    }
+    
+    // DEV-870 work ends here
+    
+    // DEV-846 work starts here
+    /**
+     * Get a list of pathways that a person has reviewed 
+     * 
+     * @param personId database identifier for an instance of the Person class
+     * @return ArrayList<Pathway>
+     */
+    public List<Pathway> queryReviewedPathways(long personId) {
+    	try{
+    		String sql = 
+    				"SELECT d.DB_ID" +
+    				" FROM  DatabaseObject AS d," +
+    				" Event_2_reviewed AS e2r," +
+    				" InstanceEdit_2_author AS i2a " + 
+    				" WHERE i2a.author=" + String.valueOf(personId) + 
+    				" AND   e2r.reviewed=i2a.DB_ID" + 
+    				" AND   e2r.DB_ID=d.DB_ID" + 
+    				" AND   d._class='Pathway'" ;
+
+    		Connection dbaConn = dba.getConnection();
+    		Statement dbaStat = dbaConn.createStatement();
+    		ResultSet resultSet = dbaStat.executeQuery(sql);
+
+    		List<Pathway> rtn = new ArrayList<Pathway>();
+    		while (resultSet.next()) { 
+    			Long pathwayId = resultSet.getLong(1);
+                GKInstance instance = dba.fetchInstance(pathwayId);
+                Pathway pathway = (Pathway) converter.createObject(instance);
+                rtn.add(pathway);
+    		}
+
+    		return rtn;
+    	}
+    	catch(Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+    
+        return new ArrayList<Pathway>();
+    }
+    // DEV-846 work ends here
     
     /**
      * Query a list of pathways containing one or more genes from the passed gene
