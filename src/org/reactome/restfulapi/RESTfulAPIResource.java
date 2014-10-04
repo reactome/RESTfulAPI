@@ -123,6 +123,40 @@ public class RESTfulAPIResource {
                                          query.split(","));
     }
     
+    // DEV-870 work starts here
+    /**
+     * Get the database identifier(s) for a Person by name
+     * @return
+     */
+    @GET
+    @Path("/queryPeopleByName/{name}")
+    public List<DatabaseObject> getPersonsByName(@PathParam("name") String name) {
+    	return service.getPeopleByName(name);
+    }
+    
+    /**
+     * Get the database identifier(s) for a Person by email
+     * @return
+     */
+    @GET
+    @Path("/queryPeopleByEmail/{email}")
+    public List<DatabaseObject> getPersonssByEmail(@PathParam("email") String email) {
+    	return service.getPeopleByEmail(email);
+    }
+    // DEV-870 work ends here
+    // DEV-846 work starts here
+    /**
+     * Query a list of pathways that have been reviewed by a person.
+     * @return List
+     */
+    @GET
+    @Path("/queryReviewedPathways/{personId}")
+    public List<Pathway> queryReviewedPathwaysJSON(@PathParam("personId") long personId) {
+        return service.queryReviewedPathways(personId);
+    }
+
+    // DEV-846 work ends here
+    
     /**
      * Query a list of pathways that contain one or more genes in the query gene list.
      * @return
