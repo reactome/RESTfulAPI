@@ -154,6 +154,16 @@ public class RESTfulAPIResource {
     public List<Pathway> queryReviewedPathwaysJSON(@PathParam("personId") long personId) {
         return service.queryReviewedPathways(personId);
     }
+    
+    /**
+     * Query a list of pathways that have been authored by a person.
+     * @return List
+     */
+    @GET
+    @Path("/queryAuthoredPathways/{personId}")
+    public List<Pathway> queryAuthoredPathwaysJSON(@PathParam("personId") long personId) {
+        return service.queryAuthoredPathways(personId);
+    }
 
     // DEV-846 work ends here
     
