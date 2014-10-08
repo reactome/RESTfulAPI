@@ -417,6 +417,46 @@ public class APIControllerHelper {
     
     // DEV-846 work starts here
     /**
+     * Get a list of pathways that a person has authored
+     * 
+     * @param personId database identifier for an instance of the Person class
+     * @return ArrayList<Pathway>
+     */
+    public List<Pathway> queryAuthoredPathways(long personId) {
+    	try{
+    		String sql = 
+    				"SELECT d.DB_ID" +
+    				" FROM  DatabaseObject AS d," +
+    				" Event_2_authored AS e2a," +
+    				" InstanceEdit_2_author AS i2a " + 
+    				" WHERE i2a.author=" + String.valueOf(personId) + 
+    				" AND   e2a.authored=i2a.DB_ID" + 
+    				" AND   e2a.DB_ID=d.DB_ID" + 
+    				" AND   d._class='Pathway'" ;
+    		
+    		System.err.println("MY SQL: " + sql);
+
+    		Connection dbaConn = dba.getConnection();
+    		Statement dbaStat = dbaConn.createStatement();
+    		ResultSet resultSet = dbaStat.executeQuery(sql);
+
+    		List<Pathway> rtn = new ArrayList<Pathway>();
+    		while (resultSet.next()) { 
+    			Long pathwayId = resultSet.getLong(1);
+                GKInstance instance = dba.fetchInstance(pathwayId);
+                Pathway pathway = (Pathway) converter.createObject(instance);
+                rtn.add(pathway);
+    		}
+
+    		return rtn;
+    	}
+    	catch(Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+    
+        return new ArrayList<Pathway>();
+    }
+    /**
      * Get a list of pathways that a person has reviewed 
      * 
      * @param personId database identifier for an instance of the Person class
@@ -433,6 +473,9 @@ public class APIControllerHelper {
     				" AND   e2r.reviewed=i2a.DB_ID" + 
     				" AND   e2r.DB_ID=d.DB_ID" + 
     				" AND   d._class='Pathway'" ;
+    		
+    		System.err.println("MY SQL: " + sql);
+    		
 
     		Connection dbaConn = dba.getConnection();
     		Statement dbaStat = dbaConn.createStatement();
