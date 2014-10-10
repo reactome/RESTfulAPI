@@ -434,7 +434,7 @@ public class APIControllerHelper {
     				" AND   e2a.DB_ID=d.DB_ID" + 
     				" AND   d._class='Pathway'" ;
     		
-    		System.err.println("MY SQL: " + sql);
+    		//System.err.println("MY SQL: " + sql);
 
     		Connection dbaConn = dba.getConnection();
     		Statement dbaStat = dbaConn.createStatement();
@@ -474,7 +474,7 @@ public class APIControllerHelper {
     				" AND   e2r.DB_ID=d.DB_ID" + 
     				" AND   d._class='Pathway'" ;
     		
-    		System.err.println("MY SQL: " + sql);
+    		//System.err.println("MY SQL: " + sql);
     		
 
     		Connection dbaConn = dba.getConnection();
@@ -816,6 +816,13 @@ public class APIControllerHelper {
             rtn = (DatabaseObject) converter.convert(instance);
         }
         else { // This should be stable id
+        	
+        	// We do not need the version
+        	if (id.indexOf(".") >= 0) {
+        		id = id.replaceAll("\\.\\d+", "");
+        		//System.err.println("This is the actual ID: "+id);
+        	}
+        	
             Collection col = dba.fetchInstanceByAttribute(ReactomeJavaConstants.StableIdentifier,
                                                           ReactomeJavaConstants.identifier, 
                                                           "=",
