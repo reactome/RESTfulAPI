@@ -376,6 +376,24 @@ public class RESTfulAPIResource {
         return builder.toString();
     }
 
+    /**
+     * 
+     * @return a list of reference molecules with their external IDs
+     */
+    
+    @GET
+    @Path("/getReferenceMolecules")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getReferenceMolecules() {
+        List<String> dbIds = service.getReferenceMolecules();
+        StringBuilder builder = new StringBuilder();
+        for (String dbId : dbIds) {
+            builder.append(dbId).append("\n");
+        }
+        return builder.toString();
+    }
+    
+    
     @GET
     @Path("/topLevelPathways")
     public List<Pathway> listTopLevelPathways() {
