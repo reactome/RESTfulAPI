@@ -1543,5 +1543,26 @@ public class APIControllerHelper {
     	}
     	return new ArrayList<String>();
     }
+
+	public List<String> getDiseases() {
+    	try {
+    		Collection<GKInstance> instances = dba.fetchInstancesByClass(ReactomeJavaConstants.Disease);
+    		dba.loadInstanceAttributeValues(instances, new String[] {ReactomeJavaConstants.identifier,
+    				ReactomeJavaConstants.referenceDatabase});
+    		List <String> rtn = new ArrayList<String>();
+    		for (GKInstance inst : instances) {
+    			GKInstance refDb = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.referenceDatabase);
+    			String dbName = refDb.getDisplayName();
+    			String id = (String) inst.getAttributeValue(ReactomeJavaConstants.identifier);
+    			String DB_ID = inst.getDBID().toString();
+    			rtn.add(DB_ID + "\t" + dbName + ":" + id); 
+    		}
+    		return rtn;
+    	}
+    	catch (Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+		return new ArrayList<String>();
+	}
     
 }

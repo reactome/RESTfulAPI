@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PostMappers>
+    <PostMapper class="DatabaseIdentifier" mapper="org.reactome.restfulapi.mapper.DatabaseIdentifierMapper"></PostMapper>
+    <PostMapper class="Event" mapper="org.reactome.restfulapi.mapper.EventMapper"></PostMapper>
+    <PostMapper class="Pathway" mapper="org.reactome.restfulapi.mapper.PathwayMapper"></PostMapper>
+    <PostMapper class="ReactionlikeEvent" mapper="org.reactome.restfulapi.mapper.ReactionlikeEventMapper"></PostMapper>
+    <PostMapper class="StableIdentifier" mapper="org.reactome.restfulapi.mapper.StableIdentifierMapper"></PostMapper>
+    <PostMapper class="PhysicalEntity" mapper="org.reactome.restfulapi.mapper.PhysicalEntityMapper"></PostMapper>
+    <PostMapper class="ReferenceSequence" mapper="org.reactome.restfulapi.mapper.ReferenceSequenceMapper"></PostMapper>
+    <PostMapper class="ReferenceMolecule" mapper="org.reactome.restfulapi.mapper.ReferenceMoleculeMapper"></PostMapper>
+</PostMappers>

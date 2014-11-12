@@ -395,6 +395,21 @@ public class RESTfulAPIResource {
     
     
     @GET
+    @Path("/getDiseases")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getDiseases() {
+        List<String> dbIds = service.getDiseases();
+        StringBuilder builder = new StringBuilder();
+        for (String dbId : dbIds) {
+            builder.append(dbId).append("\n");
+        }
+        return builder.toString();
+    }
+    
+    
+    
+    
+    @GET
     @Path("/topLevelPathways")
     public List<Pathway> listTopLevelPathways() {
         return service.listTopLevelPathways();

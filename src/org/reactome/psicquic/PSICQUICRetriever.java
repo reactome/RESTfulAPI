@@ -39,7 +39,6 @@ public class PSICQUICRetriever {
     protected PSICQUICRetriever() {
         
     }
-    
     public PSICQUICRetriever(List<String> userData) {
         this.URL = "User data";
         this.serviceName = "User data";
