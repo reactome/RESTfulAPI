@@ -66,8 +66,6 @@ public class APIControllerHelper {
     }
 
     private Integer getReleaseNumber() throws Exception {
-        if (releaseNumber != null)
-            return releaseNumber;
         releaseNumber = dba.getReleaseNumber();
         return releaseNumber;
     }
@@ -1564,5 +1562,37 @@ public class APIControllerHelper {
     	}
 		return new ArrayList<String>();
 	}
-    
+
+	public List<String> getUniProtRefSeqs() {
+    	try {
+    		String sql1 = "SELECT DB_ID from DatabaseObject WHERE _displayName='UniProt' AND _class='ReferenceDatabase'";
+    		    		
+    		Connection dbaConn = dba.getConnection();
+    		Statement dbaStat = dbaConn.createStatement();
+    		ResultSet resultSet = dbaStat.executeQuery(sql1);
+    		resultSet.next(); 
+    		String DB_ID = resultSet.getString(1);
+  
+    		String sql2 = "SELECT re.DB_ID, re.identifier FROM ReferenceEntity re, ReferenceSequence rs "+
+    				"WHERE rs.DB_ID=re.DB_ID AND referenceDatabase=" + DB_ID;
+    		
+    		Statement dbaStat2 = dbaConn.createStatement();
+    		ResultSet resultSet2 = dbaStat2.executeQuery(sql2);
+    		
+    		List<String> rtn = new ArrayList<String>();
+    		while (resultSet2.next()) {
+    			String id = resultSet2.getString(1);
+    			String accession = resultSet2.getString(2);
+    			rtn.add(id + "\tUniProt:" + accession);
+    		}
+    		
+    		return rtn;
+    	}
+    	catch (Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+		return new ArrayList<String>();
+	}
+	
+	
 }

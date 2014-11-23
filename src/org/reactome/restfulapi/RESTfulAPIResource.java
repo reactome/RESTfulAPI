@@ -406,6 +406,17 @@ public class RESTfulAPIResource {
         return builder.toString();
     }
     
+    @GET
+    @Path("/getUniProtRefSeqs")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getUniProtRefSeqs() {
+        List<String> dbIds = service.getUniProtRefSeqs();
+        StringBuilder builder = new StringBuilder();
+        for (String dbId : dbIds) {
+            builder.append(dbId).append("\n");
+        }
+        return builder.toString();
+    }    
     
     
     
