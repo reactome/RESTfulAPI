@@ -1,6 +1,18 @@
 package org.reactome.restfulapi;
 
-import com.sun.jersey.spi.resource.Singleton;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.*;
+
+import javax.imageio.ImageIO;
 
 import org.apache.log4j.Logger;
 import org.gk.graphEditor.PathwayEditor;
@@ -25,23 +37,8 @@ import org.jdom.output.DOMOutputter;
 import org.reactome.biopax.ReactomeToBioPAX3XMLConverter;
 import org.reactome.biopax.ReactomeToBioPAXXMLConverter;
 import org.reactome.restfulapi.models.*;
-import org.reactome.restfulapi.models.Event;
 
-import javax.imageio.ImageIO;
-import javax.ws.rs.PathParam;
-
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.*;
-import java.util.List;
+import com.sun.jersey.spi.resource.Singleton;
 
 @Singleton
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -669,8 +666,8 @@ public class APIControllerHelper {
      * @return
      */
     public synchronized String getPathwayDiagram(long pathwayId, 
-                                    String type,
-                                    String[] geneNames) {
+                                                 String type,
+                                                 String[] geneNames) {
         String rtn = null;
         try {
             GKInstance pathway = dba.fetchInstance(pathwayId);
@@ -678,17 +675,14 @@ public class APIControllerHelper {
                 logger.error("Pathway doesn't exist: " + pathwayId);
                 throw new IllegalArgumentException("Pathway doesn't exist: " + pathwayId);
             }
+            DiagramGeneratorFromDB diagramHelper = new DiagramGeneratorFromDB();
+            diagramHelper.setMySQLAdaptor(dba);
             // Find PathwayDiagram
-            Collection<?> c = dba.fetchInstanceByAttribute(ReactomeJavaConstants.PathwayDiagram,
-                                                           ReactomeJavaConstants.representedPathway,
-                                                           "=",
-                                                           pathway);
-            if (c == null || c.size() == 0) {
+            GKInstance diagram = diagramHelper.getPathwayDiagram(pathway);
+            if (diagram == null) {
                 //logger.error("Pathway diagram is not available for " + pathway.getDisplayName());
                 throw new IllegalStateException("Pathway diagram is not available for " + pathway.getDisplayName());
             }
-
-            GKInstance diagram = (GKInstance) c.iterator().next();
             if (type.equals("xml")) {
                 if (dba.isUseCache()) {
                     String xml = getCachedPathwayDiagramXML(pathway, diagram);
@@ -706,9 +700,9 @@ public class APIControllerHelper {
             RenderablePathway renderablePathway = reader.openDiagram(diagram);
             if (geneNames != null)
                 highlightPathwayDiagram(renderablePathway, geneNames);
-            PathwayEditor editor = new DiagramGeneratorFromDB().preparePathwayEditor(diagram, 
-                                                                                     pathway, 
-                                                                                     renderablePathway);
+            PathwayEditor editor = diagramHelper.preparePathwayEditor(diagram, 
+                                                                      pathway, 
+                                                                      renderablePathway);
             // Just to make the tightNodes() work, have to do an extra paint
             // to make textBounds correct
             new PathwayDiagramGeneratorViaAT().paintOnImage(editor);
@@ -724,7 +718,8 @@ public class APIControllerHelper {
                 baos.flush();
                 rtn = org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(baos.toByteArray());
                 baos.close();
-            } else if (type.equals("pdf")) {
+            } 
+            else if (type.equals("pdf")) {
                 String uuid = UUID.randomUUID().toString();
                 // To avoid a long name that is not supported by a platform
                 File pdfFileName = new File(outputdir, uuid + ".pdf");
@@ -738,7 +733,8 @@ public class APIControllerHelper {
                 {
                     throw new Exception("Pathway diagram file could not be deleted.");
                 }
-            } else {
+            } 
+            else {
                 throw new Exception("Unsupported Media Type");
             }
         }
