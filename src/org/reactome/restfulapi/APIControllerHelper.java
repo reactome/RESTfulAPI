@@ -1002,17 +1002,6 @@ public class APIControllerHelper {
             if (pathway == null)
                 throw new InstanceNotFoundException(ReactomeJavaConstants.Pathway,
                                                     pathwayId);
-            List <PhysicalEntity> listOfPathways = converter.listPathwayParticipants(pathway);
-            for (PhysicalEntity element : listOfPathways) {
-            	List <Disease> diseases = element.getDisease();
-            	String diseaseString = "No diseases";
-            	if (diseases != null && diseases.size() > 0) {
-            		diseaseString = diseases.toString();
-            	}            	
-            	
-            	String name = element.getDisplayName();
-            	System.err.println("Hello, this thing is "+name+" and it has diseases "+diseaseString);
-            }
             return converter.listPathwayParticipants(pathway);
         }
         catch(InstanceNotFoundException e) {
