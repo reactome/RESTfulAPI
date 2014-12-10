@@ -429,7 +429,6 @@ public class APIControllerHelper {
     				" AND   e2a.DB_ID=d.DB_ID" + 
     				" AND   d._class='Pathway'" ;
     		
-    		//System.err.println("MY SQL: " + sql);
 
     		Connection dbaConn = dba.getConnection();
     		Statement dbaStat = dbaConn.createStatement();
@@ -526,7 +525,7 @@ public class APIControllerHelper {
                 return new ArrayList<Pathway>();
             }
             builder.deleteCharAt(builder.length() - 1);
-            System.err.println("pathways 1: "+builder.toString());
+//            System.err.println("pathways 1: "+builder.toString());
             resultSet.close();
             // Select pathways that have PathwayDiagrams
             sql = "SELECT representedPathway FROM PathwayDiagram_2_representedPathway " +
@@ -543,7 +542,7 @@ public class APIControllerHelper {
             resultSet.close();
             dbaStat.close();
             builder.deleteCharAt(builder.length() - 1);
-            System.err.println("pathways 2: "+builder.toString());
+//            System.err.println("pathways 2: "+builder.toString());
             // Want the get the lowest pathways that have pathway diagrams. These
             // pathways should provide most detailed information in diagrams.
             sql = "SELECT DB_ID, hasEveryComponent FROM Pathway_2_hasEveryComponent " +
@@ -1003,6 +1002,17 @@ public class APIControllerHelper {
             if (pathway == null)
                 throw new InstanceNotFoundException(ReactomeJavaConstants.Pathway,
                                                     pathwayId);
+            List <PhysicalEntity> listOfPathways = converter.listPathwayParticipants(pathway);
+            for (PhysicalEntity element : listOfPathways) {
+            	List <Disease> diseases = element.getDisease();
+            	String diseaseString = "No diseases";
+            	if (diseases != null && diseases.size() > 0) {
+            		diseaseString = diseases.toString();
+            	}            	
+            	
+            	String name = element.getDisplayName();
+            	System.err.println("Hello, this thing is "+name+" and it has diseases "+diseaseString);
+            }
             return converter.listPathwayParticipants(pathway);
         }
         catch(InstanceNotFoundException e) {
@@ -1408,6 +1418,10 @@ public class APIControllerHelper {
         List<List<GKInstance>> paths = new ArrayList<List<GKInstance>>();
         List<GKInstance> firstPath = new ArrayList<GKInstance>();
         getParentPathways(reaction, firstPath, paths);
+        
+        if (paths.size() == 0) {
+        	paths.add(firstPath);
+        }
         mergePaths(paths);
         return paths;
     }
@@ -1418,18 +1432,25 @@ public class APIControllerHelper {
         firstPath.add(0, pathway);
         List<GKInstance> parents = new ArrayList<GKInstance>();
         Collection collection = pathway.getReferers(org.gk.model.ReactomeJavaConstants.hasEvent);
-        if (collection != null)
+
+        if (collection != null) {
             parents.addAll(collection);
+        }
+        
         collection = pathway.getReferers(ReactomeJavaConstants.hasMember);
-        if (collection != null)
+        if (collection != null) {
             parents.addAll(collection);
+        }
+        
         collection = pathway.getReferers(ReactomeJavaConstants.hasSpecialisedForm);
-        if (collection != null)
+        if (collection != null) {
             parents.addAll(collection);
+        }
+                
         if (parents.size() == 0)
             return;
 
-        if (parents.size() > 1) {
+        if (parents.size() > 0) {
         	paths.add(parents);
         }
     }

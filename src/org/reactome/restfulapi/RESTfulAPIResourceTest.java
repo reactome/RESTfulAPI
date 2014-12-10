@@ -87,13 +87,13 @@ public class RESTfulAPIResourceTest {
 
     @Test
     public void testPathwayDiagram() throws Exception {
-        //        String url = RESTFUL_URL + "pathwayDiagram/109581/png";
-        //        String text = callHttp(url,
-        //                HTTP_GET,
-        //                "");
-        //        System.out.println("Output from pathwaydiagram:\n");
-        //        System.out.println(text);
-        //        decodeInBase64(text, "69278.png");
+                String url = RESTFUL_URL + "pathwayDiagram/109581/png";
+                String text = callHttp(url,
+                        HTTP_GET,
+                        "");
+                System.out.println("Output from pathwaydiagram:\n");
+                System.out.println(text);
+                decodeInBase64(text, "109581.png");
         //        
         //        url = RESTFUL_URL + "pathwayDiagram/109581/pdf";
         //        text = callHttp(url,
@@ -104,9 +104,9 @@ public class RESTfulAPIResourceTest {
         //        decodeInBase64(text, "69278.pdf");
         //        
         // A disease diagram: signaling by FGFR in cancer
-        String url = RESTFUL_URL + "pathwayDiagram/1226099/pdf";
-        String text = callHttp(url, HTTP_GET, "");
-        decodeInBase64(text, "1226099.pdf");
+//        String url = RESTFUL_URL + "pathwayDiagram/1226099/pdf";
+//        String text = callHttp(url, HTTP_GET, "");
+//        decodeInBase64(text, "1226099.pdf");
         //        
         //        // Pathway diagram containing multiple EntitySet
         //        url = RESTFUL_URL + "pathwayDiagram/71387/xml";
@@ -657,8 +657,8 @@ public class RESTfulAPIResourceTest {
                 "IntAct"
         };
         for (int i = 0; i < dbIds.length; i++) {
-            if (i != (dbIds.length - 1))
-                continue;
+//            if (i != (dbIds.length - 1))
+//                continue;
             Long dbId = dbIds[i];
             String serviceName = serviceNames[i];
             String url = RESTFUL_URL + "psiquicInteractions/" + dbId + "/" + serviceName;

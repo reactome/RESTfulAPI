@@ -23,6 +23,7 @@ import org.reactome.psicquic.service.ServiceManager;
 
 import psidev.psi.mi.tab.io.PsimiTabReader;
 import psidev.psi.mi.tab.model.BinaryInteraction;
+import psidev.psi.mi.tab.model.Confidence;
 import uk.ac.ebi.enfin.mi.cluster.EncoreInteraction;
 import uk.ac.ebi.enfin.mi.cluster.score.InteractionClusterScore;
 
@@ -142,32 +143,44 @@ public class PSICQUICRetriever {
      * @param querySIL
      */
     private void addResultToQuerySIL(EncoreInteraction ei, 
-                                     String query,
-                                     Map<String, String> accessionToRefSeqId,
-                                     Map<String, SimpleInteractorList> querySIL){
-        // Reactome use ids only. Some databases may attached db name before the ids.
-        // Need a little parsing here
-        String id = query;
-        if (query.contains(":")) {
-            int index = query.indexOf(":");
-            id = query.substring(index + 1);
-        }
-        if(accessionToRefSeqId.keySet().contains(id)) {
-            SimpleInteractor si = this.sm.getSimpleInteractor(ei, query);
-            
-            // Next lines get an existing SimpleInteractorList from querySIL or
-            // create a new one (adding it to querySIL for future use)
-            SimpleInteractorList sil;
-            if(querySIL.containsKey(query)){
-                sil = querySIL.get(query);
-            }else{
-                sil = new SimpleInteractorList();
-                querySIL.put(query, sil);
-            }
-            
-            sil.add(si);
-        }
-    }
+    		String query,
+    		Map<String, String> accessionToRefSeqId,
+    		Map<String, SimpleInteractorList> querySIL){
+    	// Reactome use ids only. Some databases may attached db name before the ids.
+    	// Need a little parsing here
+    	String id = query;
+    	if (query.contains(":")) {
+    		int index = query.indexOf(":");
+    		id = query.substring(index + 1);
+    	}
+    	if(accessionToRefSeqId.keySet().contains(id)) {
+    		SimpleInteractor si = this.sm.getSimpleInteractor(ei, query);
+
+    		// Now, to get those scores (DEV-855)
+    		List<Confidence> confidenceScores = ei.getConfidenceValues();
+    		for(Confidence confidenceScore:confidenceScores){
+    			if(confidenceScore.getType().equalsIgnoreCase("miscore")){
+    				String score = confidenceScore.getValue();
+    				if (score != null) {
+    					si.setScore(Double.parseDouble(score));
+    				}
+    			}
+    		}
+    		
+    		// Next lines get an existing SimpleInteractorList from querySIL or
+    		// create a new one (adding it to querySIL for future use)
+    		SimpleInteractorList sil;
+    		if(querySIL.containsKey(query)){
+    			sil = querySIL.get(query);
+    		}else{
+    			sil = new SimpleInteractorList();
+    			querySIL.put(query, sil);
+    		}
+
+    		sil.add(si);
+    	}
+
+    }	
     
     /**
      * Return interactions in a raw text.
