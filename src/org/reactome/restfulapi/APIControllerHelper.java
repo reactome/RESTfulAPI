@@ -716,7 +716,7 @@ public class APIControllerHelper {
                 BufferedImage image = SwingImageCreator.createImage(editor);
                 ImageIO.write(image, "png", baos);
                 baos.flush();
-                rtn = org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(baos.toByteArray());
+                rtn = org.apache.commons.codec.binary.Base64.encodeBase64String(baos.toByteArray());
                 baos.close();
             } 
             else if (type.equals("pdf")) {
@@ -727,7 +727,7 @@ public class APIControllerHelper {
                 ImageIO.write(image, "png", pdfFileName);
                 SwingImageCreator.exportImageInPDF(editor, pdfFileName);
                 byte[] pdfBytes = org.apache.commons.io.FileUtils.readFileToByteArray(pdfFileName);
-                rtn = org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(pdfBytes);
+                rtn = org.apache.commons.codec.binary.Base64.encodeBase64String(pdfBytes);
                 boolean result = pdfFileName.delete();
                 if(result==false)
                 {
