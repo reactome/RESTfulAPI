@@ -1,6 +1,19 @@
 package org.reactome.restfulapi;
 
-import com.sun.jersey.spi.resource.Singleton;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.*;
+
+import javax.imageio.ImageIO;
+
 import org.apache.log4j.Logger;
 import org.gk.graphEditor.PathwayEditor;
 import org.gk.model.GKInstance;
@@ -24,20 +37,8 @@ import org.jdom.output.DOMOutputter;
 import org.reactome.biopax.ReactomeToBioPAX3XMLConverter;
 import org.reactome.biopax.ReactomeToBioPAXXMLConverter;
 import org.reactome.restfulapi.models.*;
-import org.reactome.restfulapi.models.Event;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.*;
-import java.util.List;
+import com.sun.jersey.spi.resource.Singleton;
 
 @Singleton
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -62,8 +63,6 @@ public class APIControllerHelper {
     }
 
     private Integer getReleaseNumber() throws Exception {
-        if (releaseNumber != null)
-            return releaseNumber;
         releaseNumber = dba.getReleaseNumber();
         return releaseNumber;
     }
@@ -304,6 +303,196 @@ public class APIControllerHelper {
         return events;
     }
     
+
+    /**
+     * Connect to the denormalized database
+     * @throws SQLException 
+     * 
+     */
+    private Connection getDNConnection() throws SQLException {
+    	String connectionStr = "jdbc:mysql://" + dba.getDBHost() + ":" + dba.getDBPort() + "/" + dba.getDBName() + "_dn";
+    	Properties prop = new Properties();
+    	prop.setProperty("user", dba.getDBUser());
+    	prop.setProperty("password", dba.getDBPwd());
+    	Connection conn = DriverManager.getConnection(connectionStr, prop);
+    	return conn;
+    }  
+    
+    // DEV-870 work starts here
+    // http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method 
+    private static boolean isValidEmailAddress(String email) {
+    	String ePattern = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$";
+    	java.util.regex.Pattern p = java.util.regex.Pattern.compile(ePattern);
+    	java.util.regex.Matcher m = p.matcher(email);
+    	return m.matches();
+    }	
+    
+    public List<DatabaseObject> getPeopleByName(String name) {
+    	try {
+    		// split into first and last names
+    		String[] names = name.split(" ");
+    		
+    		// ...but deal with situations where we only see one name
+    		StringBuilder string = new StringBuilder();
+    		if (names[0] != null && names.length > 1) {
+    			string.append(names[0]);
+    		}
+    		String firstName = string.toString();
+    		string.setLength(0);
+    		
+    		if (names.length > 1) {
+    			string.append(names[names.length-1]);
+    		}
+    		String lastName = string.toString();
+    		string.setLength(0);
+    		
+    		
+    		// Watch out for apostrophes in names -- use double quotes
+    		// and let's make matching a little fuzzy
+    		if (firstName.length() > 0 && lastName.length() > 0) {
+    			string.append("SELECT DB_ID from Person WHERE surname LIKE \"%"+ lastName + "%\""+
+    				" AND firstname LIKE \"%"+ firstName + "%\"");
+    		}
+    		else {	
+    			string.append("SELECT DB_ID from Person WHERE surname LIKE \"%"+ name + "%\""+
+    				" OR firstname LIKE \"%"+ name + "%\"");
+    		}
+    		String sql = string.toString();
+    		    		
+    		Connection dbaConn = dba.getConnection();
+    		Statement dbaStat = dbaConn.createStatement();
+    		ResultSet resultSet = dbaStat.executeQuery(sql);
+    		
+    		List<DatabaseObject> rtn = new ArrayList<DatabaseObject>();
+    		while (resultSet.next()) { 
+    			long personId = resultSet.getLong(1);
+                DatabaseObject person = fetchInstance("Person", String.valueOf(personId));
+                rtn.add(person);
+    		}
+    	
+    		return rtn;
+    	}
+    	catch(Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+    	
+    	return new ArrayList<DatabaseObject>();
+    }
+    
+    public List<DatabaseObject> getPeopleByEmail(String email) {
+    	try {
+    		if (! isValidEmailAddress(email)) {
+    			throw new IllegalArgumentException(email + " does not appear to be a valid email address.");
+    		}
+
+    		String sql = "SELECT DB_ID from Person WHERE eMailAddress LIKE '" + email + "'";
+
+    		Connection dbaConn = dba.getConnection();
+    		Statement dbaStat = dbaConn.createStatement();
+    		ResultSet resultSet = dbaStat.executeQuery(sql);
+
+    		List<DatabaseObject> rtn = new ArrayList<DatabaseObject>();
+    		while (resultSet.next()) { 
+    			Long personId = resultSet.getLong(1);
+    			DatabaseObject person = fetchInstance("Person", String.valueOf(personId));
+    			rtn.add(person);
+    		}
+
+    		return rtn;
+
+    	}
+    	catch(Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+    
+    	return new ArrayList<DatabaseObject>();
+    }
+    
+    // DEV-870 work ends here
+    
+    // DEV-846 work starts here
+    /**
+     * Get a list of pathways that a person has authored
+     * 
+     * @param personId database identifier for an instance of the Person class
+     * @return ArrayList<Pathway>
+     */
+    public List<Pathway> queryAuthoredPathways(long personId) {
+    	try{
+    		String sql = 
+    				"SELECT d.DB_ID" +
+    				" FROM  DatabaseObject AS d," +
+    				" Event_2_authored AS e2a," +
+    				" InstanceEdit_2_author AS i2a " + 
+    				" WHERE i2a.author=" + String.valueOf(personId) + 
+    				" AND   e2a.authored=i2a.DB_ID" + 
+    				" AND   e2a.DB_ID=d.DB_ID" + 
+    				" AND   d._class='Pathway'" ;
+    		
+
+    		Connection dbaConn = dba.getConnection();
+    		Statement dbaStat = dbaConn.createStatement();
+    		ResultSet resultSet = dbaStat.executeQuery(sql);
+
+    		List<Pathway> rtn = new ArrayList<Pathway>();
+    		while (resultSet.next()) { 
+    			Long pathwayId = resultSet.getLong(1);
+                GKInstance instance = dba.fetchInstance(pathwayId);
+                Pathway pathway = (Pathway) converter.createObject(instance);
+                rtn.add(pathway);
+    		}
+
+    		return rtn;
+    	}
+    	catch(Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+    
+        return new ArrayList<Pathway>();
+    }
+    /**
+     * Get a list of pathways that a person has reviewed 
+     * 
+     * @param personId database identifier for an instance of the Person class
+     * @return ArrayList<Pathway>
+     */
+    public List<Pathway> queryReviewedPathways(long personId) {
+    	try{
+    		String sql = 
+    				"SELECT d.DB_ID" +
+    				" FROM  DatabaseObject AS d," +
+    				" Event_2_reviewed AS e2r," +
+    				" InstanceEdit_2_author AS i2a " + 
+    				" WHERE i2a.author=" + String.valueOf(personId) + 
+    				" AND   e2r.reviewed=i2a.DB_ID" + 
+    				" AND   e2r.DB_ID=d.DB_ID" + 
+    				" AND   d._class='Pathway'" ;
+    		
+    		//System.err.println("MY SQL: " + sql);
+    		
+
+    		Connection dbaConn = dba.getConnection();
+    		Statement dbaStat = dbaConn.createStatement();
+    		ResultSet resultSet = dbaStat.executeQuery(sql);
+
+    		List<Pathway> rtn = new ArrayList<Pathway>();
+    		while (resultSet.next()) { 
+    			Long pathwayId = resultSet.getLong(1);
+                GKInstance instance = dba.fetchInstance(pathwayId);
+                Pathway pathway = (Pathway) converter.createObject(instance);
+                rtn.add(pathway);
+    		}
+
+    		return rtn;
+    	}
+    	catch(Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+    
+        return new ArrayList<Pathway>();
+    }
+    // DEV-846 work ends here
+    
     /**
      * Query a list of pathways containing one or more genes from the passed gene
      * array.
@@ -312,13 +501,7 @@ public class APIControllerHelper {
      */
     public List<Pathway> queryHitPathways(String[] genes) {
         try {
-            // Connect to the de-normalized database
-            String connectionStr = "jdbc:mysql://" + dba.getDBHost() + ":" + dba.getDBPort() + "/" + dba.getDBName() + "_dn";
-            //+ "?autoReconnect=true";
-            Properties prop = new Properties();
-            prop.setProperty("user", dba.getDBUser());
-            prop.setProperty("password", dba.getDBPwd());
-            Connection conn = DriverManager.getConnection(connectionStr, prop);
+        	Connection conn = getDNConnection();
             String sql = "select ei.DB_ID from Event_2_indirectIdentifier ei, Event_2_species es, " +
             		     "Pathway p where ei.DB_ID = es.DB_ID AND es.species = 48887 AND " +
             		     "ei.DB_ID = p.DB_ID AND ei.indirectIdentifier in (";
@@ -342,6 +525,7 @@ public class APIControllerHelper {
                 return new ArrayList<Pathway>();
             }
             builder.deleteCharAt(builder.length() - 1);
+//            System.err.println("pathways 1: "+builder.toString());
             resultSet.close();
             // Select pathways that have PathwayDiagrams
             sql = "SELECT representedPathway FROM PathwayDiagram_2_representedPathway " +
@@ -358,6 +542,7 @@ public class APIControllerHelper {
             resultSet.close();
             dbaStat.close();
             builder.deleteCharAt(builder.length() - 1);
+//            System.err.println("pathways 2: "+builder.toString());
             // Want the get the lowest pathways that have pathway diagrams. These
             // pathways should provide most detailed information in diagrams.
             sql = "SELECT DB_ID, hasEveryComponent FROM Pathway_2_hasEveryComponent " +
@@ -376,7 +561,6 @@ public class APIControllerHelper {
             }
             resultSet.close();
             stat.close();
-            conn.close();
             // Only pick up pathways that don't have sub-pathway diagrams
             List<Pathway> rtn = new ArrayList<Pathway>();
             for (Long dbId : pathwayIds) {
@@ -399,7 +583,8 @@ public class APIControllerHelper {
         return new ArrayList<Pathway>();
     }
     
-    /**
+
+	/**
      * Generate an XML String for GeneSet in XML. This method is used by Reactome R analysis package.
      * @return
      */
@@ -480,8 +665,8 @@ public class APIControllerHelper {
      * @return
      */
     public synchronized String getPathwayDiagram(long pathwayId, 
-                                    String type,
-                                    String[] geneNames) {
+                                                 String type,
+                                                 String[] geneNames) {
         String rtn = null;
         try {
             GKInstance pathway = dba.fetchInstance(pathwayId);
@@ -489,17 +674,14 @@ public class APIControllerHelper {
                 logger.error("Pathway doesn't exist: " + pathwayId);
                 throw new IllegalArgumentException("Pathway doesn't exist: " + pathwayId);
             }
+            DiagramGeneratorFromDB diagramHelper = new DiagramGeneratorFromDB();
+            diagramHelper.setMySQLAdaptor(dba);
             // Find PathwayDiagram
-            Collection<?> c = dba.fetchInstanceByAttribute(ReactomeJavaConstants.PathwayDiagram,
-                                                           ReactomeJavaConstants.representedPathway,
-                                                           "=",
-                                                           pathway);
-            if (c == null || c.size() == 0) {
+            GKInstance diagram = diagramHelper.getPathwayDiagram(pathway);
+            if (diagram == null) {
                 //logger.error("Pathway diagram is not available for " + pathway.getDisplayName());
                 throw new IllegalStateException("Pathway diagram is not available for " + pathway.getDisplayName());
             }
-
-            GKInstance diagram = (GKInstance) c.iterator().next();
             if (type.equals("xml")) {
                 if (dba.isUseCache()) {
                     String xml = getCachedPathwayDiagramXML(pathway, diagram);
@@ -517,9 +699,9 @@ public class APIControllerHelper {
             RenderablePathway renderablePathway = reader.openDiagram(diagram);
             if (geneNames != null)
                 highlightPathwayDiagram(renderablePathway, geneNames);
-            PathwayEditor editor = new DiagramGeneratorFromDB().preparePathwayEditor(diagram, 
-                                                                                     pathway, 
-                                                                                     renderablePathway);
+            PathwayEditor editor = diagramHelper.preparePathwayEditor(diagram, 
+                                                                      pathway, 
+                                                                      renderablePathway);
             // Just to make the tightNodes() work, have to do an extra paint
             // to make textBounds correct
             new PathwayDiagramGeneratorViaAT().paintOnImage(editor);
@@ -533,9 +715,10 @@ public class APIControllerHelper {
                 BufferedImage image = SwingImageCreator.createImage(editor);
                 ImageIO.write(image, "png", baos);
                 baos.flush();
-                rtn = org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(baos.toByteArray());
+                rtn = org.apache.commons.codec.binary.Base64.encodeBase64String(baos.toByteArray());
                 baos.close();
-            } else if (type.equals("pdf")) {
+            } 
+            else if (type.equals("pdf")) {
                 String uuid = UUID.randomUUID().toString();
                 // To avoid a long name that is not supported by a platform
                 File pdfFileName = new File(outputdir, uuid + ".pdf");
@@ -543,13 +726,14 @@ public class APIControllerHelper {
                 ImageIO.write(image, "png", pdfFileName);
                 SwingImageCreator.exportImageInPDF(editor, pdfFileName);
                 byte[] pdfBytes = org.apache.commons.io.FileUtils.readFileToByteArray(pdfFileName);
-                rtn = org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(pdfBytes);
+                rtn = org.apache.commons.codec.binary.Base64.encodeBase64String(pdfBytes);
                 boolean result = pdfFileName.delete();
                 if(result==false)
                 {
                     throw new Exception("Pathway diagram file could not be deleted.");
                 }
-            } else {
+            } 
+            else {
                 throw new Exception("Unsupported Media Type");
             }
         }
@@ -592,7 +776,6 @@ public class APIControllerHelper {
     
     public DatabaseObject queryById(String className, 
                                     String id) {
-        GKInstance instance;
         DatabaseObject rtn = new DatabaseObject();
         try {
             rtn = fetchInstance(className, 
@@ -626,6 +809,13 @@ public class APIControllerHelper {
             rtn = (DatabaseObject) converter.convert(instance);
         }
         else { // This should be stable id
+        	
+        	// We do not need the version
+        	if (id.indexOf(".") >= 0) {
+        		id = id.replaceAll("\\.\\d+", "");
+        		//System.err.println("This is the actual ID: "+id);
+        	}
+        	
             Collection col = dba.fetchInstanceByAttribute(ReactomeJavaConstants.StableIdentifier,
                                                           ReactomeJavaConstants.identifier, 
                                                           "=",
@@ -1095,15 +1285,15 @@ public class APIControllerHelper {
             logger.error(e.getMessage(), e);
         }
         if (instances.size() == 0)
-            return new ArrayList<Pathway>();
-//      Query the list of Reactions containing instances
+        	return new ArrayList<Pathway>();
+        //      Query the list of Reactions containing instances
         // Have to consider all complexes those GKInstances participate too
         try {
             //TODO: Should we also check with EntitySet?
             Set<GKInstance> complexes = grepComplexesForEntities(instances);
             instances.addAll(complexes);
             Set<GKInstance> reactions = getParticipatingReactions(instances);
-            rtn = grepTopPathwaysFromReactions(reactions);
+            rtn = getPathwaysFromReactions(reactions);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -1127,55 +1317,45 @@ public class APIControllerHelper {
      * @throws Exception
      */
     private Set<GKInstance> grepComplexesForEntities(Set<GKInstance> entities)
-            throws Exception {
-        Set<GKInstance> complexes = new HashSet<GKInstance>();
-        Collection query = new HashSet<GKInstance>(entities);
-        while (true) {
-            query = dba.fetchInstanceByAttribute(ReactomeJavaConstants.Complex,
-                    ReactomeJavaConstants.hasComponent,
-                    "=",
-                    query);
-            if (query != null && query.size() > 0)
-                complexes.addAll(query);
-            else
-                break;
-        }
-        return complexes;
+    		throws Exception {
+    	Set<GKInstance> complexes = new HashSet<GKInstance>();
+    	Collection query = new HashSet<GKInstance>(entities);
+    	while (true) {
+    		query = dba.fetchInstanceByAttribute(ReactomeJavaConstants.Complex,
+    				ReactomeJavaConstants.hasComponent,
+    				"=",
+    				query);
+    		if (query != null && query.size() > 0)
+    			complexes.addAll(query);
+    		else
+    			break;
+    	}
+    	return complexes;
     }
 
-    private List<Pathway> grepTopPathwaysFromReactions(Collection reactions) throws Exception {
-        // Create the paths from the passed Pathways to the top level Pathways
-        List<List<GKInstance>> paths = new ArrayList<List<GKInstance>>();
-        for (Iterator it = reactions.iterator(); it.hasNext(); ) {
-            GKInstance pathway = (GKInstance) it.next();
-            List<List<GKInstance>> paths1 = getAncestorPaths(pathway);
-            paths.addAll(paths1);
-        }
-        mergePaths(paths);
-        // Now get the top level pathways
-        Set<GKInstance> set = new HashSet<GKInstance>();
-        for (List<GKInstance> path : paths) {
-            // Only Pathways are needed
-            for (int i = path.size() - 1; i >= 0; i--) {
-                GKInstance bottom = path.get(i);
-                if (bottom.getSchemClass().isa(ReactomeJavaConstants.Pathway)) {
-                    set.add(bottom);
-                    break;
-                }
-            }
-        }
-        List<GKInstance> topPathways = new ArrayList<GKInstance>();
-        for (GKInstance instance : set) {
-            topPathways.add(instance);
-        }
-        InstanceUtilities.sortInstances(topPathways);
-        // Convert the topPathways to Pathway objects
-        List<Pathway> rtn = new ArrayList<Pathway>();
-        for (GKInstance pathwayInstance : topPathways) {
-            Pathway pathway = (Pathway) converter.createObject(pathwayInstance);
-            rtn.add(pathway);
-        }
-        return rtn;
+
+    private List<Pathway> getPathwaysFromReactions(Collection reactions) throws Exception {
+    	// Create the paths from the passed reactions
+    	List<List<GKInstance>> paths = new ArrayList<List<GKInstance>>();
+    	for (Iterator it = reactions.iterator(); it.hasNext(); ) {
+    		GKInstance reaction = (GKInstance) it.next();
+    		List<List<GKInstance>> paths1 = getParentPathways(reaction);
+    		paths.addAll(paths1);
+    	}
+    	mergePaths(paths);
+
+    	// Only Pathways are needed
+    	List<Pathway> rtn = new ArrayList<Pathway>();
+    	for (List<GKInstance> path : paths) {
+    		for (int i = path.size() - 1; i >= 0; i--) {
+    			GKInstance bottom = path.get(i);		
+    			if (bottom.getSchemClass().isa(ReactomeJavaConstants.Pathway)) {
+    				Pathway pathway = (Pathway) converter.createObject(bottom);
+    				rtn.add(pathway);
+    			}
+    		}
+    	}
+    	return rtn;
     }
 
     private Set<GKInstance> getParticipatingReactions(Collection<GKInstance> entities) throws Exception {
@@ -1223,46 +1403,44 @@ public class APIControllerHelper {
         return reactions;
     }
 
-    List<List<GKInstance>> getAncestorPaths(GKInstance pathway) throws Exception {
+    List<List<GKInstance>> getParentPathways(GKInstance reaction) throws Exception {
         List<List<GKInstance>> paths = new ArrayList<List<GKInstance>>();
         List<GKInstance> firstPath = new ArrayList<GKInstance>();
-        paths.add(firstPath);
-        getAncestorPaths(pathway, firstPath, paths);
+        getParentPathways(reaction, firstPath, paths);
+        
+        if (paths.size() == 0) {
+        	paths.add(firstPath);
+        }
         mergePaths(paths);
         return paths;
     }
 
-    private void getAncestorPaths(GKInstance pathway,
+    private void getParentPathways(GKInstance pathway,
                                   List<GKInstance> firstPath,
                                   List<List<GKInstance>> paths) throws Exception {
         firstPath.add(0, pathway);
         List<GKInstance> parents = new ArrayList<GKInstance>();
         Collection collection = pathway.getReferers(org.gk.model.ReactomeJavaConstants.hasEvent);
-        if (collection != null)
+
+        if (collection != null) {
             parents.addAll(collection);
+        }
+        
         collection = pathway.getReferers(ReactomeJavaConstants.hasMember);
-        if (collection != null)
+        if (collection != null) {
             parents.addAll(collection);
+        }
+        
         collection = pathway.getReferers(ReactomeJavaConstants.hasSpecialisedForm);
-        if (collection != null)
+        if (collection != null) {
             parents.addAll(collection);
+        }
+                
         if (parents.size() == 0)
             return;
-        int c = 0;
-        // firstPath might be changes. Back it up
-        List<GKInstance> firstPathBackup = null;
-        if (parents.size() > 1)
-            firstPathBackup = new ArrayList<GKInstance>(firstPath);
-        for (GKInstance parent : parents) {
-            if (c == 0)
-                getAncestorPaths(parent, firstPath, paths);
-            else {
-                // Copy the original Paths
-                List<GKInstance> morePath = new ArrayList<GKInstance>(firstPathBackup);
-                paths.add(morePath);
-                getAncestorPaths(parent, morePath, paths);
-            }
-            c++;
+
+        if (parents.size() > 0) {
+        	paths.add(parents);
         }
     }
 
@@ -1348,4 +1526,79 @@ public class APIControllerHelper {
         }
         touchedComplexes.add(complex);
     }
+
+    public List<String> getReferenceMolecules() {
+    	try {
+    		Collection<GKInstance> instances = dba.fetchInstancesByClass(ReactomeJavaConstants.ReferenceMolecule);
+    		dba.loadInstanceAttributeValues(instances, new String[] {ReactomeJavaConstants.identifier,
+    				ReactomeJavaConstants.referenceDatabase});
+    		List <String> rtn = new ArrayList<String>();
+    		for (GKInstance inst : instances) {
+    			GKInstance refDb = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.referenceDatabase);
+    			String dbName = refDb.getDisplayName();
+    			String id = (String) inst.getAttributeValue(ReactomeJavaConstants.identifier);
+    			String DB_ID = inst.getDBID().toString();
+    			rtn.add(DB_ID + "\t" + dbName + ":" + id); 
+    		}
+    		return rtn;
+    	}
+    	catch (Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+    	return new ArrayList<String>();
+    }
+
+	public List<String> getDiseases() {
+    	try {
+    		Collection<GKInstance> instances = dba.fetchInstancesByClass(ReactomeJavaConstants.Disease);
+    		dba.loadInstanceAttributeValues(instances, new String[] {ReactomeJavaConstants.identifier,
+    				ReactomeJavaConstants.referenceDatabase});
+    		List <String> rtn = new ArrayList<String>();
+    		for (GKInstance inst : instances) {
+    			GKInstance refDb = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.referenceDatabase);
+    			String dbName = refDb.getDisplayName();
+    			String id = (String) inst.getAttributeValue(ReactomeJavaConstants.identifier);
+    			String DB_ID = inst.getDBID().toString();
+    			rtn.add(DB_ID + "\t" + dbName + ":" + id); 
+    		}
+    		return rtn;
+    	}
+    	catch (Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+		return new ArrayList<String>();
+	}
+
+	public List<String> getUniProtRefSeqs() {
+    	try {
+    		String sql1 = "SELECT DB_ID from DatabaseObject WHERE _displayName='UniProt' AND _class='ReferenceDatabase'";
+    		    		
+    		Connection dbaConn = dba.getConnection();
+    		Statement dbaStat = dbaConn.createStatement();
+    		ResultSet resultSet = dbaStat.executeQuery(sql1);
+    		resultSet.next(); 
+    		String DB_ID = resultSet.getString(1);
+  
+    		String sql2 = "SELECT re.DB_ID, re.identifier FROM ReferenceEntity re, ReferenceSequence rs "+
+    				"WHERE rs.DB_ID=re.DB_ID AND referenceDatabase=" + DB_ID;
+    		
+    		Statement dbaStat2 = dbaConn.createStatement();
+    		ResultSet resultSet2 = dbaStat2.executeQuery(sql2);
+    		
+    		List<String> rtn = new ArrayList<String>();
+    		while (resultSet2.next()) {
+    			String id = resultSet2.getString(1);
+    			String accession = resultSet2.getString(2);
+    			rtn.add(id + "\tUniProt:" + accession);
+    		}
+    		
+    		return rtn;
+    	}
+    	catch (Exception e) {
+    		logger.error(e.getMessage(), e);
+    	}
+		return new ArrayList<String>();
+	}
+	
+	
 }

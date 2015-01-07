@@ -15,7 +15,7 @@ public class CatalystActivity extends DatabaseObject implements Regulator {
     private GO_MolecularFunction activity;
     private PhysicalEntity physicalEntity;
     private String physicalEntityClass;
-    private List<Domain> activeUnit;
+    private List<PhysicalEntity> activeUnit;
 
     public CatalystActivity() {
     }
@@ -44,11 +44,11 @@ public class CatalystActivity extends DatabaseObject implements Regulator {
         this.physicalEntityClass = physicalEntityClass;
     }
 
-	public List<Domain> getActiveUnit() {
+	public List<PhysicalEntity> getActiveUnit() {
 		return activeUnit;
 	}
 
-	public void setActiveUnit(List<Domain> activeUnit) {
+	public void setActiveUnit(List<PhysicalEntity> activeUnit) {
 		this.activeUnit = activeUnit;
 	}
     

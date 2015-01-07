@@ -79,7 +79,7 @@ The returned result can be specified as either XML or JSON. The user can view th
 	<h4>FrontPageItems: <code>frontPageItems/{species name}</code></h4>
 	<dl>
 		<dd class="description">
-		Get the list of front page items listed in the <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current">Reactome pathway browser</a>.
+		Get the list of front page items listed in the <a href="http://www.reactome.org/PathwayBrowser">Reactome pathway browser</a>.
 		You can get a list of front page items for different species by specifying species name.
 		</dd>
 		<dd>
@@ -307,6 +307,61 @@ First a key "ID", and a value of comma separated list inside the body of the HTT
 </li>
 
 <li>
+<h4><a name="QueryReviewedPathways"></a>QueryReviewedPathways: <code>queryReviewedPathways/{personId}</code></h4>
+<dl>
+	<dd class="description">This API lets you query the Reactome Database for pathways reviewed by a particular person. 
+	It requires the DB_ID for the Person class.  Person IDs can be located with either the <a href="#QuaeryPeopleByName">QueryPeopleByName</a>
+	or <a href="#QuaeryPeopleByEmail">QueryPeopleByEmail</a> methods,
+		<dl>
+			<dt><b>Request Type:</b></dt><dd><code>GET</code></dd>
+			<dt><b>Parameters:</b></dt>
+			<dd><code>String</code> - Person class name</dd>
+			<dt><b>Output:</b></dt><dd>encoded object in JSON or XML</dd>
+			<dt><b>Example:</b></dt>
+			<dd>To get all pathways reviewed by Person 1169275 <a href="/ReactomeRESTfulAPI/RESTfulWS/queryReviewedPathways/1169275" target="example"><code>queryReviewedPathways/1169275</code></a></dd>
+		</dl>
+	</dd>
+</dl>
+</li>
+
+<li>
+<h4><a name="QueryPeopleByName"></a>QueryPeopleByName: <code>queryPeopleByName/{name}</code></h4>
+<dl>
+	<dd class="description">This API lets you query the Reactome Database for a particular person. 
+	It requires a full or partial name. <b>NOTE: spaces must be escaped with '%20'.</b>
+		<dl>
+			<dt><b>Request Type:</b></dt><dd><code>GET</code></dd>
+			<dt><b>Parameters:</b></dt>
+			<dd><code>String</code> - Name</dd>
+			<dt><b>Output:</b></dt><dd>encoded object in JSON or XML</dd>
+			<dt><b>Example:</b></dt>
+			<dd>Find people whose names match 'Robin Haw' <a href="/ReactomeRESTfulAPI/RESTfulWS/queryPeopleByName/Robin%20Haw" 
+			target="example"><code>queryPeopleByName/Robin%20Haw</code></a></dd>
+			<dd>Find all people whose names match 'Haw' <a href="/ReactomeRESTfulAPI/RESTfulWS/queryPeopleByName/Haw" 
+			target="example"><code>queryPeopleByName/Haw</code></a></dd>
+		</dl>
+	</dd>
+</dl>
+</li>
+
+<li>
+<h4><a name="QueryPeopleByEmail"></a>QueryPeopleByEmail: <code>queryPeopleByEmail/{email}</code></h4>
+<dl>
+	<dd class="description">This API lets you query the Reactome Database for a particular person by a valid email address. 
+			<dl>
+			<dt><b>Request Type:</b></dt><dd><code>GET</code></dd>
+			<dt><b>Parameters:</b></dt>
+			<dd><code>String</code> - email address</dd>
+			<dt><b>Output:</b></dt><dd>encoded object in JSON or XML</dd>
+			<dt><b>Example:</b></dt>
+			<dd>Find people whose names match 'deustp01@nyumc.org' <a href="/ReactomeRESTfulAPI/RESTfulWS/queryPeopleByEmail/deustp01@nyumc.org" 
+			target="example"><code>queryPeopleByEmail/deustp01@nyumc.org</code></a></dd>
+		</dl>
+	</dd>
+</dl>
+</li>
+
+<li>
 <h4>Species List: <code>speciesList</code></h4>
 <dl>
 <dd class="description">Get the list of species used in the "Switch Species" box in <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current">Reactome pathway browser</a>.
@@ -342,6 +397,57 @@ First a key "ID", and a value of comma separated list inside the body of the HTT
 </dd>
 </dl>
 </li>
+
+<li>
+<h4>Reference Molecules <code>getReferenceMolecules/</code></h4>
+<dl>
+<dd class="description">Get a list of small molecules and their chebi IDs</dd>
+<dd>
+        <dl>
+                <dt><b>Request Type:</b></dt><dd>GET</dd>
+                <dt><b>Parameters:</b></dt>
+                        <dd><code>None</code></dd>
+                <dt><b>Output:</b></dt><dd><code>String</code> Tab-delimited list</dd>
+                <dt><b>Example:</b></dt>
+                <dd><a href="/ReactomeRESTfulAPI/RESTfulWS/getReferenceMolecules" target="example">Get small molecules</a></dd>
+        </dl>
+</dd>
+</dl>
+</li>
+
+<li>
+<h4>Diseases <code>getDiseases/</code></h4>
+<dl>
+<dd class="description">Get a list of diseases and their disease ontology Ids (DOID)</dd>
+<dd>
+        <dl>
+                <dt><b>Request Type:</b></dt><dd>GET</dd>
+                <dt><b>Parameters:</b></dt>
+                        <dd><code>None</code></dd>
+                <dt><b>Output:</b></dt><dd><code>String</code> Tab-delimited list</dd>
+                <dt><b>Example:</b></dt>
+                <dd><a href="/ReactomeRESTfulAPI/RESTfulWS/getDiseases" target="example">Get diseases</a></dd>
+        </dl>
+</dd>
+</dl>
+</li>
+	
+<li>
+<h4>Proteins <code>getUniProtRefSeqs/</code></h4>
+<dl>
+<dd class="description">Get a list of Reactome proteins that have UniProt identifiers</dd>
+<dd>
+        <dl>
+                <dt><b>Request Type:</b></dt><dd>GET</dd>
+                <dt><b>Parameters:</b></dt>
+                        <dd><code>None</code></dd>
+                <dt><b>Output:</b></dt><dd><code>String</code> Tab-delimited list</dd>
+                <dt><b>Example:</b></dt>
+                <dd><a href="/ReactomeRESTfulAPI/RESTfulWS/getUniProtRefSeqs" target="example">Get proteins</a></dd>
+        </dl>
+</dd>
+</dl>
+</li>	
 	
 </ul>
 
