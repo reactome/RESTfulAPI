@@ -62,6 +62,21 @@ public class RESTfulAPIResource {
     public String getDBName() {
     	return service.getDBName();
     }
+
+    /**
+     * Returns the release version where the RESTFul instance is pointing to
+     * @return the release version where the RESTFul instance is pointing to
+     */
+    @GET
+    @Path("/version")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getVersion() {
+        try {
+            return service.getDba().getReleaseNumber().toString();
+        } catch (Exception e) {
+            return null;
+        }
+    }
     
     /**
      * Export SBML for an Event. 
