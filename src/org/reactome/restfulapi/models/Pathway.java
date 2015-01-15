@@ -16,7 +16,15 @@ public class Pathway extends Event {
     private String isCanonical;
     private java.util.List<Event> hasEvent;
     private Boolean hasDiagram;
+    private Pathway normalPathway;
 
+    public Pathway getNormalPathway() {
+        return normalPathway;
+    }
+
+    public void setNormalPathway(Pathway normalPathway) {
+        this.normalPathway = normalPathway;
+    }
 
     public List<Event> getHasEvent() {
         return hasEvent;

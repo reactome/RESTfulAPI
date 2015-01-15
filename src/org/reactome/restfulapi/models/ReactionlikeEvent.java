@@ -21,6 +21,15 @@ public class ReactionlikeEvent extends Event {
     private List<CatalystActivity> catalystActivity;
     private List<ReactionlikeEvent> normalReaction;
     private List<EntityFunctionalStatus> entityFunctionalStatus;
+    private String systematicName;
+    
+    public String getSystematicName() {
+        return systematicName;
+    }
+
+    public void setSystematicName(String systematicName) {
+        this.systematicName = systematicName;
+    }
 
     public List<PhysicalEntity> getInput() {
         return input;
