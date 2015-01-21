@@ -18,6 +18,7 @@ public class Event extends DatabaseObject implements Regulator {
     private List<InstanceEdit> revised;
     private List<InstanceEdit> reviewed;
     private List<Species> species;
+    private List<Species> relatedSpecies;
     private String definition;
     private EvidenceType evidenceType;
     private GO_BiologicalProcess goBiologicalProcess;
@@ -113,7 +114,15 @@ public class Event extends DatabaseObject implements Regulator {
         this.species = species;
     }
 
-    public String getDefinition() {
+    public List<Species> getRelatedSpecies() {
+		return relatedSpecies;
+	}
+
+	public void setRelatedSpecies(List<Species> relatedSpecies) {
+		this.relatedSpecies = relatedSpecies;
+	}
+
+	public String getDefinition() {
         return definition;
     }
 
