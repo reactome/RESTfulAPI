@@ -39,10 +39,19 @@ public class PhysicalEntity extends DatabaseObject implements Regulator {
     private List<Event> requiredEvent;
     private List<Event> producedByEvent;
     private List<Event> consumedByEvent;
+    private String systematicName;
 //    private List<Domain> hasDomain;
     
     public PhysicalEntity() {
         
+    }
+
+    public String getSystematicName() {
+        return systematicName;
+    }
+
+    public void setSystematicName(String systematicName) {
+        this.systematicName = systematicName;
     }
 
     public InstanceEdit getAuthored() {

@@ -17,8 +17,17 @@ public class EntitySet extends PhysicalEntity {
     private String maxHomologues;
     private List<PhysicalEntity> hasMember;
     private List<Species> species;
+    private Boolean isOrdered;
 
     public EntitySet() {
+    }
+    
+    public Boolean getIsOrdered() {
+        return isOrdered;
+    }
+
+    public void setIsOrdered(Boolean isOrdered) {
+        this.isOrdered = isOrdered;
     }
 
     public String getTotalProt() {
