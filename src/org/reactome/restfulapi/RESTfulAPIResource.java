@@ -383,6 +383,8 @@ public class RESTfulAPIResource {
     @Produces(MediaType.TEXT_PLAIN)
     public String getContainedEventIds(@PathParam("dbId") Long pathwayId) {
         List<Long> dbIds = service.getContainedEventIds(pathwayId);
+        if (dbIds == null || dbIds.size() == 0)
+            return ""; // Return an empty String to avoid null exception in the client.
         StringBuilder builder = new StringBuilder();
         for (Long dbId : dbIds) {
             builder.append(dbId).append(",");
