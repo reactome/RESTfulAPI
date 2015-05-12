@@ -226,7 +226,6 @@ public class EventMapper extends ReactomeModelPostMapper {
         	revisions.addAll(inst.getAttributeValuesList("modified"));
         	for (Integer i=0;i < revisions.size();i++) {
         		GKInstance revised = revisions.get(i);
-        		System.err.println(revised.getDisplayName());
         			
         		String dateString = revised.getAttributeValue("dateTime").toString();
         		Date date = releaseDateFromString(dateString);
