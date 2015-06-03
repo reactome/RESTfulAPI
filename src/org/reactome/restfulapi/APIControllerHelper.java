@@ -27,6 +27,8 @@ import org.gk.persistence.MySQLAdaptor;
 import org.gk.persistence.MySQLAdaptor.QueryRequest;
 import org.gk.render.Renderable;
 import org.gk.render.RenderablePathway;
+import org.gk.sbgn.Dumper;
+import org.gk.sbgn.SBGNBuilderFields;
 import org.gk.sbml.SBMLAndLayoutBuilderFields;
 import org.gk.schema.InvalidAttributeException;
 import org.gk.schema.SchemaAttribute;
@@ -173,6 +175,27 @@ public class APIControllerHelper {
         }
         return null;
     }
+    
+	public String sbgnExport(long dbId) {
+		try {
+			GKInstance inst = dba.fetchInstance(dbId);
+			if (!inst.getSchemClass().isa(ReactomeJavaConstants.Pathway)) {
+				logger.error(inst + " is not a Pathway in sbgnExport()!");
+				return null;
+			}
+			SBGNBuilderFields sbgnBuilder = new SBGNBuilderFields();
+			sbgnBuilder.getDatabaseConnectionHandler().setDatabaseAdaptor(dba);
+			sbgnBuilder.addField("pid", Arrays.asList(String.valueOf(dbId)));
+			sbgnBuilder.convertPathways();
+			String prolog = "<?xml version'1.0' encoding='UTF-8' standalone='yes'?>\n";
+			String sbgnString = Dumper.dumpToString(sbgnBuilder.getPDExtractor().getSbgn());
+			return prolog + sbgnString;
+		}
+		catch(Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+		return null;
+	}
     
     public List<PhysicalToReferenceEntityMap> getPathwayPEToRefEntityMap(Long pathwayId) {
         try {
@@ -1599,6 +1622,4 @@ public class APIControllerHelper {
     	}
 		return new ArrayList<String>();
 	}
-	
-	
 }

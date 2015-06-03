@@ -93,7 +93,22 @@ public class RESTfulAPIResource {
         else
             return sbml;
     }
-
+    
+    /**
+     * Export SBGN for an Event.
+     * @param dbId
+     * @return
+     */
+    @GET
+    @Path("/sbgnExporter/{dbId:\\d+}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String sbgnExport(@PathParam("dbId") long dbId) {
+    	String sbgn = service.sbgnExport(dbId);
+    	if (sbgn == null)
+    		return "Cannot generate SBGN for " + dbId;
+    	return sbgn;
+    }
+    
     /**
      * @param PathwayId The ID of the Pathway
      * @param format The format which the Pathway will be rendered in

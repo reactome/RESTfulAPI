@@ -84,6 +84,15 @@ public class RESTfulAPIResourceTest {
         System.out.println("Output from sbmlExporter:\n");
         System.out.println(text);
     }
+    
+    @Test
+    public void testSBGNExport() throws Exception {
+    	String url = RESTFUL_URL + "sbgnExporter/453274";
+    	System.out.println(url);
+    	String text = callHttp(url, HTTP_GET, "");
+    	System.out.println("Output from sbgnExporter:\n");
+    	System.out.println(text);
+    }
 
     @Test
     public void testPathwayDiagram() throws Exception {
