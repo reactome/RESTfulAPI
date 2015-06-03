@@ -176,7 +176,13 @@ public class APIControllerHelper {
         return null;
     }
     
-	public String sbgnExport(long dbId) {
+	/**
+	 * Export a Pathway into SBGN.
+	 * Only a Pathway can be exported, otherwise an empty string will be returned.
+	 * @param dbId
+	 * @return
+	 */
+    public String sbgnExport(long dbId) {
 		try {
 			GKInstance inst = dba.fetchInstance(dbId);
 			if (!inst.getSchemClass().isa(ReactomeJavaConstants.Pathway)) {
@@ -340,6 +346,21 @@ public class APIControllerHelper {
     	Connection conn = DriverManager.getConnection(connectionStr, prop);
     	return conn;
     }  
+    
+    /**
+     * Connect to the stable identifier database
+     * @throws SQLException 
+     * 
+     */
+    private Connection getStableIdConnection() throws SQLException {
+    	String connectionStr = "jdbc:mysql://" + dba.getDBHost() + ":" + dba.getDBPort() + "/" + "stable_identifiers";
+    	Properties prop = new Properties();
+    	prop.setProperty("user", dba.getDBUser());
+    	prop.setProperty("password", dba.getDBPwd());
+    	Connection conn = DriverManager.getConnection(connectionStr, prop);
+    	return conn;
+    } 
+    
     
     // DEV-870 work starts here
     // http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method 
@@ -515,6 +536,41 @@ public class APIControllerHelper {
         return new ArrayList<Pathway>();
     }
     // DEV-846 work ends here
+    
+    /**
+     * Query a list of pathways containing one or more genes from the passed gene
+     * array.
+     * @param genes gene symbols
+     * @return
+     */
+    public Integer stableIdToDb_Id(String stableId) {
+    	Integer DB_ID = null;
+        try {
+        	Connection conn = getStableIdConnection();
+        	// We don't care about version
+        	String identifier = stableId.replaceAll("\\.\\d+", "");
+            String sql = "SELECT instanceId from StableIdentifier WHERE identifier = '" + identifier + "'";
+            Statement stat = conn.createStatement();
+            ResultSet resultSet = stat.executeQuery(sql);
+            // Get a list of Pathway ids containing genes
+            while (resultSet.next()) {
+            	DB_ID = resultSet.getInt(1);
+            	if (DB_ID != null && DB_ID > 0) {
+            		break;
+            	}
+            }
+            resultSet.close();
+            stat.close();
+            return DB_ID;
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
+        return DB_ID;	
+    }
+    
+    
     
     /**
      * Query a list of pathways containing one or more genes from the passed gene
@@ -789,13 +845,6 @@ public class APIControllerHelper {
             }
         }
     }
-
-    boolean isStableIdentifier(final String Id)
-    {
-        String StrId = String.valueOf(Id);
-        boolean result = StrId.matches("REACT.*");
-        return result;
-    }
     
     public DatabaseObject queryById(String className, 
                                     String id) {
@@ -823,40 +872,25 @@ public class APIControllerHelper {
     private DatabaseObject fetchInstance(String className, String id) throws Exception, InstanceNotFoundException {
         GKInstance instance = null;
         DatabaseObject rtn = null;
-        if (!isStableIdentifier(id)) {
-            Long dbIdl = new Long(id);
-            instance = dba.fetchInstance(className, dbIdl);
-            if (instance == null) {
-                throw new InstanceNotFoundException(dbIdl);
-            }
+        Long dbIdl = null;
+
+        if (id.contains("REACT") || id.contains("R-")) {
+        	Integer dbId = stableIdToDb_Id(id);
+        	dbIdl = new Long(dbId);
+        }
+        else {
+            dbIdl = new Long(id);
+        }
+            
+        instance = dba.fetchInstance(className, dbIdl);
+        
+        if (instance == null) {
+        	throw new InstanceNotFoundException(dbIdl);
+        }
+        else {
             rtn = (DatabaseObject) converter.convert(instance);
         }
-        else { // This should be stable id
-        	
-        	// We do not need the version
-        	if (id.indexOf(".") >= 0) {
-        		id = id.replaceAll("\\.\\d+", "");
-        		//System.err.println("This is the actual ID: "+id);
-        	}
-        	
-            Collection col = dba.fetchInstanceByAttribute(ReactomeJavaConstants.StableIdentifier,
-                                                          ReactomeJavaConstants.identifier, 
-                                                          "=",
-                                                          id);
-            if (col == null || col.size() == 0) {
-                throw new InstanceNotFoundException(ReactomeJavaConstants.StableIdentifier,
-                                                    id);
-            }
-            Collection objCol = dba.fetchInstanceByAttribute(className, 
-                                                             ReactomeJavaConstants.stableIdentifier,
-                                                             "=", 
-                                                             (GKInstance)col.iterator().next());
-            if (objCol == null || objCol.size() == 0) {
-                throw new InstanceNotFoundException(className, id);
-            }
-            // Choose the first returned object only
-            rtn = (DatabaseObject) converter.convert((GKInstance)objCol.iterator().next());
-        }
+    
         return rtn;
     }
     
@@ -1622,4 +1656,6 @@ public class APIControllerHelper {
     	}
 		return new ArrayList<String>();
 	}
+	
+	
 }
