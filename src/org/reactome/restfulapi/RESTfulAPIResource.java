@@ -11,8 +11,13 @@ import org.reactome.restfulapi.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -86,12 +91,14 @@ public class RESTfulAPIResource {
     @GET
     @Path("/sbmlExporter/{dbId:\\d+}")
     @Produces(MediaType.TEXT_PLAIN)
-    public String sbmlExport(@PathParam("dbId") Long dbId) {
+    public Response sbmlExport(@PathParam("dbId") Long dbId) {
         String sbml = service.sbmlExport(dbId);
-        if (sbml == null)
-            return "Cannot generate SBML for " + dbId;
-        else
-            return sbml;
+        
+        if (sbml == null) { 
+        	return buildResponse("Cannot generate SBML for " + dbId, null);
+        }
+        
+        return buildResponse(sbml, dbId + ".sbml");
     }
     
     /**
@@ -102,11 +109,24 @@ public class RESTfulAPIResource {
     @GET
     @Path("/sbgnExporter/{dbId:\\d+}")
     @Produces(MediaType.TEXT_PLAIN)
-    public String sbgnExport(@PathParam("dbId") long dbId) {
-    	String sbgn = service.sbgnExport(dbId);
-    	if (sbgn == null)
-    		return "Cannot generate SBGN for " + dbId;
-    	return sbgn;
+    public Response sbgnExport(@PathParam("dbId") long dbId) {
+        String sbgn = service.sbgnExport(dbId);
+        
+        if (sbgn == null) { 
+        	return buildResponse("Cannot generate SBGN for " + dbId, null);
+        }
+        
+        return buildResponse(sbgn, dbId + ".sbgn");
+    }
+    
+    private Response buildResponse(String responseEntity, String fileName) {
+        ResponseBuilder responseBuilder = Response.status(Response.Status.OK).entity(responseEntity);
+        
+        if (fileName != null && !fileName.isEmpty()) {
+            responseBuilder.header("Content-Disposition", "attachment;filename= " + fileName);
+        }
+        
+        return responseBuilder.build();
     }
     
     /**
