@@ -863,7 +863,7 @@ public class APIControllerHelper {
         GKInstance instance = null;
         DatabaseObject rtn = null;
         Long dbIdl = getIdentifier(id);
-            
+
         instance = dba.fetchInstance(className, dbIdl);
         
         if (instance == null) {
@@ -1325,9 +1325,10 @@ public class APIControllerHelper {
      */
     public DatabaseObject getOrthologous(String dbId, String speciesId){
         try {
-            Long speciesDbId = Long.valueOf(speciesId); // getIdentifier(speciesId);
-//            GKInstance instance = dba.fetchInstance(getIdentifier(dbId));
-            GKInstance instance = dba.fetchInstance(Long.valueOf(dbId));
+//            Long speciesDbId = Long.valueOf(speciesId);
+//            GKInstance instance = dba.fetchInstance(Long.valueOf(dbId));
+            Long speciesDbId = getIdentifier(speciesId);
+            GKInstance instance = dba.fetchInstance(getIdentifier(dbId));
 
             //Some initial checking before looking for something which does not make sense :)
             if(!instance.getSchemClass().isValidAttribute(ReactomeJavaConstants.species)){
