@@ -23,10 +23,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 
 /**
@@ -510,19 +507,48 @@ public class RESTfulAPIResource {
         DatabaseObject rtn = service.getDetailedView(className, dbId);
         return rtn;
     }
-    
-//    /**
-//     * Use this method to get a list of Pathways that have been listed in the 
-//     * FrontPage instance.
-//     * @return
-//     */
-//    @GET
-//    @Path("/frontPageItems")
-//    public List<Pathway> queryFrontPageItems() {
-//        // Default for human with null
-//        return service.listFrontPageItem(null);
-//    }
-    
+
+    /**
+     * Returns the orthologous object for the specified species or null if not found
+     * @param className  Class Name of Object you are querying for
+     * @param identifier Identifiers of the object (could either be dbId or stId)
+     * @param speciesId dbId of the species to find the orthologous
+     * @return
+     */
+    @GET
+    @Path("/orthologous/{className}/{identifier}/Species/{speciesId}")
+    public DatabaseObject getOrthologous(@PathParam("className") String className,
+                                         @PathParam("identifier") String identifier,
+                                         @PathParam("speciesId") String speciesId){
+        DatabaseObject rtn = service.getOrthologous(identifier, speciesId);
+        return rtn;
+    }
+
+    /**
+     * Returns the corresponding orthologous elements for a list passed by POST
+     * @param speciesId The species identifier for the ortholgous
+     * @param post      Array of dbIDs
+     * @return A map of orthologs for those that have been found
+     */
+    @POST
+    @Path("/orthologous/Species/{speciesId}")
+    public Map<String, DatabaseObject> getorthologous(@PathParam("speciesId") String speciesId,
+                                           String post) {
+        if (post.length() == 0)
+            return null;
+        // The first three characters should be "ID="
+        post = post.substring(3);
+        String[] dbIDs = post.split(",");
+        List<String> ids = Arrays.asList(dbIDs);
+
+        Map<String, DatabaseObject> rtn = new HashMap<String, DatabaseObject>();
+        for (String id : ids) {
+            DatabaseObject orth = service.getOrthologous(id, speciesId);
+            if(orth!=null) rtn.put(id, orth);
+        }
+        return rtn;
+    }
+
     /**
      * Use this method to get a list of Pathways that have been listed in the 
      * FrontPage instance for other non-human species

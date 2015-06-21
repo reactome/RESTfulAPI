@@ -1,19 +1,6 @@
 package org.reactome.restfulapi;
 
-import java.awt.Color;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.*;
-
-import javax.imageio.ImageIO;
-
+import com.sun.jersey.spi.resource.Singleton;
 import org.apache.log4j.Logger;
 import org.gk.graphEditor.PathwayEditor;
 import org.gk.model.GKInstance;
@@ -39,8 +26,17 @@ import org.jdom.output.DOMOutputter;
 import org.reactome.biopax.ReactomeToBioPAX3XMLConverter;
 import org.reactome.biopax.ReactomeToBioPAXXMLConverter;
 import org.reactome.restfulapi.models.*;
+import org.reactome.restfulapi.models.Event;
 
-import com.sun.jersey.spi.resource.Singleton;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.sql.*;
+import java.util.*;
+import java.util.List;
 
 @Singleton
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -536,13 +532,7 @@ public class APIControllerHelper {
         return new ArrayList<Pathway>();
     }
     // DEV-846 work ends here
-    
-    /**
-     * Query a list of pathways containing one or more genes from the passed gene
-     * array.
-     * @param genes gene symbols
-     * @return
-     */
+
     public Integer stableIdToDb_Id(String stableId) {
     	Integer DB_ID = null;
         try {
@@ -872,15 +862,7 @@ public class APIControllerHelper {
     private DatabaseObject fetchInstance(String className, String id) throws Exception, InstanceNotFoundException {
         GKInstance instance = null;
         DatabaseObject rtn = null;
-        Long dbIdl = null;
-
-        if (id.contains("REACT") || id.contains("R-")) {
-        	Integer dbId = stableIdToDb_Id(id);
-        	dbIdl = new Long(dbId);
-        }
-        else {
-            dbIdl = new Long(id);
-        }
+        Long dbIdl = getIdentifier(id);
             
         instance = dba.fetchInstance(className, dbIdl);
         
@@ -1324,6 +1306,73 @@ public class APIControllerHelper {
             }
         }
         return rtn;
+    }
+
+    private Long getIdentifier(String dbId){
+        if (dbId.contains("REACT") || dbId.contains("R-")) {
+            return (long) stableIdToDb_Id(dbId);
+        } else {
+            return new Long(dbId);
+        }
+    }
+
+    /**
+     * There are two possibilities here. 1) The specified object has a direct link to the
+     * demanded orthologous or 2) we need to go through the main species to try to find it.
+     * @param dbId the identifier of the initial object
+     * @param speciesId the identifier of the species the orthologous is required
+     * @return the orthologous object for the specified species or null if not found
+     */
+    public DatabaseObject getOrthologous(String dbId, String speciesId){
+        try {
+            Long speciesDbId = Long.valueOf(speciesId); // getIdentifier(speciesId);
+//            GKInstance instance = dba.fetchInstance(getIdentifier(dbId));
+            GKInstance instance = dba.fetchInstance(Long.valueOf(dbId));
+
+            //Some initial checking before looking for something which does not make sense :)
+            if(!instance.getSchemClass().isValidAttribute(ReactomeJavaConstants.species)){
+                return null;
+            }
+            List speciess = instance.getAttributeValuesList(ReactomeJavaConstants.species);
+            if(speciess==null || speciess.isEmpty()) return null;
+            GKInstance species = (GKInstance) speciess.get(0);
+            if(species.getDBID().equals(speciesDbId)) return converter.convert(instance);
+            //Checking finished. It makes sense to continue looking for it after this point
+
+            List orths = new ArrayList();
+            if (instance.getSchemClass().isValidAttribute(ReactomeJavaConstants.orthologousEvent)) {
+                List aux = instance.getAttributeValuesList(ReactomeJavaConstants.orthologousEvent);
+                if(aux!=null) orths.addAll(aux);
+            }else{
+                if(instance.getSchemClass().isValidAttribute(ReactomeJavaConstants.inferredFrom)){
+                    List aux = instance.getAttributeValuesList(ReactomeJavaConstants.inferredFrom);
+                    if(aux!=null) orths.addAll(aux);
+                }
+                if(instance.getSchemClass().isValidAttribute(ReactomeJavaConstants.inferredTo)){
+                    List aux = instance.getAttributeValuesList(ReactomeJavaConstants.inferredTo);
+                    if(aux!=null) orths.addAll(aux);
+                }
+            }
+            for (Object item : orths) {
+                GKInstance orth = (GKInstance) item;
+                if(orth.getSchemClass().isValidAttribute(ReactomeJavaConstants.species)){
+                    speciess = orth.getAttributeValuesList(ReactomeJavaConstants.species);
+                    if(speciess!=null){
+                        for (Object s : speciess) {
+                            species = (GKInstance) s;
+                            if(species.getDBID().equals(speciesDbId)){
+                                return converter.convert(orth);
+                            }else if(species.getDBID().equals(48887L)){
+                                return getOrthologous(orth.getDBID().toString(), speciesId);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return null;
     }
 
     public List<Pathway> queryPathwaysforEntities(final List<Long> EntityIds) {
