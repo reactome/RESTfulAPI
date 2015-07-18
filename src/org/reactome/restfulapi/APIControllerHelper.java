@@ -937,6 +937,22 @@ public class APIControllerHelper {
         return rtn;
     }
 
+    public Map<String, DatabaseObject> mapByIds(String className,
+                                                List<String> ids){
+        Map<String, DatabaseObject> rtn  = new HashMap<String, DatabaseObject>();
+        try {
+            for (String id : ids) {
+                DatabaseObject converted = fetchInstance(className, id);
+                if (converted != null)
+                    rtn.put(id, converted);
+            }
+        }
+        catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return rtn;
+    }
+
     public List<DatabaseObject> listByQuery(String className, 
                                             String propertyName, 
                                             String propertyValue) {

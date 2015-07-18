@@ -323,6 +323,24 @@ public class RESTfulAPIResource {
 
     /**
      * @param className Class Name of Object you are querying for
+     * @param post      Array of dbIDs
+     * @return A map of full objects of type className paring query and result (useful for the ST_ID transition time)
+     */
+    @POST
+    @Path("/mapByIds/{className}")
+    public Map<String, DatabaseObject> mapByIds(@PathParam("className") String className,
+                                           String post) {
+        if (post.length() == 0)
+            return null;
+        // The first three characters should be "ID="
+        post = post.substring(3);
+        String[] dbIDs = post.split(",");
+        List<String> ids = Arrays.asList(dbIDs);
+        return service.mapByIds(className, ids);
+    }
+
+    /**
+     * @param className Class Name of Object you are querying for
      * @param  post Comma seperated list of Database ID's
      * @return list of of objects of type Class Name
      */
