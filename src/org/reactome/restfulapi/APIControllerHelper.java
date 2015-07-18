@@ -189,7 +189,7 @@ public class APIControllerHelper {
 			sbgnBuilder.getDatabaseConnectionHandler().setDatabaseAdaptor(dba);
 			sbgnBuilder.addField("pid", Arrays.asList(String.valueOf(dbId)));
 			sbgnBuilder.convertPathways();
-			String prolog = "<?xml version'1.0' encoding='UTF-8' standalone='yes'?>\n";
+			String prolog = "<?xml version='1.0' encoding='UTF-8'?>\n";
 			String sbgnString = Dumper.dumpToString(sbgnBuilder.getPDExtractor().getSbgn());
 			return prolog + sbgnString;
 		}
