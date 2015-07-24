@@ -570,84 +570,77 @@ public class APIControllerHelper {
      */
     public List<Pathway> queryHitPathways(String[] genes) {
         try {
-        	Connection conn = getDNConnection();
-            String sql = "select ei.DB_ID from Event_2_indirectIdentifier ei, Event_2_species es, " +
-            		     "Pathway p where ei.DB_ID = es.DB_ID AND es.species = 48887 AND " +
-            		     "ei.DB_ID = p.DB_ID AND ei.indirectIdentifier in (";
+        	Connection dnConn = getDNConnection();
+            String sql = "SELECT pr.pathwayId " + 
+            		"FROM PhysicalEntity p, Id_To_ExternalIdentifier e, "+
+            		"Pathway_To_ReactionLikeEvent pr, "+
+            		"ReactionLikeEvent_To_PhysicalEntity r " + 
+            		"WHERE e.id = p.id and p.id = r.physicalEntityId " + 
+            		"AND r.reactionLikeEventId = pr.reactionLikeEventId "+
+            		"AND p.species = 'Homo sapiens'" +
+            		"AND e.externalIdentifier IN(";
             StringBuilder builder = new StringBuilder();
             for (String gene : genes) {
                 builder.append("'").append(gene).append("',");
             }
             builder.deleteCharAt(builder.length() - 1); // Delete the last ","
             sql += builder.toString() + ")";
-            Statement stat = conn.createStatement();
+            System.err.println(sql);
+            
+            Statement stat = dnConn.createStatement();
             ResultSet resultSet = stat.executeQuery(sql);
+            
             // Get a list of Pathway ids containing genes
             builder.setLength(0);
-            while (resultSet.next()) {
-                builder.append(resultSet.getLong(1)).append(",");
-            }
-            if (builder.length() == 0) { // Nothing returned
-                resultSet.close();
-                stat.close();
-                conn.close();
-                return new ArrayList<Pathway>();
-            }
-            builder.deleteCharAt(builder.length() - 1);
-//            System.err.println("pathways 1: "+builder.toString());
-            resultSet.close();
-            // Select pathways that have PathwayDiagrams
-            sql = "SELECT representedPathway FROM PathwayDiagram_2_representedPathway " +
-            		"WHERE representedPathway IN (" + builder.toString() + ")";
-            Connection dbaConn = dba.getConnection();
-            Statement dbaStat = dbaConn.createStatement();
-            resultSet = dbaStat.executeQuery(sql);
             Set<Long> pathwayIds = new HashSet<Long>();
-            builder.setLength(0);
             while (resultSet.next()) {
-                pathwayIds.add(resultSet.getLong(1));
-                builder.append(resultSet.getLong(1)).append(",");
+//            	builder.append(resultSet.getLong(1)).append(",");
+            	pathwayIds.add(resultSet.getLong(1));
             }
-            resultSet.close();
-            dbaStat.close();
-            builder.deleteCharAt(builder.length() - 1);
-//            System.err.println("pathways 2: "+builder.toString());
-            // Want the get the lowest pathways that have pathway diagrams. These
-            // pathways should provide most detailed information in diagrams.
-            sql = "SELECT DB_ID, hasEveryComponent FROM Pathway_2_hasEveryComponent " +
-            		"WHERE DB_ID IN (" + builder.toString() + ")";
-            resultSet = stat.executeQuery(sql);
-            Map<Long, Set<Long>> pathwayToSubs = new HashMap<Long, Set<Long>>();
-            while (resultSet.next()) {
-                Long pathwayId = resultSet.getLong(1);
-                Long subPathwayId = resultSet.getLong(2);
-                Set<Long> subIds = pathwayToSubs.get(pathwayId);
-                if (subIds == null) {
-                    subIds = new HashSet<Long>();
-                    pathwayToSubs.put(pathwayId, subIds);
-                }
-                subIds.add(subPathwayId);
+//            if (builder.length() == 0) { // Nothing returned
+//            	resultSet.close();
+//            	stat.close();
+//            	dnConn.close();
+//            	return new ArrayList<Pathway>();
+//            }
+//            builder.deleteCharAt(builder.length() - 1);
+//            resultSet.close();
+//
+//            sql = "SELECT pathwayId  \n" + 
+//            		"FROM Pathway_To_ReactionLikeEvent pr \n" + 
+//            		"WHERE pr.reactionLikeEventId IN(" + builder.toString() + ")";
+//            System.err.println(sql);
+//            resultSet = stat.executeQuery(sql);
+//
+//            // Get a list of Pathway ids containing genes
+//            builder.setLength(0);
+//            Set<Long> pathwayIds = new HashSet<Long>();
+//            while (resultSet.next()) {
+//            	pathwayIds.add(resultSet.getLong(1));
+//            }
+            if (pathwayIds.size() == 0) { // Nothing returned
+            	resultSet.close();
+            	stat.close();
+            	dnConn.close();
+            	return new ArrayList<Pathway>();
             }
-            resultSet.close();
-            stat.close();
-            // Only pick up pathways that don't have sub-pathway diagrams
+          
+            DiagramGeneratorFromDB diagramHelper = new DiagramGeneratorFromDB();
+            diagramHelper.setMySQLAdaptor(dba);
+            
             List<Pathway> rtn = new ArrayList<Pathway>();
             for (Long dbId : pathwayIds) {
-                Set<Long> subIds = pathwayToSubs.get(dbId);
-                if (subIds != null) {
-                    // Check if there is any sub-pathway has PathwayDiagram
-                    subIds.retainAll(pathwayIds);
-                }
-                if (subIds == null || subIds.size() == 0) {
-                    GKInstance instance = dba.fetchInstance(dbId);
-                    Pathway pathway = (Pathway) converter.createObject(instance);
-                    rtn.add(pathway);
-                }
+            	GKInstance instance = dba.fetchInstance(dbId);
+//            	GKInstance diagram = diagramHelper.getPathwayDiagram(instance);
+//            	if (diagram != null) {
+            		Pathway pathway = (Pathway) converter.createObject(instance);
+            		rtn.add(pathway);
+//            	}            	
             }
             return rtn;
         }
         catch(Exception e) {
-            logger.error(e.getMessage(), e);
+        	logger.error(e.getMessage(), e);
         }
         return new ArrayList<Pathway>();
     }

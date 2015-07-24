@@ -17,7 +17,7 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
 /**
- * This class is used to generate the pathway hierachy as displayed in the web pathway browser. The implementation in
+ * This class is used to generate the pathway hierarchy as displayed in the web pathway browser. The implementation in
  * this class is modified from an original class in org.gk.scripts.
  * @author gwu
  *
