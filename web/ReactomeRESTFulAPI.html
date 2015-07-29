@@ -53,6 +53,79 @@
 <p class="introduction">The following lists the Reactome RESTful API. To use this API efficiently, the user needs to understand the <a href="http://www.reactome.org/cgi-bin/classbrowser?DB=gk_current">Reactome data model</a>.
 The returned result can be specified as either XML or JSON. The user can view the HTML source of this document to see some examples on how to use this API.
 <ul>
+<div style="width:85%;background:ivory;border:1px solid gray;padding:20px">
+<h2>GET vs POSTs Methods</h2>
+The methods listed below are specified as either GET or POST requests. GET and POST are not interchangeable.  
+<h3>GET</h3>
+This API is primarily intended for programmatic access by other applications such as the Reactome Pathway Browser.
+However, methods specifying GET can be accessed via a web browser or command line client such as wget 
+or curl using the URL structure specified in the documentation.  An example of a GET request for the method QueryById is
+shown below:
+<br>
+<pre>
+http://reactome.org/ReactomeRESTfulAPI/RESTfulWS/queryById/DatabaseObject/R-ALL-29358.1
+</pre>
+
+An example of how to obtain this information via the command line:
+
+<pre>curl http://reactome.org/ReactomeRESTfulAPI/RESTfulWS/queryById/DatabaseObject/R-ALL-29358.1 \
+> R-ALL-29358.1.xml</pre>
+
+<h3>POST</h3>
+
+POST methods are generally accessed by other programs and can be accessed directly by a web browser.  How they are accessed 
+is specific to the application and programming language.  Below is an example of how Javascript was used in this web page
+to demonstrate the POST methods.
+
+<pre style=background:""white">
+	
+	function queryByIds(type) {
+		url = "/ReactomeRESTfulAPI/RESTfulWS/queryByIds/Pathway";
+		body = "ID=109607,109606,75153,169911";
+		doPost(url, type, body);
+	}
+		
+	function doPost(url, type, body) {
+		newWindow = window.open("", url);
+		ajax = new XMLHttpRequest();
+		ajax.open("POST", url, true);
+		ajax.setRequestHeader("Content-type", "text/plain");
+		ajax.setRequestHeader("Accept", type);
+		ajax.onreadystatechange = function() {
+			if(ajax.readyState == 4 && ajax.status == 200) {
+				text = ajax.responseText.replace(/&lt;/g, "&amp;lt;");
+				text = text.replace(/&gt;/g, "&amp;gt;");
+				newWindow.document.write("&lt;pre&gt;" + text + "&lt;/pre&gt;");
+				newWindow.document.close();
+			}
+		};
+		ajax.send(body);
+	}
+		
+	function listByQuery(type) {
+		url = "/ReactomeRESTfulAPI/RESTfulWS/listByQuery/Pathway";
+		body = "name=Apoptosis";
+		doPost(url, type, body);
+	}
+		
+	function pathwaysForEntities(type) {
+		url = "/ReactomeRESTfulAPI/RESTfulWS/pathwaysForEntities";
+		body="ID=170075,176374,68557";
+		doPost(url, type, body);
+	}
+		
+	function queryHitPathways(type) {
+		url = "/ReactomeRESTfulAPI/RESTfulWS/queryHitPathways";
+		body="PPP2R1A,CEP192,AKAP9,CENPJ,CEP290,DYNC1H1";
+		doPost(url, type, body);
+	}
+
+</pre>
+
+It is also possible to use the command line to obtain data from POST methods.  For example:
+<pre>curl --header "Content-Type:text/plain"  --data "PPP2R1A,CEP192,AKAP9,CENPJ,CEP290,DYNC1H1" \
+http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/queryHitPathways</pre>
+</div>
 
 <li>
 <h4>BioPAX Exporter: <code>biopaxExporter/{level}/{dbId: \\d+}</code></h4>
@@ -268,8 +341,7 @@ First a key "ID", and a value of comma separated list inside the body of the HTT
 	<h4><a name="queryHitPathway"></a>QueryHitPathways: <code>queryHitPathways</code></h4>
 	<dl>
 		<dd class="description">
-			Query for a list of pathways that contain one or more genes passed in the query list. In the Reactome data model, pathways are organized in a hierarchical structure. 
-			The returned pathways in this method are pathways having detailed manually drawn pathway diagrams. Currently only human pathways will be returned from this method.
+			Query for a list of pathways that contain one or more genes passed in the query list. Currently only human pathways will be returned from this method.
 		</dd>
 		<dd>
 			<dl>
