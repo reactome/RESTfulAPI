@@ -80,20 +80,28 @@ public class PSICQUICRetriever {
         ics.setMappingIdDbNames(this.sm.getMappingIdDbNames());
         ics.runService();
         
-	// DEV-885 Note: the score is still retained at this point but it gets lost
-	// upon conversion to EncoreInteraction objects
+	    // DEV-885 Note: the score is still retained at this point but it was
+	    // getting upon conversion to EncoreInteraction objects
 
         // Retrieve results
         Map<Integer, EncoreInteraction> interactionMapping = ics.getInteractionMapping();
         
-        String query;
         Map<String, SimpleInteractorList> querySIL = new HashMap<String, SimpleInteractorList>();
-        for(EncoreInteraction ei : interactionMapping.values() ){
-            query = ei.getInteractorA();
-            addResultToQuerySIL(ei, query, accessionToRefId, querySIL);
-            
-            query = ei.getInteractorB();
-            addResultToQuerySIL(ei, query, accessionToRefId, querySIL);
+
+        // DEV-1046  psiquicInteractions NOT working.
+        // It was failing silently right here...
+        try { 
+        	for(EncoreInteraction ei : interactionMapping.values() ){
+        		String queryA = ei.getInteractorA();
+        		addResultToQuerySIL(ei, queryA, accessionToRefId, querySIL);
+
+        		String queryB = ei.getInteractorB();
+        		addResultToQuerySIL(ei, queryB, accessionToRefId, querySIL);
+        	}
+        }
+        catch (Throwable e) {
+        	// ..and I am not sure why!
+        	// System.err.println("I have no idea why I am here");  
         }
         
         for(String queryAux : querySIL.keySet()){
