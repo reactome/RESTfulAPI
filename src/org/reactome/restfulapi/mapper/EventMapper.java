@@ -158,27 +158,12 @@ public class EventMapper extends ReactomeModelPostMapper {
         event.setIsInDisease(disease == null ? Boolean.FALSE : Boolean.TRUE);       
         GKInstance inferredFrom = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.inferredFrom);
         event.setIsInferred(inferredFrom == null ? Boolean.FALSE : Boolean.TRUE);
-    }
-    
-    @Override
-    public void postShellProcessWithSpecies(GKInstance inst, 
-    			                            DatabaseObject obj,
-    			                            ReactomeToRESTfulAPIConverter converter) throws Exception {
-        if (!validParameters(inst, obj))
-            return;
-        
-        postShellProcess(inst,obj);
-
-        Event event = (Event) obj;
         
         List<GKInstance> speciesList = inst.getAttributeValuesList(ReactomeJavaConstants.species);
         if (speciesList != null && speciesList.size() > 0) {
-        	List<Species> species = new ArrayList<Species>();
-        	for (GKInstance oSpecies1 : speciesList) {
-        		Species tmp = (Species) converter.createObject(oSpecies1);
-        		species.add(tmp);
-        	}
-        	event.setSpecies(species);
+        	GKInstance firstSpecies = speciesList.get(0); 
+        	String name = firstSpecies.getDisplayName();
+        	event.setSpeciesName(name);
         }
     }
     

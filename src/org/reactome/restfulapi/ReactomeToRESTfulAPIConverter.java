@@ -143,7 +143,7 @@ public class ReactomeToRESTfulAPIConverter {
             obj.setDisplayName(instance.getDisplayName());
             ReactomeModelPostMapper mapper = postMapperFactory.getPostMapper(instance);
             if (mapper != null)
-                mapper.postShellProcessWithSpecies(instance, obj, this);
+                mapper.postShellProcess(instance, obj);
         }
         return obj;
     }
