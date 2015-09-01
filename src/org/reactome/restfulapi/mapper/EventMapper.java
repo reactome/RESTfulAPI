@@ -4,6 +4,7 @@
  */
 package org.reactome.restfulapi.mapper;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.gk.model.PersistenceAdaptor;
 import org.gk.model.ReactomeJavaConstants;
 import org.reactome.restfulapi.ReactomeModelPostMapper;
 import org.reactome.restfulapi.ReactomeToRESTfulAPIConverter;
+import org.reactome.restfulapi.ReflectionUtility;
 import org.reactome.restfulapi.models.DatabaseObject;
 import org.reactome.restfulapi.models.Event;
 import org.reactome.restfulapi.models.Species;
@@ -153,9 +155,31 @@ public class EventMapper extends ReactomeModelPostMapper {
         }
         // Check if this Event is in disease
         GKInstance disease = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.disease);
-        event.setIsInDisease(disease == null ? Boolean.FALSE : Boolean.TRUE);
+        event.setIsInDisease(disease == null ? Boolean.FALSE : Boolean.TRUE);       
         GKInstance inferredFrom = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.inferredFrom);
         event.setIsInferred(inferredFrom == null ? Boolean.FALSE : Boolean.TRUE);
+    }
+    
+    @Override
+    public void postShellProcessWithSpecies(GKInstance inst, 
+    			                            DatabaseObject obj,
+    			                            ReactomeToRESTfulAPIConverter converter) throws Exception {
+        if (!validParameters(inst, obj))
+            return;
+        
+        postShellProcess(inst,obj);
+
+        Event event = (Event) obj;
+        
+        List<GKInstance> speciesList = inst.getAttributeValuesList(ReactomeJavaConstants.species);
+        if (speciesList != null && speciesList.size() > 0) {
+        	List<Species> species = new ArrayList<Species>();
+        	for (GKInstance oSpecies1 : speciesList) {
+        		Species tmp = (Species) converter.createObject(oSpecies1);
+        		species.add(tmp);
+        	}
+        	event.setSpecies(species);
+        }
     }
     
 }

@@ -492,7 +492,7 @@ public class RESTfulAPIResource {
     }
 
     /**
-     * @param post An comma seperated list of Pathway ID's
+     * @param post A comma separated list of Pathway ID's
      * @return List of Pathway Objects
      */
     @POST
