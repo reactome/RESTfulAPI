@@ -4,18 +4,29 @@
  */
 package org.reactome.restfulapi.mapper;
 
+import java.lang.reflect.Method;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import org.gk.model.GKInstance;
 import org.gk.model.PersistenceAdaptor;
 import org.gk.model.ReactomeJavaConstants;
+import org.gk.persistence.MySQLAdaptor;
+import org.reactome.restfulapi.APIControllerHelper;
 import org.reactome.restfulapi.ReactomeModelPostMapper;
 import org.reactome.restfulapi.ReactomeToRESTfulAPIConverter;
+import org.reactome.restfulapi.ReflectionUtility;
 import org.reactome.restfulapi.models.DatabaseObject;
 import org.reactome.restfulapi.models.Event;
 import org.reactome.restfulapi.models.Species;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * This class is used to do some post-processing for Event.
@@ -23,11 +34,14 @@ import org.reactome.restfulapi.models.Species;
  *i
  */
 @SuppressWarnings("unchecked")
-public class EventMapper extends ReactomeModelPostMapper {
-    
-    public EventMapper() {
-    }
 
+public class EventMapper extends ReactomeModelPostMapper {
+	
+	public EventMapper() {
+	}
+   
+	private String releaseDate = null;
+        
     @Override
     public void fillDetailedView(GKInstance inst,
                                  DatabaseObject obj,
@@ -73,6 +87,27 @@ public class EventMapper extends ReactomeModelPostMapper {
                             ReactomeToRESTfulAPIConverter converter) throws Exception {
     }
 
+    private String getReleaseDate(GKInstance inst) throws Exception {
+    	if (this.releaseDate != null) {
+    		return this.releaseDate;
+    	}
+    	if (!(inst.getDbAdaptor() instanceof MySQLAdaptor)) {
+            return null;
+    	}
+    	
+        MySQLAdaptor dba = (MySQLAdaptor) inst.getDbAdaptor();
+        
+        Collection<?> instances = dba.fetchInstancesByClass(ReactomeJavaConstants._Release);
+        if (instances == null || instances.size() == 0) {
+            return null;
+        }
+        
+        GKInstance release = (GKInstance) instances.iterator().next();
+        String releaseDate = (String) release.getAttributeValue(ReactomeJavaConstants.releaseDate);
+        this.releaseDate = releaseDate;
+        return releaseDate;
+    }
+    
     /**
      * A helper method to fetch Regulation for the passed Event GKInstance.
      * @param inst
@@ -141,7 +176,33 @@ public class EventMapper extends ReactomeModelPostMapper {
     protected boolean isValidObject(DatabaseObject obj) {
         return obj instanceof Event;
     }
+    
+    public Date releaseStartDate(String releaseDateString) throws ParseException {
+    	
+    	Date releaseStartDate = null;
+    	DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+    	Date releaseDate = format.parse(releaseDateString);
+    	
+		if (releaseDate != null) {
+			// subtract three months                                                                                                                                                                                                          
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(releaseDate);
+			cal.add(Calendar.MONTH, -3);
+			releaseStartDate = cal.getTime();
+		}
+		
+        return releaseStartDate;
+    }
 
+    private Date releaseDateFromString(String dateString) throws ParseException {
+    	Date date = null;	
+    	DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+    	if (dateString != null) {
+    		date = format.parse(dateString);
+    	}
+    	return date;
+    }
+    
     @Override
     public void postShellProcess(GKInstance inst, DatabaseObject obj) throws Exception {
         if (!validParameters(inst, obj))
@@ -151,11 +212,45 @@ public class EventMapper extends ReactomeModelPostMapper {
         if (releaseStatus != null) {
             event.setReleaseStatus(releaseStatus);
         }
+        
+        // Trigger updated release status if there is a 'revised' or 'modified' InstanceEdit
+        // belonging to this release
+        if (releaseStatus == null || ! (releaseStatus.equals("UPDATED") || releaseStatus.equals("NEW"))) {
+        	List<GKInstance> revisions = inst.getAttributeValuesList("revised");
+        	//revisions.addAll(inst.getAttributeValuesList("modified"));
+        	for (Integer i=0;i < revisions.size();i++) {
+        		GKInstance revised = revisions.get(i);
+        			
+        		String dateString = revised.getAttributeValue("dateTime").toString();
+        		Date date = releaseDateFromString(dateString);
+        		
+        		String releaseDateString = getReleaseDate(inst);
+        		Date releaseStart = null;
+        		if (releaseDateString != null) {
+        			releaseStart = releaseStartDate(releaseDateString);
+        		}
+
+        		// test to see if this InstanceEdit post-dates release minus 3 months
+        		if (releaseStart != null && date != null && date.after(releaseStart)) {
+        			event.setReleaseStatus("UPDATED");
+        			break;
+        		}
+        	}
+        }
+        
+        
         // Check if this Event is in disease
         GKInstance disease = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.disease);
         event.setIsInDisease(disease == null ? Boolean.FALSE : Boolean.TRUE);
         GKInstance inferredFrom = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.inferredFrom);
         event.setIsInferred(inferredFrom == null ? Boolean.FALSE : Boolean.TRUE);
+
+        List<GKInstance> speciesList = inst.getAttributeValuesList(ReactomeJavaConstants.species);
+        if (speciesList != null && speciesList.size() > 0) {
+	    GKInstance firstSpecies = speciesList.get(0);
+	    String name = firstSpecies.getDisplayName();
+	    event.setSpeciesName(name);
+        }
     }
-    
+
 }

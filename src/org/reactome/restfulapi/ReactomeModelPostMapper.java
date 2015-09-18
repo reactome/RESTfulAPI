@@ -63,6 +63,7 @@ public abstract class ReactomeModelPostMapper {
      */
     public abstract void postShellProcess(GKInstance inst,
                                           DatabaseObject obj) throws Exception;
+     
     
     protected abstract boolean isValidObject(DatabaseObject obj);
 
