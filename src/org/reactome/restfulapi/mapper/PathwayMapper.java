@@ -4,8 +4,7 @@
  */
 package org.reactome.restfulapi.mapper;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 
 import org.gk.model.GKInstance;
 import org.gk.model.ReactomeJavaConstants;
@@ -14,6 +13,7 @@ import org.gk.persistence.MySQLAdaptor;
 import org.reactome.restfulapi.ReactomeToRESTfulAPIConverter;
 import org.reactome.restfulapi.models.DatabaseObject;
 import org.reactome.restfulapi.models.Pathway;
+import org.reactome.restfulapi.models.Species;
 
 /**
  * @author gwu
@@ -33,6 +33,14 @@ public class PathwayMapper extends EventMapper {
         if (!validParameters(inst, obj))
             return;
         addPathwayDiagramFlag(inst, obj);
+    }
+
+    @Override
+    public void postShellProcess(GKInstance inst, DatabaseObject obj)
+            throws Exception {
+        super.postShellProcess(inst, obj);
+        addPathwayDiagramFlag(inst, obj);
+        addPathwaySpecies(inst, obj);
     }
 
     private void addPathwayDiagramFlag(GKInstance inst, DatabaseObject obj) throws Exception {
@@ -60,11 +68,21 @@ public class PathwayMapper extends EventMapper {
         }
     }
 
-    @Override
-    public void postShellProcess(GKInstance inst, DatabaseObject obj)
-            throws Exception {
-        super.postShellProcess(inst, obj);
-        addPathwayDiagramFlag(inst, obj);
+
+    private void addPathwaySpecies(GKInstance inst, DatabaseObject obj){
+        Pathway pathway = (Pathway) obj;
+        if(pathway.getSpecies()!=null) return;
+        if(inst.getSchemClass().isValidAttribute(ReactomeJavaConstants.species)){
+            try {
+                GKInstance s = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.species);
+                Species species = new Species();
+                species.setDbId(s.getDBID());
+                species.setDisplayName(s.getDisplayName());
+                pathway.setSpecies(Arrays.asList(species));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
     
 }
