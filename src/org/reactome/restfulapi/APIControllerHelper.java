@@ -974,9 +974,9 @@ public class APIControllerHelper {
                                                      String containedName,
                                                      String species) {
         try {
-            List<GKInstance> instances = queryHelper.queryByNameAndSpecies(className, 
-                                                                           containedName, 
-                                                                           species);
+            List<GKInstance> instances = queryHelper.queryByNameAndSpecies(className,
+                    containedName,
+                    species);
             return convertInstanceList(instances);
         }
         catch(Exception e) {
@@ -1410,6 +1410,38 @@ public class APIControllerHelper {
             instances.addAll(complexes);
             Set<GKInstance> reactions = getParticipatingReactions(instances);
             rtn = getPathwaysFromReactions(reactions);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return rtn;
+    }
+
+    public List<Pathway> queryPathwaysWithDiagramForEntity(Long dbId) {
+        //Convert entity to GKInstances so that database query can be done for performance reason
+        List<Pathway> rtn = new ArrayList<Pathway>();
+        try {
+            Set<GKInstance> instances = new HashSet<GKInstance>();
+            instances.add(dba.fetchInstance(dbId));
+            instances.addAll(grepComplexesForEntities(instances));
+            Set<GKInstance> reactions = getParticipatingReactions(instances);
+            for (Pathway pathway : getPathwaysFromReactions(reactions)) {
+                if(pathway.getHasDiagram()){
+                    rtn.add(pathway);
+                }else{
+                    List<Event> events = queryAncestors(pathway.getDbId()).get(0);
+                    ListIterator<Event> li = events.listIterator(events.size());
+                    while(li.hasPrevious()){
+                        Event event = li.previous();
+                        if(event instanceof Pathway){
+                            Pathway p = (Pathway) event;
+                            if(p.getHasDiagram()){
+                                rtn.add(p);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }

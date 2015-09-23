@@ -15,7 +15,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -509,6 +508,17 @@ public class RESTfulAPIResource {
         }
         List<Long> IDs = Arrays.asList(entityIdsList);
         return service.queryPathwaysforEntities(IDs);
+    }
+
+    @GET
+    @Path("/pathwaysWithDiagramForEntity/{dbId}")
+    public List<Pathway> queryPathwaysWithDiagramForEntity(@PathParam("dbId") String dbId) {
+        DatabaseObject entity = service.getDetailedView("DatabaseObject", dbId);
+        if (entity instanceof PhysicalEntity) {
+            return service.queryPathwaysWithDiagramForEntity(entity.getDbId());
+        } else {
+            return new ArrayList<Pathway>();
+        }
     }
     
     /**
