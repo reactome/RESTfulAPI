@@ -342,22 +342,7 @@ public class APIControllerHelper {
     	Connection conn = DriverManager.getConnection(connectionStr, prop);
     	return conn;
     }  
-    
-    /**
-     * Connect to the stable identifier database
-     * @throws SQLException 
-     * 
-     */
-    private Connection getStableIdConnection() throws SQLException {
-    	String connectionStr = "jdbc:mysql://" + dba.getDBHost() + ":" + dba.getDBPort() + "/" + "stable_identifiers";
-    	Properties prop = new Properties();
-    	prop.setProperty("user", dba.getDBUser());
-    	prop.setProperty("password", dba.getDBPwd());
-    	Connection conn = DriverManager.getConnection(connectionStr, prop);
-    	return conn;
-    } 
-    
-    
+
     // DEV-870 work starts here
     // http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method 
     private static boolean isValidEmailAddress(String email) {
@@ -533,34 +518,6 @@ public class APIControllerHelper {
     }
     // DEV-846 work ends here
 
-    public Integer stableIdToDb_Id(String stableId) {
-    	Integer DB_ID = null;
-        try {
-        	Connection conn = getStableIdConnection();
-        	// We don't care about version
-        	String identifier = stableId.replaceAll("\\.\\d+", "");
-            String sql = "SELECT instanceId from StableIdentifier WHERE identifier = '" + identifier + "'";
-            Statement stat = conn.createStatement();
-            ResultSet resultSet = stat.executeQuery(sql);
-            // Get a list of Pathway ids containing genes
-            while (resultSet.next()) {
-            	DB_ID = resultSet.getInt(1);
-            	if (DB_ID != null && DB_ID > 0) {
-            		break;
-            	}
-            }
-            resultSet.close();
-            stat.close();
-            return DB_ID;
-        }
-        catch(Exception e) {
-            logger.error(e.getMessage(), e);
-            e.printStackTrace();
-        }
-        return DB_ID;	
-    }
-    
-    
     
     /**
      * Query a list of pathways containing one or more genes from the passed gene
@@ -852,21 +809,12 @@ public class APIControllerHelper {
      * @throws Exception
      * @throws InstanceNotFoundException
      */
-    private DatabaseObject fetchInstance(String className, String id) throws Exception, InstanceNotFoundException {
-        GKInstance instance = null;
-        DatabaseObject rtn = null;
-        Long dbIdl = getIdentifier(id);
-
-        instance = dba.fetchInstance(className, dbIdl);
-        
+    private DatabaseObject fetchInstance(String className, String id) throws Exception {
+        GKInstance instance = getInstance(id);
         if (instance == null) {
-        	throw new InstanceNotFoundException(dbIdl);
+        	throw new InstanceNotFoundException(className, id);
         }
-        else {
-            rtn = (DatabaseObject) converter.convert(instance);
-        }
-    
-        return rtn;
+        return converter.convert(instance);
     }
     
     /**
@@ -1317,12 +1265,21 @@ public class APIControllerHelper {
         return rtn;
     }
 
-    private Long getIdentifier(String dbId){
-        if (dbId.contains("REACT") || dbId.contains("R-")) {
-            return (long) stableIdToDb_Id(dbId);
+    private GKInstance getInstance(String identifier) throws Exception {
+        identifier = identifier.trim().split("\\.")[0];
+        if (identifier.startsWith("REACT")){
+            return getInstance(dba.fetchInstanceByAttribute(ReactomeJavaConstants.StableIdentifier, "oldIdentifier", "=", identifier));
+        }else if (identifier.startsWith("R-")) {
+            return getInstance(dba.fetchInstanceByAttribute(ReactomeJavaConstants.StableIdentifier, ReactomeJavaConstants.identifier, "=", identifier));
         } else {
-            return new Long(dbId);
+            return dba.fetchInstance(Long.parseLong(identifier));
         }
+    }
+
+    private GKInstance getInstance(Collection<GKInstance> target) throws Exception {
+        if(target==null || target.size()!=1) throw new Exception("Many options have been found fot the specified identifier");
+        GKInstance stId = target.iterator().next();
+        return (GKInstance) dba.fetchInstanceByAttribute(ReactomeJavaConstants.DatabaseObject, ReactomeJavaConstants.stableIdentifier, "=", stId).iterator().next();
     }
 
     /**
@@ -1334,10 +1291,8 @@ public class APIControllerHelper {
      */
     public DatabaseObject getOrthologous(String dbId, String speciesId){
         try {
-//            Long speciesDbId = Long.valueOf(speciesId);
-//            GKInstance instance = dba.fetchInstance(Long.valueOf(dbId));
-            Long speciesDbId = getIdentifier(speciesId);
-            GKInstance instance = dba.fetchInstance(getIdentifier(dbId));
+            GKInstance species = getInstance(speciesId);
+            GKInstance instance = getInstance(dbId);
 
             //Some initial checking before looking for something which does not make sense :)
             if(!instance.getSchemClass().isValidAttribute(ReactomeJavaConstants.species)){
@@ -1345,8 +1300,8 @@ public class APIControllerHelper {
             }
             List speciess = instance.getAttributeValuesList(ReactomeJavaConstants.species);
             if(speciess==null || speciess.isEmpty()) return null;
-            GKInstance species = (GKInstance) speciess.get(0);
-            if(species.getDBID().equals(speciesDbId)) return converter.convert(instance);
+            GKInstance target = (GKInstance) speciess.get(0);
+            if(target.getDBID().equals(species.getDBID())) return converter.convert(instance);
             //Checking finished. It makes sense to continue looking for it after this point
 
             List orths = new ArrayList();
@@ -1369,10 +1324,10 @@ public class APIControllerHelper {
                     speciess = orth.getAttributeValuesList(ReactomeJavaConstants.species);
                     if(speciess!=null){
                         for (Object s : speciess) {
-                            species = (GKInstance) s;
-                            if(species.getDBID().equals(speciesDbId)){
+                            target = (GKInstance) s;
+                            if(target.getDBID().equals(species.getDBID())){
                                 return converter.convert(orth);
-                            }else if(species.getDBID().equals(48887L)){
+                            }else if(target.getDBID().equals(48887L)){
                                 return getOrthologous(orth.getDBID().toString(), speciesId);
                             }
                         }
