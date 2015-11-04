@@ -4,29 +4,21 @@
  */
 package org.reactome.restfulapi.mapper;
 
-import java.lang.reflect.Method;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-
 import org.gk.model.GKInstance;
 import org.gk.model.PersistenceAdaptor;
 import org.gk.model.ReactomeJavaConstants;
 import org.gk.persistence.MySQLAdaptor;
-import org.reactome.restfulapi.APIControllerHelper;
 import org.reactome.restfulapi.ReactomeModelPostMapper;
 import org.reactome.restfulapi.ReactomeToRESTfulAPIConverter;
-import org.reactome.restfulapi.ReflectionUtility;
 import org.reactome.restfulapi.models.DatabaseObject;
 import org.reactome.restfulapi.models.Event;
 import org.reactome.restfulapi.models.Species;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.reactome.restfulapi.models.StableIdentifier;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * This class is used to do some post-processing for Event.
@@ -85,6 +77,7 @@ public class EventMapper extends ReactomeModelPostMapper {
     public void postProcess(GKInstance inst, 
                             DatabaseObject obj,
                             ReactomeToRESTfulAPIConverter converter) throws Exception {
+        addPathwayStableIdentifier(inst, obj);
     }
 
     private String getReleaseDate(GKInstance inst) throws Exception {
@@ -251,6 +244,17 @@ public class EventMapper extends ReactomeModelPostMapper {
 	    String name = firstSpecies.getDisplayName();
 	    event.setSpeciesName(name);
         }
+
+        addPathwayStableIdentifier(inst, obj);
     }
 
+    private void addPathwayStableIdentifier(GKInstance inst, DatabaseObject obj) throws Exception {
+        if(obj.getStableIdentifier()==null){
+            GKInstance stId = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.stableIdentifier);
+            StableIdentifier stableIdentifier = new StableIdentifier();
+            stableIdentifier.setDbId(stId.getDBID());
+            stableIdentifier.setDisplayName(stId.getDisplayName());
+            obj.setStableIdentifier(stableIdentifier);
+        }
+    }
 }
