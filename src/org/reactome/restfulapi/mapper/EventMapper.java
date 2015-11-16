@@ -249,12 +249,14 @@ public class EventMapper extends ReactomeModelPostMapper {
     }
 
     private void addPathwayStableIdentifier(GKInstance inst, DatabaseObject obj) throws Exception {
-        if(obj.getStableIdentifier()==null){
+        if (obj.getStableIdentifier() == null) {
             GKInstance stId = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.stableIdentifier);
-            StableIdentifier stableIdentifier = new StableIdentifier();
-            stableIdentifier.setDbId(stId.getDBID());
-            stableIdentifier.setDisplayName(stId.getDisplayName());
-            obj.setStableIdentifier(stableIdentifier);
+            if (stId != null) {
+                StableIdentifier stableIdentifier = new StableIdentifier();
+                stableIdentifier.setDbId(stId.getDBID());
+                stableIdentifier.setDisplayName(stId.getDisplayName());
+                obj.setStableIdentifier(stableIdentifier);
+            }
         }
     }
 }
