@@ -237,10 +237,10 @@ public class APIControllerHelper {
         return new ArrayList<PhysicalToReferenceEntityMap>();
     }
     
-    public List<PhysicalToReferenceEntityMap> getPathwayParticipantPEToRefEntityMap(Long pathwayId){
+    public List<PhysicalToReferenceEntityMap> getPathwayParticipantPEToRefEntityMap(String pathwayId){
     	Set<GKInstance> pes = new HashSet<GKInstance>(); 
     	try{
-	    	GKInstance pathway = dba.fetchInstance(pathwayId);
+            GKInstance pathway = getInstance(pathwayId);
 	        if (pathway == null)
 	            throw new InstanceNotFoundException(pathwayId);
 	        if (!pathway.getSchemClass().isa(ReactomeJavaConstants.Pathway))
