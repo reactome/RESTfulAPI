@@ -240,7 +240,7 @@ public class RESTfulAPIResource {
      */
     @GET
     @Path("/getParticipantsToReferenceEntityMaps/{dbId}")
-    public List<PhysicalToReferenceEntityMap> getPathwayParticipantsPEToRefEntityMap(@PathParam("dbId") Long pathwayId) {
+    public List<PhysicalToReferenceEntityMap> getPathwayParticipantsPEToRefEntityMap(@PathParam("dbId") String pathwayId) {
         return service.getPathwayParticipantPEToRefEntityMap(pathwayId);
     }
 

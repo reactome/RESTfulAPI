@@ -4,20 +4,24 @@ package org.reactome.restfulapi;
 public class InstanceNotFoundException extends ReactomeRemoteException {
 
     private String clsName;
-    private long dbId;
+    private String identifier;
     private String propertyValue;
 
     public InstanceNotFoundException() {
 
     }
 
-    public InstanceNotFoundException(long dbId) {
-        this.dbId = dbId;
+    public InstanceNotFoundException(Long identifier) {
+        this.identifier = identifier + "";
     }
 
-    public InstanceNotFoundException(String clsName, long dbId) {
+    public InstanceNotFoundException(String identifier) {
+        this.identifier = identifier;
+    }
+
+    public InstanceNotFoundException(String clsName, Long identifier) {
         this.clsName = clsName;
-        this.dbId = dbId;
+        this.identifier = identifier + "";
     }
 
     public InstanceNotFoundException(String clsName, String value) {
@@ -33,19 +37,19 @@ public class InstanceNotFoundException extends ReactomeRemoteException {
         this.clsName = clsName;
     }
 
-    public long getDbId() {
-        return dbId;
+    public String getDbId() {
+        return identifier;
     }
 
     public void setDbId(long dbId) {
-        this.dbId = dbId;
+        this.identifier = dbId + "";
     }
 
     public String toString() {
-        if (clsName != null && dbId != 0)
-            return super.toString() + ": " + clsName + ": " + dbId;
-        if (dbId != 0)
-            return super.toString() + ": " + dbId;
+        if (clsName != null && identifier != null)
+            return super.toString() + ": " + clsName + ": " + identifier;
+        if (identifier != null)
+            return super.toString() + ": " + identifier;
         return super.toString();
     }
 
