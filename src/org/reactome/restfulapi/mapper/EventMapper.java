@@ -180,8 +180,9 @@ public class EventMapper extends ReactomeModelPostMapper {
 			// subtract three months                                                                                                                                                                                                          
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(releaseDate);
-			cal.add(Calendar.MONTH, -3);
+			cal.add(Calendar.MONTH, -4);
 			releaseStartDate = cal.getTime();
+			//System.err.println("The old release date would be "+ releaseStartDate.toString());
 		}
 		
         return releaseStartDate;
@@ -210,7 +211,7 @@ public class EventMapper extends ReactomeModelPostMapper {
         // belonging to this release
         if (releaseStatus == null || ! (releaseStatus.equals("UPDATED") || releaseStatus.equals("NEW"))) {
         	List<GKInstance> revisions = inst.getAttributeValuesList("revised");
-        	//revisions.addAll(inst.getAttributeValuesList("modified"));
+        	revisions.addAll(inst.getAttributeValuesList("reviewed"));
         	for (Integer i=0;i < revisions.size();i++) {
         		GKInstance revised = revisions.get(i);
         			
