@@ -173,7 +173,7 @@ public class EventMapper extends ReactomeModelPostMapper {
         Event event = (Event) obj;
         String releaseStatus = (String) inst.getAttributeValue(ReactomeJavaConstants.releaseStatus);
         if (releaseStatus != null) {
-        	System.err.println("Event ("+event.getDisplayName()+") has release status "+releaseStatus);
+        	//System.err.println("Event ("+event.getDisplayName()+") has release status "+releaseStatus);
         	event.setReleaseStatus(releaseStatus);
         }
                 
