@@ -7,7 +7,6 @@ package org.reactome.restfulapi.mapper;
 import org.gk.model.GKInstance;
 import org.gk.model.PersistenceAdaptor;
 import org.gk.model.ReactomeJavaConstants;
-import org.gk.persistence.MySQLAdaptor;
 import org.reactome.restfulapi.ReactomeModelPostMapper;
 import org.reactome.restfulapi.ReactomeToRESTfulAPIConverter;
 import org.reactome.restfulapi.models.DatabaseObject;
@@ -31,8 +30,7 @@ public class EventMapper extends ReactomeModelPostMapper {
 	
 	public EventMapper() {
 	}
-   
-	private String releaseDate = null;
+
         
     @Override
     public void fillDetailedView(GKInstance inst,
@@ -80,26 +78,6 @@ public class EventMapper extends ReactomeModelPostMapper {
         addPathwayStableIdentifier(inst, obj);
     }
 
-    private String getReleaseDate(GKInstance inst) throws Exception {
-    	if (this.releaseDate != null) {
-    		return this.releaseDate;
-    	}
-    	if (!(inst.getDbAdaptor() instanceof MySQLAdaptor)) {
-            return null;
-    	}
-    	
-        MySQLAdaptor dba = (MySQLAdaptor) inst.getDbAdaptor();
-        
-        Collection<?> instances = dba.fetchInstancesByClass(ReactomeJavaConstants._Release);
-        if (instances == null || instances.size() == 0) {
-            return null;
-        }
-        
-        GKInstance release = (GKInstance) instances.iterator().next();
-        String releaseDate = (String) release.getAttributeValue(ReactomeJavaConstants.releaseDate);
-        this.releaseDate = releaseDate;
-        return releaseDate;
-    }
     
     /**
      * A helper method to fetch Regulation for the passed Event GKInstance.
@@ -180,20 +158,12 @@ public class EventMapper extends ReactomeModelPostMapper {
 			// subtract three months                                                                                                                                                                                                          
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(releaseDate);
-			cal.add(Calendar.MONTH, -3);
+			cal.add(Calendar.MONTH, -4);
 			releaseStartDate = cal.getTime();
+			//System.err.println("The old release date would be "+ releaseStartDate.toString());
 		}
 		
         return releaseStartDate;
-    }
-
-    private Date releaseDateFromString(String dateString) throws ParseException {
-    	Date date = null;	
-    	DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-    	if (dateString != null) {
-    		date = format.parse(dateString);
-    	}
-    	return date;
     }
     
     @Override
@@ -203,35 +173,10 @@ public class EventMapper extends ReactomeModelPostMapper {
         Event event = (Event) obj;
         String releaseStatus = (String) inst.getAttributeValue(ReactomeJavaConstants.releaseStatus);
         if (releaseStatus != null) {
-            event.setReleaseStatus(releaseStatus);
+        	//System.err.println("Event ("+event.getDisplayName()+") has release status "+releaseStatus);
+        	event.setReleaseStatus(releaseStatus);
         }
-        
-        // Trigger updated release status if there is a 'revised' or 'modified' InstanceEdit
-        // belonging to this release
-        if (releaseStatus == null || ! (releaseStatus.equals("UPDATED") || releaseStatus.equals("NEW"))) {
-        	List<GKInstance> revisions = inst.getAttributeValuesList("revised");
-        	//revisions.addAll(inst.getAttributeValuesList("modified"));
-        	for (Integer i=0;i < revisions.size();i++) {
-        		GKInstance revised = revisions.get(i);
-        			
-        		String dateString = revised.getAttributeValue("dateTime").toString();
-        		Date date = releaseDateFromString(dateString);
-        		
-        		String releaseDateString = getReleaseDate(inst);
-        		Date releaseStart = null;
-        		if (releaseDateString != null) {
-        			releaseStart = releaseStartDate(releaseDateString);
-        		}
-
-        		// test to see if this InstanceEdit post-dates release minus 3 months
-        		if (releaseStart != null && date != null && date.after(releaseStart)) {
-        			event.setReleaseStatus("UPDATED");
-        			break;
-        		}
-        	}
-        }
-        
-        
+                
         // Check if this Event is in disease
         GKInstance disease = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.disease);
         event.setIsInDisease(disease == null ? Boolean.FALSE : Boolean.TRUE);
@@ -240,9 +185,9 @@ public class EventMapper extends ReactomeModelPostMapper {
 
         List<GKInstance> speciesList = inst.getAttributeValuesList(ReactomeJavaConstants.species);
         if (speciesList != null && speciesList.size() > 0) {
-	    GKInstance firstSpecies = speciesList.get(0);
-	    String name = firstSpecies.getDisplayName();
-	    event.setSpeciesName(name);
+        	GKInstance firstSpecies = speciesList.get(0);
+        	String name = firstSpecies.getDisplayName();
+        	event.setSpeciesName(name);
         }
 
         addPathwayStableIdentifier(inst, obj);
