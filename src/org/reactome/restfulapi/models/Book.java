@@ -13,7 +13,7 @@ public class Book extends Publication {
     private String isbn;
     private String chapterTitle;
     private String pages;
-    private Integer publisher;
+    private Affiliation publisher;
     private String publisherClass;
     private Integer year;
 
@@ -44,11 +44,11 @@ public class Book extends Publication {
         this.pages = pages;
     }
 
-    public Integer getPublisher() {
+    public Affiliation getPublisher() {
         return this.publisher;
     }
 
-    public void setPublisher(Integer publisher) {
+    public void setPublisher(Affiliation publisher) {
         this.publisher = publisher;
     }
 
