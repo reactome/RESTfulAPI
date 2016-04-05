@@ -26,6 +26,7 @@ import org.reactome.restfulapi.models.Event;
 import org.reactome.restfulapi.models.GO_MolecularFunction;
 import org.reactome.restfulapi.models.PhysicalEntity;
 import org.reactome.restfulapi.models.Species;
+import org.reactome.restfulapi.models.Taxon;
 
 /**
  * @author gwu
@@ -112,11 +113,13 @@ public class PhysicalEntityMapper extends ReactomeModelPostMapper {
                 species.add(species1);
             }
             // The method argument may be an array of species or just a species
-            if (setSpeciesMethod.getParameterTypes()[0] == Species.class) {
+            if (setSpeciesMethod.getParameterTypes()[0] == Species.class ||
+                setSpeciesMethod.getParameterTypes()[0] == Taxon.class) { // Handle GEE class’s Taxon type
                 setSpeciesMethod.invoke(pe1, species.get(0));
             }
-            else // Should be a list
+            else {// Should be a list
                 setSpeciesMethod.invoke(pe1, species);
+            }
         }
     }
     

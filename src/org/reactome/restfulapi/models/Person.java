@@ -12,6 +12,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class Person extends DatabaseObject {
 
+    private List<Affiliation> affiliation;
     private String emailAddress;
     private String firstname;
     private String initial;
@@ -22,7 +23,15 @@ public class Person extends DatabaseObject {
 
     public Person() {
     }
-    
+
+    public List<Affiliation> getAffiliation() {
+        return affiliation;
+    }
+
+    public void setAffiliation(List<Affiliation> affiliation) {
+        this.affiliation = affiliation;
+    }
+
     public List<DatabaseIdentifier> getCrossReference() {
         return crossReference;
     }
