@@ -335,7 +335,7 @@ public class APIControllerHelper {
      * 
      */
     private Connection getDNConnection() throws SQLException {
-    	String connectionStr = "jdbc:mysql://" + dba.getDBHost() + ":" + dba.getDBPort() + "/" + dba.getDBName() + "_dn";
+    	String connectionStr = "jdbc:mysql://" + dba.getDBHost() + ":" + dba.getDBPort() + "/" + dba.getDBName() + "_dn&characterEncoding=utf-8";
     	Properties prop = new Properties();
     	prop.setProperty("user", dba.getDBUser());
     	prop.setProperty("password", dba.getDBPwd());
