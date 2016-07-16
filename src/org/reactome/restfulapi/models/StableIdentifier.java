@@ -12,8 +12,9 @@ public class StableIdentifier extends DatabaseObject {
 
     private String identifier;
     private String identifierVersion;
-    private Integer referenceDatabase;
-    private String referenceDatabaseClass;
+    private String oldIdentifier;
+    private String oldIdentifierVersion;
+    private Boolean released;
 
     public StableIdentifier() {
     }
@@ -34,20 +35,28 @@ public class StableIdentifier extends DatabaseObject {
         this.identifierVersion = identifierVersion;
     }
 
-    public Integer getReferenceDatabase() {
-        return this.referenceDatabase;
+    public String getOldIdentifier() {
+        return oldIdentifier;
     }
 
-    public void setReferenceDatabase(Integer referenceDatabase) {
-        this.referenceDatabase = referenceDatabase;
+    public void setOldIdentifier(String oldIdentifier) {
+        this.oldIdentifier = oldIdentifier;
     }
 
-    public String getReferenceDatabaseClass() {
-        return this.referenceDatabaseClass;
+    public String getOldIdentifierVersion() {
+        return oldIdentifierVersion;
     }
 
-    public void setReferenceDatabaseClass(String referenceDatabaseClass) {
-        this.referenceDatabaseClass = referenceDatabaseClass;
+    public void setOldIdentifierVersion(String oldIdentifierVersion) {
+        this.oldIdentifierVersion = oldIdentifierVersion;
+    }
+
+    public Boolean getReleased() {
+        return released;
+    }
+
+    public void setReleased(Boolean released) {
+        this.released = released;
     }
 
 }
