@@ -4,12 +4,7 @@
  */
 package org.reactome.restfulapi;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.gk.model.GKInstance;
 import org.gk.model.InstanceUtilities;
@@ -83,6 +78,20 @@ public class QueryHelper {
             }
         }
         return (instances instanceof List) ? (List<GKInstance>)instances : new ArrayList<GKInstance>(instances);
+    }
+
+    public List<GKInstance> getReferersFor(GKInstance instance, String... attributes) throws Exception {
+        List<GKInstance> rtn = new ArrayList<GKInstance>();
+        for (String attr : attributes) {
+            Collection<GKInstance> aux = instance.getReferers(attr);
+            if (aux != null) {
+                rtn.addAll(aux);
+                for (GKInstance i : aux) {
+                    rtn.addAll(getReferersFor(i, attributes));
+                }
+            }
+        }
+        return rtn;
     }
 
     public List<GKInstance> query(String className,
@@ -176,7 +185,7 @@ public class QueryHelper {
             }
         }
     }
-    
+
     private Event convertToEvent(GKInstance instance) throws Exception {
         if (instance.getSchemClass().isa(ReactomeJavaConstants.Event)) {
             Event event = (Event) converter.createObject(instance);

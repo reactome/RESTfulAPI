@@ -30,7 +30,7 @@ import org.reactome.restfulapi.models.PhysicalEntity;
  *
  * @author guanming
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "WeakerAccess"})
 public class ReactomeToRESTfulAPIConverter {
     private static Logger logger = Logger.getLogger(ReactomeToRESTfulAPIConverter.class);
     // Cache all mapped GKInstance
