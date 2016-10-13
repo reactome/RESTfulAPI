@@ -1277,7 +1277,7 @@ public class APIControllerHelper {
     }
 
     private GKInstance getInstance(Collection<GKInstance> target) throws Exception {
-        if(target==null || target.size()!=1) throw new Exception("Many options have been found fot the specified identifier");
+        if(target==null || target.size()!=1) throw new Exception("Multiple options have been found for the specified identifier");
         GKInstance stId = target.iterator().next();
         return (GKInstance) dba.fetchInstanceByAttribute(ReactomeJavaConstants.DatabaseObject, ReactomeJavaConstants.stableIdentifier, "=", stId).iterator().next();
     }

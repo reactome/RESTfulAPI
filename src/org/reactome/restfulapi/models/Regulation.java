@@ -26,10 +26,19 @@ public class Regulation extends DatabaseObject {
     private List<Summation> summation;
     // New attribute in December, 2013
     private List<Pathway> containedInPathway;
+    private GO_BiologicalProcess goBiologicalProcess;
     
     public Regulation() {
     }
     
+    public GO_BiologicalProcess getGoBiologicalProcess() {
+        return goBiologicalProcess;
+    }
+
+    public void setGoBiologicalProcess(GO_BiologicalProcess goBiologicalProcess) {
+        this.goBiologicalProcess = goBiologicalProcess;
+    }
+
     public List<Pathway> getContainedInPathway() {
         return containedInPathway;
     }
