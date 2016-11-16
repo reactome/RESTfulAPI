@@ -18,10 +18,19 @@ public class EntitySet extends PhysicalEntity {
     private List<PhysicalEntity> hasMember;
     private List<Species> species;
     private Boolean isOrdered;
+    private List<Species> relatedSpecies;
 
     public EntitySet() {
     }
     
+    public List<Species> getRelatedSpecies() {
+        return relatedSpecies;
+    }
+
+    public void setRelatedSpecies(List<Species> relatedSpecies) {
+        this.relatedSpecies = relatedSpecies;
+    }
+
     public Boolean getIsOrdered() {
         return isOrdered;
     }
