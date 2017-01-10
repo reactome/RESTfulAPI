@@ -20,9 +20,18 @@ public class Complex extends PhysicalEntity {
     private List<PhysicalEntity> entityOnOthercell;
     private List<EntityCompartment> includedLocation;
     private List<Species> species;
+    private List<Species> relatedSpecies;
 
     public List<PhysicalEntity> getEntityOnOthercell() {
         return entityOnOthercell;
+    }
+
+    public List<Species> getRelatedSpecies() {
+        return relatedSpecies;
+    }
+
+    public void setRelatedSpecies(List<Species> relatedSpecies) {
+        this.relatedSpecies = relatedSpecies;
     }
 
     public void setEntityOnOthercell(List<PhysicalEntity> entityOnOthercell) {

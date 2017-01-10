@@ -12,8 +12,17 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class Species extends Taxon {
     private List<Figure> figure;
+    private String abbreviation;
 
     public Species() {
+    }
+
+    public String getAbbreviation() {
+        return abbreviation;
+    }
+
+    public void setAbbreviation(String abbreviation) {
+        this.abbreviation = abbreviation;
     }
 
     public List<Figure> getFigure() {

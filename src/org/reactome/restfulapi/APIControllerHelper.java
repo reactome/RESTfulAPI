@@ -39,7 +39,7 @@ import java.util.*;
 import java.util.List;
 
 @Singleton
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({"unchecked", "rawtypes", "WeakerAccess"})
 public class APIControllerHelper {
     private Logger logger = Logger.getLogger(APIControllerHelper.class);
     private MySQLAdaptor dba;
@@ -1376,8 +1376,10 @@ public class APIControllerHelper {
         List<Pathway> rtn = new ArrayList<Pathway>();
         try {
             Set<GKInstance> instances = new HashSet<GKInstance>();
-            instances.add(dba.fetchInstance(dbId));
-            instances.addAll(grepComplexesForEntities(instances));
+            GKInstance target = dba.fetchInstance(dbId);
+            instances.add(target);
+            instances.addAll(queryHelper.getReferersFor(target, "hasComponent", "hasMember", "hasCandidate", "repeatedUnit"));
+//            instances.addAll(grepComplexesForEntities(instances));
             Set<GKInstance> reactions = getParticipatingReactions(instances);
             for (Pathway pathway : getPathwaysFromReactions(reactions)) {
                 if(pathway.getHasDiagram()){
