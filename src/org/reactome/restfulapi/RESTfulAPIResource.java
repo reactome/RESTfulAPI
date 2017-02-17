@@ -3,6 +3,8 @@ package org.reactome.restfulapi;
 import com.sun.jersey.multipart.FormDataParam;
 import com.sun.jersey.spi.resource.Singleton;
 import org.apache.log4j.Logger;
+import org.gk.model.GKInstance;
+import org.gk.model.ReactomeJavaConstants;
 import org.reactome.psicquic.CustomizedInteractionService;
 import org.reactome.psicquic.PSICQUICService;
 import org.reactome.psicquic.model.QueryResults;
