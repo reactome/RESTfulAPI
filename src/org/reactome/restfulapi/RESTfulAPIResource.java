@@ -791,4 +791,20 @@ public class RESTfulAPIResource {
         List<ReferenceEntity> entities = service.getReferenceEntity(dbId);
         return entities;
     }
+    
+    /**
+     * Returns the list of ALL LiteratureReferences stored in the database
+     * @return
+     * @throws Exception
+     */
+    @GET
+    @Path("/literatureReferences")
+    public List<LiteratureReference> queryAllLiteratureReferences() throws Exception {
+        List<LiteratureReference> rtn = new ArrayList<LiteratureReference>();
+        Collection<GKInstance> lrs = service.getDba().fetchInstancesByClass(ReactomeJavaConstants.LiteratureReference);
+        for (GKInstance lr : lrs) {
+            rtn.add((LiteratureReference) service.getConverter().convert(lr));
+        }
+        return rtn;
+    }
 }
