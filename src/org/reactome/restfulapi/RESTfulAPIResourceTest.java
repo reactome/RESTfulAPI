@@ -298,6 +298,13 @@ public class RESTfulAPIResourceTest {
         System.out.println("Output from querybyid 69278:\n");
         prettyPrintXML(text);
         
+        //Test for weird characters
+        url = RESTFUL_URL + "queryById/DatabaseIdentifier/8870797";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput from queryById/DatabaseIdentifier/8870797:");
+        prettyPrintXML(text);
+
+        
         // For PE
         url = RESTFUL_URL + "queryById/DatabaseObject/418785";
         text = callHttp(url, HTTP_GET, "");
