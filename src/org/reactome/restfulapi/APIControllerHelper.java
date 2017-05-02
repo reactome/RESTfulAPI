@@ -1307,17 +1307,13 @@ public class APIControllerHelper {
             List orths = new ArrayList();
             if (instance.getSchemClass().isValidAttribute(ReactomeJavaConstants.orthologousEvent)) {
                 List aux = instance.getAttributeValuesList(ReactomeJavaConstants.orthologousEvent);
-                if(aux!=null) orths.addAll(aux);
-            }else{
-                if(instance.getSchemClass().isValidAttribute(ReactomeJavaConstants.inferredFrom)){
-                    List aux = instance.getAttributeValuesList(ReactomeJavaConstants.inferredFrom);
-                    if(aux!=null) orths.addAll(aux);
-                }
-                if(instance.getSchemClass().isValidAttribute(ReactomeJavaConstants.inferredTo)){
-                    List aux = instance.getAttributeValuesList(ReactomeJavaConstants.inferredTo);
-                    if(aux!=null) orths.addAll(aux);
-                }
+                if (aux != null) orths.addAll(aux);
             }
+            if (instance.getSchemClass().isValidAttribute(ReactomeJavaConstants.inferredFrom)) {
+                List aux = instance.getAttributeValuesList(ReactomeJavaConstants.inferredFrom);
+                if (aux != null) orths.addAll(aux);
+            }
+
             for (Object item : orths) {
                 GKInstance orth = (GKInstance) item;
                 if(orth.getSchemClass().isValidAttribute(ReactomeJavaConstants.species)){
