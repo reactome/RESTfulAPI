@@ -568,6 +568,13 @@ public class RESTfulAPIResourceTest {
         text = callHttp(url, HTTP_GET, "");
         System.out.println("\nOutput from detailedView:");
         prettyPrintXML(text);
+        // An event has regulation
+        url = RESTFUL_URL + "detailedView/DatabaseObject/2586555";
+        text = callHttp(url,
+                HTTP_GET,
+                "");
+        System.out.println("Output from detailedView 2586555:\n");
+        prettyPrintXML(text);
     }
     
 //    

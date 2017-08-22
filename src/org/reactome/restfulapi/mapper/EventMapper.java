@@ -4,6 +4,16 @@
  */
 package org.reactome.restfulapi.mapper;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
 import org.gk.model.GKInstance;
 import org.gk.model.PersistenceAdaptor;
 import org.gk.model.ReactomeJavaConstants;
@@ -11,13 +21,10 @@ import org.reactome.restfulapi.ReactomeModelPostMapper;
 import org.reactome.restfulapi.ReactomeToRESTfulAPIConverter;
 import org.reactome.restfulapi.models.DatabaseObject;
 import org.reactome.restfulapi.models.Event;
+import org.reactome.restfulapi.models.NegativeRegulation;
+import org.reactome.restfulapi.models.PositiveRegulation;
 import org.reactome.restfulapi.models.Species;
 import org.reactome.restfulapi.models.StableIdentifier;
-
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * This class is used to do some post-processing for Event.
@@ -92,6 +99,7 @@ public class EventMapper extends ReactomeModelPostMapper {
         Collection<GKInstance> regulations = inst.getReferers(ReactomeJavaConstants.regulatedEntity);
         if (regulations == null || regulations.size() == 0)
             return;
+        fillRegulations(event, regulations, converter);
         List<DatabaseObject> requirements = null;
         List<DatabaseObject> positiveRegulators = null;
         List<DatabaseObject> negativeRegulators = null;
@@ -120,6 +128,31 @@ public class EventMapper extends ReactomeModelPostMapper {
         event.setRequirements(requirements);
         event.setPositiveRegulators(positiveRegulators);
         event.setNegativeRegulators(negativeRegulators);
+    }
+    
+    private void fillRegulations(Event event, 
+                                 Collection<GKInstance> regulations,
+                                 ReactomeToRESTfulAPIConverter converter) throws Exception {
+        if (regulations == null || regulations.size() == 0)
+            return;
+        List<PositiveRegulation> positiveRegulations = null;
+        List<NegativeRegulation> negativeRegulations = null;
+        for (GKInstance regulation : regulations) {
+            if (regulation.getSchemClass().isa(ReactomeJavaConstants.PositiveRegulation)) {
+                PositiveRegulation posRegulation = (PositiveRegulation) converter.createObject(regulation);
+                if (positiveRegulations == null)
+                    positiveRegulations = new ArrayList<PositiveRegulation>();
+                positiveRegulations.add(posRegulation);
+            }
+            else if (regulation.getSchemClass().isa(ReactomeJavaConstants.NegativeRegulation)) {
+                NegativeRegulation negRegulation = (NegativeRegulation) converter.createObject(regulation);
+                if (negativeRegulations == null)
+                    negativeRegulations = new ArrayList<NegativeRegulation>();
+                negativeRegulations.add(negRegulation);
+            }
+        }
+        event.setPositiveRegulations(positiveRegulations);
+        event.setNegativeRegulations(negativeRegulations);
     }
     
     /**

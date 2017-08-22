@@ -47,8 +47,27 @@ public class Event extends DatabaseObject implements Regulator {
     private List<String> name;
     private List<Event> orthologousEvent;
     private List<Compartment> compartment;
+    // Expose regulations directly so that more information can be displayed
+    private List<PositiveRegulation> positiveRegulations;
+    private List<NegativeRegulation> negativeRegulations;
     
     public Event() {
+    }
+
+    public List<PositiveRegulation> getPositiveRegulations() {
+        return positiveRegulations;
+    }
+
+    public void setPositiveRegulations(List<PositiveRegulation> positiveRegulations) {
+        this.positiveRegulations = positiveRegulations;
+    }
+
+    public List<NegativeRegulation> getNegativeRegulations() {
+        return negativeRegulations;
+    }
+
+    public void setNegativeRegulations(List<NegativeRegulation> negativeRegulations) {
+        this.negativeRegulations = negativeRegulations;
     }
 
     public Boolean getIsInferred() {
