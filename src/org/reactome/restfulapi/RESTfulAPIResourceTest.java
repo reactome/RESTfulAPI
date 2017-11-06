@@ -146,11 +146,14 @@ public class RESTfulAPIResourceTest {
     @Test
     public void testHighlightPathwayDiagram() throws Exception {
         // G2/M Transition: 453274
-        String url = RESTFUL_URL + "highlightPathwayDiagram/453274/pdf";
+//        String url = RESTFUL_URL + "highlightPathwayDiagram/453274/pdf";
+//        String fileName = "HighlightG2_MTransition.pdf";
+        String url = RESTFUL_URL + "highlightPathwayDiagram/453274/png";
+        String fileName = "HighlightG2_MTransition.png";
         // A list of genes
         String genes = "PPP2R1A,CEP192,AKAP9,CENPJ,CEP290,DYNC1H1";
         String text = callHttp(url, HTTP_POST, genes);
-        decodeInBase64(text, "HighlightG2_MTransition.pdf");
+        decodeInBase64(text, fileName);
         
 //        // Some users' list returns 204 error code
 //        url = RESTFUL_URL + "highlightPathwayDiagram/3449037/xml";

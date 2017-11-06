@@ -4,7 +4,10 @@
  */
 package org.reactome.restfulapi.mapper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 import org.gk.model.GKInstance;
 import org.gk.model.ReactomeJavaConstants;
@@ -71,14 +74,20 @@ public class PathwayMapper extends EventMapper {
 
     private void addPathwaySpecies(GKInstance inst, DatabaseObject obj){
         Pathway pathway = (Pathway) obj;
-        if(pathway.getSpecies()!=null) return;
+        if(pathway.getSpecies()!=null) return; // Check if this has been handled
         if(inst.getSchemClass().isValidAttribute(ReactomeJavaConstants.species)){
             try {
-                GKInstance s = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.species);
-                Species species = new Species();
-                species.setDbId(s.getDBID());
-                species.setDisplayName(s.getDisplayName());
-                pathway.setSpecies(Arrays.asList(species));
+                List<Species> speciesList = new ArrayList<Species>();
+                List<GKInstance> values = inst.getAttributeValuesList(ReactomeJavaConstants.species);
+                if (values != null && values.size() > 0) {
+                    for (GKInstance s : values) {
+                        Species species = new Species();
+                        species.setDbId(s.getDBID());
+                        species.setDisplayName(s.getDisplayName());
+                        speciesList.add(species);
+                    }
+                }
+                pathway.setSpecies(speciesList);
             } catch (Exception e) {
                 e.printStackTrace();
             }
