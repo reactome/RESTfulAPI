@@ -1,9 +1,329 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>Reactome RESTful API</title>
+	<title>Reactome RESTful API</title>
+	<link rel="stylesheet" type="text/css" href="ReactomeStyleSheet.css" />
+	<script type="text/javascript">
+		function queryByIds(type) {
+			url = "/ReactomeRESTfulAPI/RESTfulWS/queryByIds/Pathway";
+			body = "ID=109607,109606,75153,169911";
+		    doPost(url, type, body);
+		}
+		
+		function doPost(url, type, body) {
+			newWindow = window.open("", url);
+			ajax = new XMLHttpRequest();
+			ajax.open("POST", url, true);
+			ajax.setRequestHeader("Content-type", "text/plain");
+			ajax.setRequestHeader("Accept", type);
+			ajax.onreadystatechange = function() {
+				if(ajax.readyState == 4 && ajax.status == 200) {
+					text = ajax.responseText.replace(/</g, "&lt;");
+					text = text.replace(/>/g, "&gt;");
+					newWindow.document.write("<pre>" + text + "</pre>");
+					newWindow.document.close();
+				}
+			};
+			ajax.send(body);
+		}
+		
+		function listByQuery(type) {
+			url = "/ReactomeRESTfulAPI/RESTfulWS/listByQuery/Pathway";
+			body = "name=Apoptosis";
+			doPost(url, type, body);
+		}
+		
+		function pathwaysForEntities(type) {
+			url = "/ReactomeRESTfulAPI/RESTfulWS/pathwaysForEntities";
+			body="ID=170075,176374,68557";
+			doPost(url, type, body);
+		}
+		
+		function queryHitPathways(type) {
+			url = "/ReactomeRESTfulAPI/RESTfulWS/queryHitPathways";
+			body="PPP2R1A,CEP192,AKAP9,CENPJ,CEP290,DYNC1H1";
+			doPost(url, type, body);
+		}
+	</script>
 </head>
+
 <body>
-<iframe style="width:100%;height:1200px;border:none" src="http://www.reactome.org/pages/documentation/developer-guide/restful-service"></iframe>
+<h1 class="frontpage">Reactome RESTful API</h1>
+
+<p class="introduction">The following lists the Reactome RESTful API. To use this API efficiently, the user needs to understand the <a href="http://www.reactome.org/cgi-bin/classbrowser?DB=gk_current">Reactome data model</a>.
+The returned result can be specified as either XML or JSON. The user can view the HTML source of this document to see some examples on how to use this API.
+<ul>
+
+<li>
+<h4>BioPAX Exporter: <code>biopaxExporter/{level}/{dbId: \\d+}</code></h4>
+<dl>
+<dd class="description">Pass an Event database identifier, and get the BioPAX exported in either XML or JSON. The passed Id has to be an Event Id. If there is no matching ID in the database, it will return an empty string.
+</dd>
+<dd>
+	<dl>
+		<dt><b>Request Type:</b></dt><dd>GET</dd>
+		<dt><b>Parameters:</b></dt>
+			<dd><code>String</code> - BioPAX Level2 or Level3: one of two values, Level2 and Level3</dd>
+			<dd><code>Integer</code> - Event database identifier</dd>
+		<dt><b>Output:</b></dt><dd><code>String</code> - BioPAX RDF document</dd>
+		<dt><b>Example:</b></dt>
+		<dd>To get the BioPAX level 2 export for <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current&FOCUS_SPECIES_ID=48887&FOCUS_PATHWAY_ID=109581&ID=109581" target="example">Apoptosis</a>, 
+			use <a href="/ReactomeRESTfulAPI/RESTfulWS/biopaxExporter/Level2/109581" target="example"><code>biopaxExporter/Level2/109581</code></a>
+		</dd>
+	</dl>
+</dd>
+</dl>
+</li>
+
+<li>
+	<h4>FrontPageItems: <code>frontPageItems/{species name}</code></h4>
+	<dl>
+		<dd class="description">
+		Get the list of front page items listed in the <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current">Reactome pathway browser</a>.
+		You can get a list of front page items for different species by specifying species name.
+		</dd>
+		<dd>
+			<dl>
+				<dt><b>Request Type:</b></dt><dd><code>GET</code></dd>
+				<dt><b>Parameters:</b></dt>
+					<dd><code>String</code> - Full species name that should be encoded for URL (e.g. homo+sapiens for human, or mus+musculus for mouse)</dd>
+				<dt><b>Output:</b></dt><dd>list of fully encoded Pathway objects in JSON or XML</dd>
+				<dt><b>Example:</b></dt>
+				<dd>To get a list of front page items for human pathways, use <a href="/ReactomeRESTfulAPI/RESTfulWS/frontPageItems/homo+sapiens" target="example">frontPageItems/homo+sapiens</a></dd>
+			</dl>
+		</dd>
+	</dl>
+</li>
+
+<li>
+	<h4><a name="highlightPathwayDiagram"></a>HighlightPathwayDiagram: <code>highlightPathwayDiagram/{dbId:\\d+}/{format: PDF|PNG}</code></h4>
+	<dl>
+		<dd class="description">
+			Highlight a diagram for a specified pathway based on its DB_ID. The returned value is base64 encoded image in the PDF or PNG format. This method should be used after method 
+			<a href="#queryHitPathway">queryHitPathways</a>.
+		</dd>
+		<dd>
+			<dl>
+				<dt><b>Request Type:</b></dt><dd><code>POST</code></dd>
+				<dt><b>Parameters:</b></dt>
+					<dd><code>Integer</code> - Pathway database identifier</dd>
+					<dd><code>String</code> - image format: PNG, or PDF
+					<dd><code>String</code> - Gene symbols delimited by comma (no space)</dd>
+				<dt><b>Output:</b></dt>
+					<dd><code>String</code> - Base64 encoded pathway diagram for PNG or PDF with objects highlighted for queried genes</dd>
+				<dt><b>Note:</b></dt>
+				<dd>You may have to use a Base64 decoder to get the actual image file from the returned String.</dd>
+			</dl>
+		</dd>
+	</dl>
+</li>
+
+<li>
+<h4>ListByQuery: <code>listByQuery/{className}</code></h4>
+<dl>
+	<dd class="description">
+		This API lets you query the Reactome Database for a list of objects by using Key Value pairs based on an object's attributes.  The format of the HTTP POST body should structured as a Key=Value pair. 
+		First there must be a key "key", and a value "value" inside the body of the HTTP POST request. For example, to query pathways with names as "Apoptosis", post "name=Apoptosis" to the server.
+	</dd>
+	<dd>
+		<dl>
+			<dt><b>Request Type:</b></dt><dd><code>POST</code></dd>
+			<dt><b>Parameters:</b></dt>
+			<dd><code>String</code> - class name</dd>
+			<dd><code>String</code> - attribute values encoded in key-value pair in the POST body</dd>
+			<dt><b>Output:</b></dt><dd>encoded objects in JSON or XML</dd>
+			<dt><b>Example:</b></dt>
+			<dd>To query a list of pathways with names as "Apoptosis", try <a href="javascript:listByQuery('application/xml')"><code>XML</code></a> 
+			or <a href="javascript:listByQuery('application/json')">JSON</a> result</dd> 
+		</dl>
+	</dd>
+</dl>
+</li>
+
+<li>
+<h4>PathwayDiagram: <code>pathwayDiagram/{dbId : \\d+}/{format: .+}</code></h4>
+<dl>
+<dd class="description">This API lets you retrieve a pathway diagram by passing the database identifier of the pathway and the format of the pathway diagram returned. The available format choices are PDF, PNG and XML. 
+</dd>
+<dd>
+	<dl>
+		<dt><b>Request Type:</b></dt><dd><code>GET</code></dd>
+		<dt><b>Parameters:</b></dt>
+			<dd><code>Integer</code> - Pathway database identifier</dd>
+			<dd><code>String</code> - image format: PNG, PDF, or XML.
+		<dt><b>Output:</b></dt><dd><code>String</code> - Base64 encoded pathway diagram for PNG or PDF. XML text for the XML file type.</dd>
+		<dt><b>Example:</b></dt>
+		<dd>To get the pathway diagram in XML for <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current&FOCUS_SPECIES_ID=48887&FOCUS_PATHWAY_ID=109581&ID=109581" target="example">Apoptosis</a>, 
+		use <a href="/ReactomeRESTfulAPI/RESTfulWS/pathwayDiagram/109581/XML" target="example"><code>pathwayDiagram/109581/XML</code></a>
+		</dd>
+	</dl>
+</dl>
+</li>
+
+<li>
+<h4><a name="PathwayHierarchy"></a>PathwayHierarchy: <code>pathwayHierarchy/{species name}</code></h4>
+<dl>
+<dd class="description">Get the pathway hierarchy for a specified species as displayed in <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current">Reactome pathway browser</a>.
+</dd>
+<dd>
+	<dl>
+		<dt><b>Request Type:</b></dt><dd>GET</dd>
+		<dt><b>Parameters:</b></dt>
+			<dd><code>String</code> - Full species name that should be encoded for URL (e.g. homo+sapiens for human, or mus+musculus for mouse)</dd>
+		<dt><b>Output:</b></dt><dd><code>String</code> - XML text containing pathways and reactions</dd>
+		<dt><b>Example:</b></dt>
+		<dd>To get the pathway hierarchy for human as displayed in <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current">Reactome pathway browser</a>,
+		use <a href="/ReactomeRESTfulAPI/RESTfulWS/pathwayHierarchy/homo+sapiens" target="example"><code>pathwayHierarchy/homo+sapiens</code></a>
+		</dd>
+	</dl>
+</dd>
+</dl>
+</li>
+
+<li>
+<h4>PathwayParticipants: <code>pathwayParticipants/{dbId : \\d+}</code></h4>
+<dl>
+	<dd class="description">
+		This API lets you query for a list of pathway participants for a pathway using a Pathway database identifier.  It returns a list of all PhysicalEntity objects that participate in the Pathway. 
+	</dd>
+	<dd>
+		<dl>
+			<dt><b>Request Type:</b></dt><dd><code>GET</code></dd>
+			<dt><b>Parameters:</b></dt>
+			<dd><code>Integer</code> - Pathway database identifier</dd>
+			<dt><b>Output:</b></dt><dd>list of fully encoded PhysicalEntity objects in JSON or XML</dd>
+			<dt><b>Example:</b></dt>
+			<dd>To get a list of PhysicalEntity objects participating in <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current&FOCUS_SPECIES_ID=48887&FOCUS_PATHWAY_ID=109581&ID=109581" target="example">Apoptosis</a>, 
+			use <a href="/ReactomeRESTfulAPI/RESTfulWS/pathwayParticipants/109581" target="example"><code>pathwayParticipants/109581</code></a>
+			</dd>
+		</dl>
+	</dd>
+</dl>
+</li>
+
+<li>
+<h4>QueryById: <code>queryById/{className}/{dbId: \\d+}</code></h4>
+<dl>
+	<dd class="description">This API lets you query the Reactome Database for a specific object. It requires passing class name of the object, as well as the database identifier or the stable identifier of the object. The class name is required. It returns a full object, including full class information about all the attributes of the returned object. For example, if the object has one PublicationSource attribute, it will return a full PublicationSource object within the returned object.</dd>
+	<dd>
+		<dl>
+			<dt><b>Request Type:</b></dt><dd><code>GET</code></dd>
+			<dt><b>Parameters:</b></dt>
+			<dd><code>String</code> - class name</dd>
+			<dd><code>Integer</code> - instance database identifier or stable identifier if available</dd>
+			<dt><b>Output:</b></dt><dd>encoded object in JSON or XML</dd>
+			<dt><b>Example:</b></dt>
+			<dd>To get a Pathway object for <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current&FOCUS_SPECIES_ID=48887&FOCUS_PATHWAY_ID=109581&ID=109581" target="example">Apoptosis</a>, 
+			use <a href="/ReactomeRESTfulAPI/RESTfulWS/queryById/Pathway/109581" target="example"><code>queryById/Pathway/109581</code></a></dd>
+		</dl>
+	</dd>
+</dl>
+</li>
+
+<li>
+<h4>QueryByIds: <code>queryByIds/{className}</code></h4>
+<dl>
+	<dd class="description">
+This API lets you query the Reactome Database for a list of objects.  It requires passing the object class as the first parameter in the URL, and a list of database identifiers 
+or stable identifiers as the second parameter. The Identifiers are passed inside the body of the HTTP Post request.  The Id's format should be structured as a Key=Value pair.  
+First a key "ID", and a value of comma separated list inside the body of the HTTP POST request.
+	</dd>
+	<dd>
+		<dl>
+			<dt><b>Request Type:</b></dt><dd><code>POST</code></dd>
+			<dt><b>Parameters:</b></dt>
+			<dd><code>String</code> - class name</dd>
+			<dd><code>Integer</code> - database identifiers or stable identifiers if available in the POST body</dd>
+			<dt><b>Output:</b></dt><dd>encoded objects in JSON or XML</dd>
+			<dt><b>Example:</b></dt>
+			<dd>To get the sub-pathway objects for <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current&FOCUS_SPECIES_ID=48887&FOCUS_PATHWAY_ID=109581&ID=109581" target="example">Apoptosis</a>, 
+			try <a href="javascript:queryByIds('application/xml')"><code>XML</code></a> or <a href="javascript:queryByIds('application/json')">JSON</a> result</dd>
+		</dl>
+	</dd>
+</dl>
+</li>
+
+<li>
+	<h4><a name="queryHitPathway"></a>QueryHitPathways: <code>queryHitPathways</code></h4>
+	<dl>
+		<dd class="description">
+			Query for a list of pathways that contain one or more genes passed in the query list. In the Reactome data model, pathways are organized in a hierarchical structure. 
+			The returned pathways in this method are pathways having detailed manually drawn pathway diagrams. Currently only human pathways will be returned from this method.
+		</dd>
+		<dd>
+			<dl>
+				<dt><b>Request Type:</b></dt><dd><code>POST</code></dd>
+				<dt><b>Parameters:</b></dt>
+				<dd><code>String</code> - Gene symbols delimited by comma (no space)</dd>
+				<dt><b>Output:</b></dt><dd>list of fully encoded Pathways objects in JSON or XML</dd>
+				<dt><b>Example:</b></dt>
+				<dd>To get a list of pathways containing PPP2R1A, CEP192, AKAP9, CENPJ, CEP290, and DYNC1H1, 
+				try <a href="javascript:queryHitPathways('application/xml')"><code>XML</code></a> or <a href="javascript:queryHitPathways('application/json')">JSON</a> result
+			</dl>
+		</dd>
+	</dl>
+</li>
+
+<li>
+	<h4>QueryPathwayForEntities: <code>pathwaysForEntities</code></h4>
+	<dl>
+		<dd class="description">
+			Query for pathway objects by specifying an array of PhysicalEntity database identifiers. The returned Pathways should contain the passed EventEntity objects. All passed EventEntity database identifiers should be in the database.
+		</dd>
+				<dd>
+			<dl>
+				<dt><b>Request Type:</b></dt><dd><code>POST</code></dd>
+				<dt><b>Parameters:</b></dt>
+				<dd><code>Integer</code> - PhysicalEntity database identifiers delimited by comma</dd>
+				<dt><b>Output:</b></dt><dd>list of fully encoded Pathways objects in JSON or XML</dd>
+				<dt><b>Example:</b></dt>
+				<dd>To get a list of pathways containing <a href="http://www.reactome.org/cgi-bin/instancebrowser?DB=gk_current&ID=170075">CDC2</a>, 
+				<a href="http://www.reactome.org/cgi-bin/instancebrowser?DB=gk_current&ID=176374">HUS1</a>, and <a href="http://www.reactome.org/cgi-bin/instancebrowser?DB=gk_current&ID=68557">MCM2</a>, 
+				try <a href="javascript:pathwaysForEntities('application/xml')"><code>XML</code></a> or <a href="javascript:pathwaysForEntities('application/json')">JSON</a> result
+			</dl>
+		</dd>
+	</dl>
+</li>
+
+<li>
+<h4>Species List: <code>speciesList</code></h4>
+<dl>
+<dd class="description">Get the list of species used in the "Switch Species" box in <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current">Reactome pathway browser</a>.
+</dd>
+<dd>
+	<dl>
+		<dt><b>Request Type:</b></dt><dd>GET</dd>
+		<dt><b>Output:</b></dt><dd>encoded objects in JSON or XML</dd>
+		<dt><b>Example:</b></dt>
+		<dd>To get the list of species in Reactome, use <a href="/ReactomeRESTfulAPI/RESTfulWS/speciesList" target="example"><code>speciesList</code></a>
+		</dd>
+	</dl>
+</dd>
+</dl>
+</li>
+
+<li>
+<h4>SBML Exporter: <code>sbmlExporter/{dbId: \\d+}</code></h4>
+<dl>
+<dd class="description">Pass an Event database identifier, and get the SBML XML text. The passed Id has to be an Event Id. If there is no matching ID in the database, it will return an empty string.
+</dd>
+<dd>
+	<dl>
+		<dt><b>Request Type:</b></dt><dd>GET</dd>
+		<dt><b>Parameters:</b></dt>
+			<dd><code>Integer</code> - Event database identifier</dd>
+		<dt><b>Output:</b></dt><dd><code>String</code> - SBML XML text</dd>
+		<dt><b>Example:</b></dt>
+		<dd>To get the SBML export for <a href="http://www.reactome.org/entitylevelview/PathwayBrowser.html#DB=gk_current&FOCUS_SPECIES_ID=48887&FOCUS_PATHWAY_ID=109581&ID=109581" target="example">Apoptosis</a>, 
+			use <a href="/ReactomeRESTfulAPI/RESTfulWS/sbmlExporter/109581" target="example"><code>sbmlExporter/109581</code></a>
+		</dd>
+	</dl>
+</dd>
+</dl>
+</li>
+	
+</ul>
+
 </body>
+
 </html>
