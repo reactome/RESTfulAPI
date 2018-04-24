@@ -21,6 +21,15 @@ public class Complex extends PhysicalEntity {
     private List<EntityCompartment> includedLocation;
     private List<Species> species;
     private List<Species> relatedSpecies;
+    private Boolean stoichiometryKnown;
+
+    public Boolean getStoichiometryKnown() {
+        return stoichiometryKnown;
+    }
+
+    public void setStoichiometryKnown(Boolean stoichiometryKnown) {
+        this.stoichiometryKnown = stoichiometryKnown;
+    }
 
     public List<PhysicalEntity> getEntityOnOthercell() {
         return entityOnOthercell;

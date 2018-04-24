@@ -22,7 +22,16 @@ public class ReactionlikeEvent extends Event {
     private List<ReactionlikeEvent> normalReaction;
     private List<EntityFunctionalStatus> entityFunctionalStatus;
     private String systematicName;
+    private List<Regulation> regulatedBy;
     
+    public List<Regulation> getRegulatedBy() {
+        return regulatedBy;
+    }
+
+    public void setRegulatedBy(List<Regulation> regulatedBy) {
+        this.regulatedBy = regulatedBy;
+    }
+
     public String getSystematicName() {
         return systematicName;
     }
