@@ -17,9 +17,18 @@ public class Pathway extends Event {
     private java.util.List<Event> hasEvent;
     private Boolean hasDiagram;
     private Pathway normalPathway;
+    private Boolean hasEHLD;
 
     public Pathway getNormalPathway() {
         return normalPathway;
+    }
+
+    public Boolean getHasEHLD() {
+        return hasEHLD;
+    }
+
+    public void setHasEHLD(Boolean hasEHLD) {
+        this.hasEHLD = hasEHLD;
     }
 
     public void setNormalPathway(Pathway normalPathway) {
