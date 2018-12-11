@@ -16,7 +16,25 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class EntityFunctionalStatus extends DatabaseObject {
     private List<FunctionalStatus> functionalStatus;
     private PhysicalEntity physicalEntity;
+    private PhysicalEntity diseaseEntity;
+    private PhysicalEntity normalEntity;
     
+    public PhysicalEntity getDiseaseEntity() {
+        return diseaseEntity;
+    }
+
+    public void setDiseaseEntity(PhysicalEntity diseaseEntity) {
+        this.diseaseEntity = diseaseEntity;
+    }
+
+    public PhysicalEntity getNormalEntity() {
+        return normalEntity;
+    }
+
+    public void setNormalEntity(PhysicalEntity normalEntity) {
+        this.normalEntity = normalEntity;
+    }
+
     public EntityFunctionalStatus() {
     }
 
