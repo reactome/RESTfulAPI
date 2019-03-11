@@ -52,14 +52,14 @@ public class RESTfulAPIResourceTest {
 //    private final static String RESTFUL_URL = "http://www.reactome.org/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://reactomecurator.oicr.on.ca:9080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomerelease.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomecurator.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
     private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
     
     @Test
     public void testBioPaxExporter() throws Exception {
-        String url = RESTFUL_URL + "biopaxExporter/Level3/109581";
+        String url = RESTFUL_URL + "biopaxExporter/Level3/201681";
         System.out.println(url);
         String text = callHttp(url,
                 HTTP_GET,
@@ -96,13 +96,13 @@ public class RESTfulAPIResourceTest {
 
     @Test
     public void testPathwayDiagram() throws Exception {
-                String url = RESTFUL_URL + "pathwayDiagram/109581/png";
-                String text = callHttp(url,
-                        HTTP_GET,
-                        "");
-                System.out.println("Output from pathwaydiagram:\n");
-                System.out.println(text);
-                decodeInBase64(text, "109581.png");
+                String url = RESTFUL_URL + "pathwayDiagram/2206290/png";
+//                String text = callHttp(url,
+//                        HTTP_GET,
+//                        "");
+//                System.out.println("Output from pathwaydiagram:\n");
+//                System.out.println(text);
+//                decodeInBase64(text, "2206290.png");
         //        
         //        url = RESTFUL_URL + "pathwayDiagram/109581/pdf";
         //        text = callHttp(url,
@@ -123,9 +123,9 @@ public class RESTfulAPIResourceTest {
         //        text = callHttp(url, HTTP_GET, "");
         //        prettyPrintXML(text);
         
-        //        String url = RESTFUL_URL + "pathwayDiagram/190236/xml";
-        //        String text = callHttp(url, HTTP_GET, "");
-        //        prettyPrintXML(text);
+                url = RESTFUL_URL + "pathwayDiagram/5602498/xml";
+                String text = callHttp(url, HTTP_GET, "");
+                prettyPrintXML(text);
         
         
     }
@@ -535,13 +535,15 @@ public class RESTfulAPIResourceTest {
         prettyPrintXML(text);
     }
     
-    @Test
-    public void testGeneSetInXML() throws Exception {
-        String url = RESTFUL_URL + "GeneSetInXML";
-        String text = callHttp(url, HTTP_GET, "");
-        System.out.println("\nOutput from GeneSetInXML:");
-        prettyPrintXML(text);
-    }
+    // This test takes too long time to generate. Disable for the time being so that
+    // we can do a suite of tests together.
+//    @Test
+//    public void testGeneSetInXML() throws Exception {
+//        String url = RESTFUL_URL + "GeneSetInXML";
+//        String text = callHttp(url, HTTP_GET, "");
+//        System.out.println("\nOutput from GeneSetInXML:");
+//        prettyPrintXML(text);
+//    }
     
     @Test
     public void testDetailedView() throws Exception {
@@ -572,11 +574,11 @@ public class RESTfulAPIResourceTest {
         System.out.println("\nOutput from detailedView:");
         prettyPrintXML(text);
         // An event has regulation
-        url = RESTFUL_URL + "detailedView/DatabaseObject/2586555";
+        url = RESTFUL_URL + "detailedView/DatabaseObject/5262606";
         text = callHttp(url,
                 HTTP_GET,
                 "");
-        System.out.println("Output from detailedView 2586555:\n");
+        System.out.println("Output from detailedView 5262606:\n");
         prettyPrintXML(text);
     }
     
