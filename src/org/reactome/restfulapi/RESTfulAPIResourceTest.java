@@ -53,7 +53,8 @@ public class RESTfulAPIResourceTest {
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomerelease.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://reactomecurator.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://reactomecurator.oicr.on.ca/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://cpws.reactome.org/ReactomeRESTfulAPI/RESTfulWS/";
     private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
     
@@ -96,13 +97,13 @@ public class RESTfulAPIResourceTest {
 
     @Test
     public void testPathwayDiagram() throws Exception {
-                String url = RESTFUL_URL + "pathwayDiagram/2206290/png";
-//                String text = callHttp(url,
-//                        HTTP_GET,
-//                        "");
-//                System.out.println("Output from pathwaydiagram:\n");
-//                System.out.println(text);
-//                decodeInBase64(text, "2206290.png");
+                String url = RESTFUL_URL + "pathwayDiagram/70326/png";
+                String text = callHttp(url,
+                        HTTP_GET,
+                        "");
+                System.out.println("Output from pathwaydiagram:\n");
+                System.out.println(text);
+                decodeInBase64(text, "2206290.png");
         //        
         //        url = RESTFUL_URL + "pathwayDiagram/109581/pdf";
         //        text = callHttp(url,
@@ -123,8 +124,8 @@ public class RESTfulAPIResourceTest {
         //        text = callHttp(url, HTTP_GET, "");
         //        prettyPrintXML(text);
         
-                url = RESTFUL_URL + "pathwayDiagram/5602498/xml";
-                String text = callHttp(url, HTTP_GET, "");
+                url = RESTFUL_URL + "pathwayDiagram/70326/xml";
+                text = callHttp(url, HTTP_GET, "");
                 prettyPrintXML(text);
         
         
@@ -294,12 +295,38 @@ public class RESTfulAPIResourceTest {
     @Test
     public void testQueryById() throws Exception {
         // Check a pathway instance
-        String url = RESTFUL_URL + "queryById/Pathway/69278";
+        String url = RESTFUL_URL + "queryById/Pathway/6799604";
         String text = callHttp(url,
                 HTTP_GET,
                 "");
-        System.out.println("Output from querybyid 69278:\n");
+        System.out.println("Output from querybyid 6799604:");
         prettyPrintXML(text);
+        
+        // Test new ControlReferences
+        url = RESTFUL_URL + "queryById/CatalystActivityReference/9642394";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput for a CatalystActivityReference:");
+        prettyPrintXML(text);
+        
+        url = RESTFUL_URL + "queryById/RegulationReference/9641210";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput for a RegulationReference:");
+        prettyPrintXML(text);
+        
+        // A reaction has both CatalystActivityReferene and RegulationReference
+        url = RESTFUL_URL + "queryById/Reaction/893596";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput for a Reaction having both catalystActivityReference and regulationReference:");
+        prettyPrintXML(text);
+        
+        // Check label in a PsiMod
+        url = RESTFUL_URL + "queryById/PsiMod/448174";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("\nOutput for a PsiMod:");
+        prettyPrintXML(text);
+        
+        if (true)
+            return;
         
         //Test for weird characters
         url = RESTFUL_URL + "queryById/DatabaseIdentifier/8870797";

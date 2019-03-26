@@ -23,6 +23,28 @@ public class ReactionlikeEvent extends Event {
     private List<EntityFunctionalStatus> entityFunctionalStatus;
     private String systematicName;
     private List<Regulation> regulatedBy;
+    private List<RegulationReference> regulationReference;
+
+    public ReactionlikeEvent() {
+    }
+    
+    public List<RegulationReference> getRegulationReference() {
+        return regulationReference;
+    }
+
+    public void setRegulationReference(List<RegulationReference> regulationReference) {
+        this.regulationReference = regulationReference;
+    }
+
+    public CatalystActivityReference getCatalystActivityReference() {
+        return catalystActivityReference;
+    }
+
+    public void setCatalystActivityReference(CatalystActivityReference catalystActivityReference) {
+        this.catalystActivityReference = catalystActivityReference;
+    }
+
+    private CatalystActivityReference catalystActivityReference;
     
     public List<Regulation> getRegulatedBy() {
         return regulatedBy;
@@ -87,9 +109,6 @@ public class ReactionlikeEvent extends Event {
 
     public void setCatalystActivity(List<CatalystActivity> catalystActivity) {
         this.catalystActivity = catalystActivity;
-    }
-
-    public ReactionlikeEvent() {
     }
 
     public Boolean getIsChimeric() {

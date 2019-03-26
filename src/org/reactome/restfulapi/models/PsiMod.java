@@ -9,7 +9,16 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 public class PsiMod extends ExternalOntology {
+    private String label;
 
     public PsiMod() {
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
     }
 }
