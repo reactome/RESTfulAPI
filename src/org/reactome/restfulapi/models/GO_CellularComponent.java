@@ -1,5 +1,7 @@
 package org.reactome.restfulapi.models;
 
+import java.util.List;
+
 // Generated Jul 8, 2011 1:48:55 PM by Hibernate Tools 3.4.0.CR1
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -14,12 +16,21 @@ public class GO_CellularComponent extends DatabaseObject {
     private String definition;
     private ReferenceDatabase referenceDatabase;
     private String referenceDatabaseClass;
+    private List<GO_CellularComponent> surroundedBy;
 
     public GO_CellularComponent() {
     }
 
     public String getAccession() {
         return this.accession;
+    }
+
+    public List<GO_CellularComponent> getSurroundedBy() {
+        return surroundedBy;
+    }
+
+    public void setSurroundedBy(List<GO_CellularComponent> surroundedBy) {
+        this.surroundedBy = surroundedBy;
     }
 
     public void setAccession(String accession) {
