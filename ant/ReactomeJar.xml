@@ -25,7 +25,8 @@
             		<include name="org/gk/graphEditor/*.class" />
             	    <include name="org/gk/property/*.class" />
             	    <include name="org/gk/render/*.class" />
-            	    <include name="org/gk/slicing/*.class" />
+            		<!-- Don't place this package into the base (May, 2019) -->
+            	    <!-- include name="org/gk/slicing/*.class" /-->
             	    <include name="org/gk/gkCurator/*.class" />
             		<include name="org/gk/gkEditor/*.class" />
             		<include name="org/gk/elv/*.class" />
@@ -42,7 +43,8 @@
             		<include name="org/gk/graphEditor/*.java" />
             	    <include name="org/gk/property/*.java" />
             	    <include name="org/gk/render/*.java" />
-            	    <include name="org/gk/slicing/*.java" />
+        			<!-- Don't place this package into the base (May, 2019) -->
+            	    <!-- include name="org/gk/slicing/*.java" / -->
             	    <include name="org/gk/gkCurator/*.java" />
             		<include name="org/gk/gkEditor/*.java" />
             		<include name="org/gk/elv/*.java" />
