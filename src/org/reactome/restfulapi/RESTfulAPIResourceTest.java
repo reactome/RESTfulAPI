@@ -55,12 +55,12 @@ public class RESTfulAPIResourceTest {
 //    private final static String RESTFUL_URL = "http://reactomerelease.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomecurator.oicr.on.ca/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://cpws.reactome.org/ReactomeRESTfulAPI/RESTfulWS/";
-    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://reactomedev.oicr.on.ca:7080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
+    private final static String RESTFUL_URL = "http://www.reactome.org/ReactomeRESTfulAPI/RESTfulWS/";
     
     @Test
     public void testBioPaxExporter() throws Exception {
-        String url = RESTFUL_URL + "biopaxExporter/Level3/201681";
+        String url = RESTFUL_URL + "biopaxExporter/Level2/1430728";
         System.out.println(url);
         String text = callHttp(url,
                 HTTP_GET,
@@ -606,6 +606,13 @@ public class RESTfulAPIResourceTest {
                 HTTP_GET,
                 "");
         System.out.println("Output from detailedView 5262606:\n");
+        prettyPrintXML(text);
+        // A disease event
+        url = RESTFUL_URL + "detailedView/DatabaseObject/9681314";
+        text = callHttp(url,
+                HTTP_GET,
+                "");
+        System.out.println("Output from detailedView 9681314:\n");
         prettyPrintXML(text);
     }
     

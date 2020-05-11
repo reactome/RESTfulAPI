@@ -1,0 +1,8 @@
+/build
+/build/classes
+*.war
+*.png
+*.pdf
+
+
+/.DS_Store
