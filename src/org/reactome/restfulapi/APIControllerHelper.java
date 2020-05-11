@@ -96,10 +96,12 @@ public class APIControllerHelper {
     }
 
     /*
-    @param long dbID The ID of the pathway diagram requested
+      This method is synchronized to avoid a potential thread conflicts caused by not-that-sophisticated
+      caching mechanisms implemented in MySQLAdaptor, causing modified element exception in the Collection framework.
+        @param long dbID The ID of the pathway diagram requested
      */
-    public org.w3c.dom.Document bioPaxExporter(String level,
-                                               long dbID) {
+    public synchronized org.w3c.dom.Document bioPaxExporter(String level,
+                                                            long dbID) {
         if (dba == null) // dba has to be defined explicitly
             throw new IllegalStateException("BioPAXExporterService.getBioPAXModel(): " +
                     "No db adaptor defined!");
