@@ -60,6 +60,12 @@ public class PathwayHierarchyGenerator {
         Element elm = new Element(inst.getSchemClass().getName());
         elm.setAttribute("dbId", inst.getDBID().toString());
         elm.setAttribute("displayName", inst.getDisplayName());
+        GKInstance stableId = (GKInstance) inst.getAttributeValue(ReactomeJavaConstants.stableIdentifier);
+        if (stableId != null) {
+            // Remove the . if any
+            String id = stableId.getDisplayName().split("\\.")[0];
+            elm.setAttribute("stId", id);
+        }
         // Check if it has PathwayDiagram associated
         if (inst.getSchemClass().isa(ReactomeJavaConstants.Pathway)) {
             Collection<?> diagrams = inst.getReferers(ReactomeJavaConstants.representedPathway);
