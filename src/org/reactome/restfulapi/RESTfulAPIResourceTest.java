@@ -55,11 +55,12 @@ public class RESTfulAPIResourceTest {
 //    private final static String RESTFUL_URL = "http://reactomerelease.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://reactomecurator.oicr.on.ca/ReactomeRESTfulAPI/RESTfulWS/";
 //    private final static String RESTFUL_URL = "http://cpws.reactome.org/ReactomeRESTfulAPI/RESTfulWS/";
-//    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
-    private final static String RESTFUL_URL = "http://www.reactome.org/ReactomeRESTfulAPI/RESTfulWS/";
+    private final static String RESTFUL_URL = "http://localhost:8080/ReactomeRESTfulAPI/RESTfulWS/";
+//    private final static String RESTFUL_URL = "http://www.reactome.org/ReactomeRESTfulAPI/RESTfulWS/";
     
     @Test
     public void testBioPaxExporter() throws Exception {
+        // This is a huge pathway
         String url = RESTFUL_URL + "biopaxExporter/Level2/1430728";
         System.out.println(url);
         String text = callHttp(url,
@@ -68,13 +69,13 @@ public class RESTfulAPIResourceTest {
         System.out.println("Output from biopaxexporter (level2):\n");
         System.out.println(text);
         
-//        url = RESTFUL_URL + "biopaxExporter/Level3/109581";
-//        System.out.println(url);
-//        text = callHttp(url,
-//                HTTP_GET,
-//                "");
-//        System.out.println("\nOutput from biopaxexporter (level3):\n");
-//        System.out.println(text);
+        url = RESTFUL_URL + "biopaxExporter/Level3/109581";
+        System.out.println(url);
+        text = callHttp(url,
+                HTTP_GET,
+                "");
+        System.out.println("\nOutput from biopaxexporter (level3):\n");
+        System.out.println(text);
     }
     
     @Test
@@ -97,13 +98,13 @@ public class RESTfulAPIResourceTest {
 
     @Test
     public void testPathwayDiagram() throws Exception {
-                String url = RESTFUL_URL + "pathwayDiagram/70326/png";
+                String url = RESTFUL_URL + "pathwayDiagram/201556/png";
                 String text = callHttp(url,
                         HTTP_GET,
                         "");
                 System.out.println("Output from pathwaydiagram:\n");
                 System.out.println(text);
-                decodeInBase64(text, "2206290.png");
+                decodeInBase64(text, "201556.png");
         //        
         //        url = RESTFUL_URL + "pathwayDiagram/109581/pdf";
         //        text = callHttp(url,
@@ -266,6 +267,9 @@ public class RESTfulAPIResourceTest {
     	String url = RESTFUL_URL + "getDBName";
     	String text = callHttp(url, HTTP_GET, "");
     	System.out.println("DB Name: " + text);
+        url = RESTFUL_URL + "version";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("DB Version: " + text);
     }
     
     @Test

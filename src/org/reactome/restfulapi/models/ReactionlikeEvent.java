@@ -24,10 +24,28 @@ public class ReactionlikeEvent extends Event {
     private String systematicName;
     private List<Regulation> regulatedBy;
     private List<RegulationReference> regulationReference;
+    private List<InteractionEvent> hasInteraction;
+    private List<ReactionType> reactionType;
 
     public ReactionlikeEvent() {
     }
     
+    public List<InteractionEvent> getHasInteraction() {
+        return hasInteraction;
+    }
+
+    public void setHasInteraction(List<InteractionEvent> hasInteraction) {
+        this.hasInteraction = hasInteraction;
+    }
+
+    public List<ReactionType> getReactionType() {
+        return reactionType;
+    }
+
+    public void setReactionType(List<ReactionType> reactionType) {
+        this.reactionType = reactionType;
+    }
+
     public List<RegulationReference> getRegulationReference() {
         return regulationReference;
     }

@@ -17,9 +17,18 @@ public class ReferenceDatabase extends DatabaseObject {
     private String accessUrl;
     private List<String> name;
     private String url;
+    private String resourceIdentifier;
     
     public ReferenceDatabase() {
         
+    }
+
+    public String getResourceIdentifier() {
+        return resourceIdentifier;
+    }
+
+    public void setResourceIdentifier(String resourceIdentifier) {
+        this.resourceIdentifier = resourceIdentifier;
     }
 
     public String getAccessUrl() {

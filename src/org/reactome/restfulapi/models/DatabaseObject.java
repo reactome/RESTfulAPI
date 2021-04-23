@@ -13,6 +13,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 
 @XmlRootElement
+@SuppressWarnings("serial")
 public class DatabaseObject implements java.io.Serializable {
 
     private Long dbId;
