@@ -329,6 +329,18 @@ public class RESTfulAPIResourceTest {
         System.out.println("\nOutput for a PsiMod:");
         prettyPrintXML(text);
         
+        // CellLineage
+        url = RESTFUL_URL + "queryById/DatabaseObject/9734797";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("CellLineagePath:");
+        prettyPrintXML(text);
+        
+        // CellLineage
+        url = RESTFUL_URL + "queryById/DatabaseObject/9734891";
+        text = callHttp(url, HTTP_GET, "");
+        System.out.println("CellLineagePath:");
+        prettyPrintXML(text);
+        
         if (true)
             return;
         

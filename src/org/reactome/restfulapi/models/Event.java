@@ -50,8 +50,18 @@ public class Event extends DatabaseObject implements Regulator {
     // Expose regulations directly so that more information can be displayed
     private List<PositiveRegulation> positiveRegulations;
     private List<NegativeRegulation> negativeRegulations;
+    // Negative preceding/following relationships
+    private List<NegativePrecedingEvent> negativePrecedingEvent;
     
     public Event() {
+    }
+
+    public List<NegativePrecedingEvent> getNegativePrecedingEvent() {
+        return negativePrecedingEvent;
+    }
+
+    public void setNegativePrecedingEvent(List<NegativePrecedingEvent> negativePrecedingEvent) {
+        this.negativePrecedingEvent = negativePrecedingEvent;
     }
 
     public List<PositiveRegulation> getPositiveRegulations() {

@@ -2,6 +2,9 @@ package org.reactome.restfulapi.models;
 
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement
 public class ControlledVocabulary extends DatabaseObject {
     
     private String definition;

@@ -1,5 +1,8 @@
 package org.reactome.restfulapi.models;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement
 public class CellDevelopmentStep extends ReactionlikeEvent {
     
     private Anatomy tissue;
