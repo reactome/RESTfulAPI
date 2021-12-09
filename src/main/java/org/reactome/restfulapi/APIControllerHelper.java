@@ -37,6 +37,7 @@ import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Singleton
 @SuppressWarnings({"unchecked", "rawtypes", "WeakerAccess"})
@@ -245,12 +246,22 @@ public class APIControllerHelper {
             GKInstance pathway = getInstance(pathwayId);
 	        if (pathway == null)
 	            throw new InstanceNotFoundException(pathwayId);
-	        if (!pathway.getSchemClass().isa(ReactomeJavaConstants.Pathway))
-	            throw new IllegalArgumentException(pathway + " is not a pathway!");
-	        Set<GKInstance> aux = InstanceUtilities.grepPathwayParticipants(pathway);
+	        if (!pathway.getSchemClass().isa(ReactomeJavaConstants.Pathway) &&
+        		!pathway.getSchemClass().isa("CellLineagePath")) {
+	        	System.out.println("Not a pathway or cell lineage path");
+	            throw new IllegalArgumentException(pathway + " is not a pathway or cell lineage path!");
+	        	
+	        }
+	        Set<GKInstance> aux = null;
+	        if (pathway.getSchemClass().isa("CellLineagePath")) {
+	        	aux = getCellLineagePathParticipants(pathway);
+	        } else if (pathway.getSchemClass().isa(ReactomeJavaConstants.Pathway)) {
+	        	aux = InstanceUtilities.grepPathwayParticipants(pathway);
+	        } 
             pes.addAll(aux);
 	        List<PhysicalToReferenceEntityMap> maps = new ArrayList<PhysicalToReferenceEntityMap>();
             for (GKInstance pe : pes) {
+            	//System.out.println(pe.getDisplayName());
                 Set<GKInstance> refEntities = InstanceUtilities.grepReferenceEntitiesForPE(pe);
                 if (refEntities == null || refEntities.size() == 0)
                     continue;
@@ -690,8 +701,13 @@ public class APIControllerHelper {
                                                  String[] geneNames) {
         String rtn = null;
         try {
+        	//System.out.println("Hello");
             GKInstance pathway = dba.fetchInstance(pathwayId);
-            if (pathway == null || !pathway.getSchemClass().isa(ReactomeJavaConstants.Pathway)) {
+            //System.out.println(pathway);
+            if (pathway == null || 
+            		(!pathway.getSchemClass().isa(ReactomeJavaConstants.Pathway) && 
+            		!pathway.getSchemClass().isa("CellLineagePath"))) {
+            	System.out.println("Doesn't exist");
                 logger.error("Pathway doesn't exist: " + pathwayId);
                 throw new IllegalArgumentException("Pathway doesn't exist: " + pathwayId);
             }
@@ -699,18 +715,23 @@ public class APIControllerHelper {
             diagramHelper.setMySQLAdaptor(dba);
             // Find PathwayDiagram
             GKInstance diagram = diagramHelper.getPathwayDiagram(pathway);
+            //System.out.println(diagram);
             if (diagram == null) {
                 //logger.error("Pathway diagram is not available for " + pathway.getDisplayName());
                 throw new IllegalStateException("Pathway diagram is not available for " + pathway.getDisplayName());
             }
             if (type.equals("xml")) {
+            	//System.out.println("Fetching xml");
                 if (dba.isUseCache()) {
+                	//System.out.println("Using cache");
                     String xml = getCachedPathwayDiagramXML(pathway, diagram);
                     if (xml != null)
                         return xml;
                 }
                 PathwayDiagramXMLGenerator xmlGenerator = new PathwayDiagramXMLGenerator();
+                //System.out.println("Generating xml");
                 String xml = xmlGenerator.generateXMLForPathwayDiagram(diagram, pathway);
+                //System.out.println(xml);
                 if (dba.isUseCache())
                     cachPathwayDiagramXML(pathway, diagram, xml);
                 return xml;
@@ -738,7 +759,7 @@ public class APIControllerHelper {
                 baos.flush();
                 rtn = org.apache.commons.codec.binary.Base64.encodeBase64String(baos.toByteArray());
                 baos.close();
-            } 
+            }
             else if (type.equals("pdf")) {
                 String uuid = UUID.randomUUID().toString();
                 // To avoid a long name that is not supported by a platform
@@ -820,26 +841,38 @@ public class APIControllerHelper {
     }
     
     /**
-     * Get Complex subunits recursively.
+     * Get Complex subunits recursively
+     * @deprecated
+     */
+    public List<PhysicalEntity> getComplexSubunits(Long dbId) {
+    	return getEntitySubunits(dbId);
+    }
+    
+    /**
+     * Get Entity subunits recursively for complexes, entity sets, polymers, or cell physical entities.
      * @param dbId
      * @return
      */
-    public List<PhysicalEntity> getComplexSubunits(Long dbId) {
+    public List<PhysicalEntity> getEntitySubunits(Long dbId) {
         try {
-            GKInstance complex = dba.fetchInstance(dbId);
-            Set<GKInstance> components = InstanceUtilities.getContainedInstances(complex,
+            GKInstance entity = dba.fetchInstance(dbId);
+            Set<GKInstance> subunits = InstanceUtilities.getContainedInstances(entity,
                                                                                  ReactomeJavaConstants.hasComponent,
                                                                                  ReactomeJavaConstants.hasMember,
-                                                                                 ReactomeJavaConstants.hasCandidate);
+                                                                                 ReactomeJavaConstants.hasCandidate,
+                                                                                 ReactomeJavaConstants.repeatedUnit,
+                                                                                 "proteinMarker",
+                                                                                 "RNAMarker");
             // Do a filter to remove complex instances
-            for (Iterator<GKInstance> it = components.iterator(); it.hasNext();) {
+            for (Iterator<GKInstance> it = subunits.iterator(); it.hasNext();) {
                 GKInstance comp = it.next();
                 if (comp.getSchemClass().isa(ReactomeJavaConstants.Complex) ||
-                    comp.getSchemClass().isa(ReactomeJavaConstants.EntitySet))
+                    comp.getSchemClass().isa(ReactomeJavaConstants.EntitySet) ||
+                    comp.getSchemClass().isa(ReactomeJavaConstants.Polymer))
                     it.remove();
             }
-            List<PhysicalEntity> rtn = new ArrayList<PhysicalEntity>(components.size());
-            for (GKInstance comp : components) {
+            List<PhysicalEntity> rtn = new ArrayList<PhysicalEntity>(subunits.size());
+            for (GKInstance comp : subunits) {
                 PhysicalEntity pe = (PhysicalEntity) converter.createObject(comp);
                 rtn.add(pe);
                 // Export referenceEntity if available
@@ -960,6 +993,9 @@ public class APIControllerHelper {
             }
             else // Treated as PE
                 refEntities = InstanceUtilities.grepReferenceEntitiesForPE(inst);
+            	if (inst.getSchemClass().isa("Cell")) {
+            		refEntities.addAll(getMarkerReferenceEntities(inst));
+            	}
             for (GKInstance ref : refEntities) {
                 ReferenceEntity refObj = (ReferenceEntity) converter.createObject(ref);
                 rtn.add(refObj);
@@ -1023,7 +1059,7 @@ public class APIControllerHelper {
             for (PhysicalEntity complex : complexes) {
             	rtn.add(complex);
             	
-            	List<PhysicalEntity> subunits = this.getComplexSubunits(complex.getDbId()); 
+            	List<PhysicalEntity> subunits = this.getEntitySubunits(complex.getDbId()); 
             	
             	// Then append each subunit (with referenceEntities) after the complex
             	for (PhysicalEntity subunit : subunits) {
@@ -1214,8 +1250,38 @@ public class APIControllerHelper {
         }
         return new ArrayList<Pathway>();
     }
-    
-    public List<Publication> queryLiteratureReferenceForPerson(Long personId) {
+   
+    public synchronized List<CellLineagePath> listCellLineagePathItems(String speciesName) {
+    	List<CellLineagePath> cellLineagePaths = new ArrayList<>();
+    	
+    	try {
+    		Collection<?> cellLineagePathInstances = dba.fetchInstancesByClass("CellLineagePath");
+    		if (cellLineagePathInstances != null && !cellLineagePathInstances.isEmpty()) {
+    			if (speciesName == null || speciesName.isEmpty()) {
+    				speciesName = "Homo sapiens";
+    			}
+    			speciesName = speciesName.toLowerCase();
+    			//System.out.println(speciesName);
+    			//System.out.println("Number of Cell Lineage Path instances: " + cellLineagePathInstances.size());
+    			for (Iterator<?> it = cellLineagePathInstances.iterator(); it.hasNext();) {
+    				GKInstance cellLineagePath = (GKInstance) it.next();
+    				if (isExpectedSpecies(cellLineagePath, speciesName)) {
+    					cellLineagePaths.add((CellLineagePath) converter.convert(cellLineagePath));
+    				}
+    			}			
+    		}
+    	}
+    	catch (Exception e) {
+    		logger.error("Cannot get CellLineagePath items", e);
+    	}
+
+//    	return cellLineagePaths;
+    	List<CellLineagePath> topLevelCellLineagePaths = getTopLevelCellLineagePaths(cellLineagePaths);
+    	//System.out.println("Number of top level Cell Lineage Path instances: " + topLevelCellLineagePaths.size());
+    	return topLevelCellLineagePaths;
+    }
+
+	public List<Publication> queryLiteratureReferenceForPerson(Long personId) {
         try {
             GKInstance person = dba.fetchInstance(personId);
             if (person == null)
@@ -1703,5 +1769,101 @@ public class APIControllerHelper {
 		return new ArrayList<String>();
 	}
 	
+	private boolean isExpectedSpecies(GKInstance instance, String speciesName) throws Exception {
+		Collection<GKInstance> instanceSpecies = instance.getAttributeValuesList(ReactomeJavaConstants.species);
+		
+		for (GKInstance singleInstanceSpecies : instanceSpecies) {
+			if (singleInstanceSpecies.getDisplayName().toLowerCase().equals(speciesName)) {
+				return true;
+			}
+		}
+		return false;
+//		return instanceSpecies.stream().anyMatch(
+//			singleInstanceSpecies -> 
+//			singleInstanceSpecies.getDisplayName().toLowerCase().equals(speciesName)
+//		);
+	}
 	
+	private List<CellLineagePath> getTopLevelCellLineagePaths(List<CellLineagePath> cellLineagePaths) {
+		Map<Long, List<Long>> childToParentCellLineagePathMap = new HashMap<>();
+		
+		for (CellLineagePath cellLineagePath : cellLineagePaths) {
+			for (CellLineagePath childCellLineagePath : getChildCellLineagePaths(cellLineagePath)) {
+				if (!childToParentCellLineagePathMap.containsKey(childCellLineagePath.getDbId())) {
+					childToParentCellLineagePathMap.put(childCellLineagePath.getDbId(), new ArrayList<>());	
+				}
+				childToParentCellLineagePathMap.get(childCellLineagePath.getDbId()).add(cellLineagePath.getDbId());
+			}
+		}
+		
+		return getCellLineagePathsWithoutCellLineagePathChildren(cellLineagePaths, childToParentCellLineagePathMap);
+	}
+	
+	private List<CellLineagePath> getChildCellLineagePaths(CellLineagePath cellLineagePath) {
+		List<CellLineagePath> childCellLineagePaths = new ArrayList<>();
+		List<Event> childEvents = cellLineagePath.getHasEvent() != null ? cellLineagePath.getHasEvent() : new ArrayList<>();
+		for (Event childEvent : childEvents) {
+			if (childEvent instanceof CellLineagePath) {
+				childCellLineagePaths.add((CellLineagePath) childEvent);
+			}
+		}
+		return childCellLineagePaths;
+	}
+	
+	private List<CellLineagePath> getCellLineagePathsWithoutCellLineagePathChildren(
+		List<CellLineagePath> cellLineagePaths,
+		Map<Long, List<Long>> childToParentCellLineagePathMap
+	) {
+		List<CellLineagePath> cellLineagePathsWithoutCellLineagePathChildren = new ArrayList<>();
+		for (CellLineagePath cellLineagePath : cellLineagePaths) {
+			if (!childToParentCellLineagePathMap.containsKey(cellLineagePath.getDbId())) {
+				cellLineagePathsWithoutCellLineagePathChildren.add(cellLineagePath);
+			}
+		}
+		return cellLineagePathsWithoutCellLineagePathChildren;
+	}
+	
+	private Set<GKInstance> getCellLineagePathParticipants(GKInstance cellLineagePath) throws InvalidAttributeException, Exception {
+		Set<GKInstance> cellLineagePathParticipants = new HashSet<>();
+		List<GKInstance> cellLineagePathEvents = cellLineagePath.getAttributeValuesList(ReactomeJavaConstants.hasEvent);
+		for (GKInstance cellLineagePathEvent : cellLineagePathEvents) {
+			if (cellLineagePathEvent.getSchemClass().isa("CellLineagePath")) {
+				cellLineagePathParticipants.addAll(getCellLineagePathParticipants(cellLineagePath));
+			} else {
+				System.out.println("Getting reaction participants");
+				cellLineagePathParticipants.addAll(InstanceUtilities.getReactionParticipants(cellLineagePathEvent));
+				
+				//cellLineagePathParticipants.addAll(cellDevelopmentStep.getAttributeValuesList("requiredInputComponent"));
+				System.out.println("Getting cell participants");
+				List<GKInstance> cells = new ArrayList<>();
+				cells.addAll(cellLineagePathEvent.getAttributeValuesList(ReactomeJavaConstants.input));
+				cells.addAll(cellLineagePathEvent.getAttributeValuesList(ReactomeJavaConstants.output));
+				
+				System.out.println("Getting marker participants");
+				for (GKInstance cell : cells) {
+					cellLineagePathParticipants.addAll(cell.getAttributeValuesList("proteinMarker"));
+					cellLineagePathParticipants.addAll(cell.getAttributeValuesList("RNAMarker"));		
+				}	
+			}
+			
+		}
+		
+		return cellLineagePathParticipants;
+	}
+	
+	private Set<GKInstance> getMarkerReferenceEntities(GKInstance cellInstance) throws InvalidAttributeException, Exception {
+		Set<GKInstance> markers = new HashSet<GKInstance>();
+		markers.addAll(cellInstance.getAttributeValuesList("proteinMarker"));
+		markers.addAll(cellInstance.getAttributeValuesList("RNAMarker"));
+
+		Set<GKInstance> refEntities = new HashSet<GKInstance>();
+		for (GKInstance marker : markers) {
+			if (marker.getSchemClass().isValidAttribute(ReactomeJavaConstants.referenceEntity)) {
+				GKInstance refEntity = (GKInstance) marker.getAttributeValue(ReactomeJavaConstants.referenceEntity);
+				if (refEntity != null)
+					refEntities.add(refEntity);
+			}
+		}
+		return refEntities;
+	}
 }

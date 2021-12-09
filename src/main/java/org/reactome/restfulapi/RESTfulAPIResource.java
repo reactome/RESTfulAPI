@@ -301,6 +301,16 @@ public class RESTfulAPIResource {
     public List<PhysicalEntity> getComplexSubunits(@PathParam("dbId") Long dbId) {
         return service.getComplexSubunits(dbId);
     }
+    
+    /**
+     * Get a list of subunits for a complex, set, polymer, or cell physical entity that are no-complex PEs.
+     * @return
+     */
+    @GET
+    @Path("/entitySubunits/{dbId}")
+    public List<PhysicalEntity> getEntitySubunits(@PathParam("dbId") Long dbId) {
+        return service.getEntitySubunits(dbId);
+    }    
 
     /**
      * @param className Class Name of Object you are querying for
@@ -594,6 +604,29 @@ public class RESTfulAPIResource {
         }
         return null;
     }
+    
+    @GET
+    @Path("/cellLineagePaths/{speciesName}")
+    public List<CellLineagePath> queryCellLineagePaths(@PathParam("speciesName") String speciesName) {
+    	try {
+    		String decoded = URLDecoder.decode(speciesName, "utf-8");
+    		return service.listCellLineagePathItems(decoded);
+    	} 
+    	catch(UnsupportedEncodingException e) {
+    		logger.error(e.getMessage(), e);
+    	}
+    	
+    	return null;
+    }
+    
+//    @GET
+//    @Path("/cellLineagePath/{dbId}")
+//    public CellLineagePath queryCellLineagePath(@PathParam("dbId") String dbId) {
+//    	try {
+//    		String decoded = URLDecoder.decode(dbId, "utf-8");
+//    		return service.
+//    	}
+//    }
     
     /**
      * Get a XML string for the pathway hierarchy for a specified species.
