@@ -2,6 +2,7 @@
 <PostMappers>
     <PostMapper class="DatabaseIdentifier" mapper="org.reactome.restfulapi.mapper.DatabaseIdentifierMapper"></PostMapper>
     <PostMapper class="Event" mapper="org.reactome.restfulapi.mapper.EventMapper"></PostMapper>
+    <PostMapper class="CellLineagePath" mapper="org.reactome.restfulapi.mapper.CellLineagePathMapper"></PostMapper>
     <PostMapper class="Pathway" mapper="org.reactome.restfulapi.mapper.PathwayMapper"></PostMapper>
     <PostMapper class="ReactionlikeEvent" mapper="org.reactome.restfulapi.mapper.ReactionlikeEventMapper"></PostMapper>
     <PostMapper class="StableIdentifier" mapper="org.reactome.restfulapi.mapper.StableIdentifierMapper"></PostMapper>
