@@ -6,3 +6,9 @@
 
 
 /.DS_Store
+
+target/
+
+# IntelliJ Files
+.idea/
+*.iml
