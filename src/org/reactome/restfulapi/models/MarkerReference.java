@@ -6,7 +6,7 @@ import java.util.List;
 public class MarkerReference extends ControlReference {
     
     private List<Cell> cell;
-    private List<EntityWithAccessionedSequence> marker;
+    private EntityWithAccessionedSequence marker;
     
     public MarkerReference() {
     }
@@ -19,11 +19,11 @@ public class MarkerReference extends ControlReference {
         this.cell = cell;
     }
 
-    public List<EntityWithAccessionedSequence> getMarker() {
+    public EntityWithAccessionedSequence getMarker() {
         return marker;
     }
 
-    public void setMarker(List<EntityWithAccessionedSequence> marker) {
+    public void setMarker(EntityWithAccessionedSequence marker) {
         this.marker = marker;
     }
 
