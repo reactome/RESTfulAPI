@@ -23,7 +23,6 @@ public class Regulation extends DatabaseObject {
     private String releaseDate;
     private List<InstanceEdit> reviewed;
     private List<InstanceEdit> revised;
-    private List<Summation> summation;
     // New attribute in December, 2013
     private List<Pathway> containedInPathway;
     private GO_BiologicalProcess goBiologicalProcess;
@@ -134,13 +133,4 @@ public class Regulation extends DatabaseObject {
     public void setRevised(List<InstanceEdit> revised) {
         this.revised = revised;
     }
-
-    public List<Summation> getSummation() {
-        return summation;
-    }
-
-    public void setSummation(List<Summation> summation) {
-        this.summation = summation;
-    }
-
 }
