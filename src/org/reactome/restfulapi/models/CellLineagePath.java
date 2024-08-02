@@ -5,9 +5,8 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class CellLineagePath extends Event {
+public class CellLineagePath extends Pathway {
     
-    private List<Event> hasEvent;
     private Anatomy tissue;
     
     public CellLineagePath() {
@@ -20,14 +19,6 @@ public class CellLineagePath extends Event {
 
     public void setTissue(Anatomy tissue) {
         this.tissue = tissue;
-    }
-
-    public List<Event> getHasEvent() {
-        return hasEvent;
-    }
-
-    public void setHasEvent(List<Event> hasEvent) {
-        this.hasEvent = hasEvent;
     }
 
 }

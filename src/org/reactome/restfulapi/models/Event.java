@@ -52,8 +52,45 @@ public class Event extends DatabaseObject implements Regulator {
     private List<NegativeRegulation> negativeRegulations;
     // Negative preceding/following relationships
     private List<NegativePrecedingEvent> negativePrecedingEvent;
+    // For ReviewStatus-based star system
+    private ReviewStatus reviewStatus;
+    private ReviewStatus previousReviewStatus;
+    private List<InstanceEdit> internalReviewed;
+    private List<InstanceEdit> structureModified;
     
     public Event() {
+    }
+
+    public ReviewStatus getReviewStatus() {
+        return reviewStatus;
+    }
+
+    public void setReviewStatus(ReviewStatus reviewStatus) {
+        this.reviewStatus = reviewStatus;
+    }
+
+    public ReviewStatus getPreviousReviewStatus() {
+        return previousReviewStatus;
+    }
+
+    public void setPreviousReviewStatus(ReviewStatus previousReviewStatus) {
+        this.previousReviewStatus = previousReviewStatus;
+    }
+
+    public List<InstanceEdit> getInternalReviewed() {
+        return internalReviewed;
+    }
+
+    public void setInternalReviewed(List<InstanceEdit> internalReviewed) {
+        this.internalReviewed = internalReviewed;
+    }
+
+    public List<InstanceEdit> getStructureModified() {
+        return structureModified;
+    }
+
+    public void setStructureModified(List<InstanceEdit> structureModified) {
+        this.structureModified = structureModified;
     }
 
     public List<NegativePrecedingEvent> getNegativePrecedingEvent() {
