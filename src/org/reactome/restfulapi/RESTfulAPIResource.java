@@ -292,6 +292,12 @@ public class RESTfulAPIResource {
         return rtn;
     }
     
+    @GET
+    @Path("/entitySubunits/{dbId}")
+    public List<PhysicalEntity> getEntitySubunits(@PathParam("dbId") Long dbId) {
+    	return getComplexSubunits(dbId);
+    }
+    
     /**
      * Get a list of complex subunits that are no-complex PEs.
      * @return
